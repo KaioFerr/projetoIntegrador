@@ -368,15 +368,18 @@ var backgroundImage = creatImage(_img_background_png__WEBPACK_IMPORTED_MODULE_1_
 
 var player = new Player(); //criando plataformas
 
-var platforms = [new Platform({
-  x: -1,
-  y: 452,
-  image: platformImage
-}), new Platform({
-  x: platformImage.width - 3,
-  y: 452,
-  image: platformImage
-})]; //criando o objeto
+var numPlatforms = 21;
+var initialX = -1;
+var platforms = [];
+
+for (var i = 0; i < numPlatforms; i++) {
+  platforms.push(new Platform({
+    x: initialX + i * (platformImage.width - 3),
+    y: 452,
+    image: platformImage
+  }));
+} //criando o objeto
+
 
 var genericObject = [new GenericObject({
   x: 0,

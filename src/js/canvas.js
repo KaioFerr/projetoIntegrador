@@ -155,19 +155,17 @@ let player = new Player()
 
 
 //criando plataformas
-let platforms = [new Platform({
-    x: -1,
-    y: 452,
-    image: platformImage
-}),
-new Platform({
-    x: platformImage.width - 3,
-    y: 452,
-    image: platformImage
-})]
+const numPlatforms = 21;
+let initialX = -1;
+let platforms = [];
 
-
-
+for (let i = 0; i < numPlatforms; i++) {
+    platforms.push(new Platform({
+        x: initialX + i * (platformImage.width - 3),
+        y: 452,
+        image: platformImage
+    }));
+}
 
 
 //criando o objeto

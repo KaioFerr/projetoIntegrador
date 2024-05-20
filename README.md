@@ -12,10 +12,8 @@ O jogo foi desenvolvido utilizando as tecnologias web JavaScript, HTML e CSS. At
 - Interface intuitiva e atrativa para crianças.
 
 ## Como Executar o Jogo
-
-1. Clone este repositório para o seu ambiente local.
-2. Execute no Git Bash o npm start
-3. Siga as instruções na tela para começar a jogar.
+1. acesse o site https://kaioferr.github.io/projetoIntegrador/
+2. Siga as instruções na tela para começar a jogar.
 
 ## Contribuição
 

@@ -21,5 +21,5 @@ Contribuições são bem-vindas! Sinta-se à vontade para propor melhorias, corr
 
 ## Autores
 
-Este projeto foi desenvolvido por Caio Moreira Cancela, Luis Vitor Carvalho Dutra , Juan Pablo Nunes Ferraz, Kaio Henrique Teixeira Ferreira, Rafael Toledo Ferraz e Sávio Barbosa Freitas como parte da disciplina de Projeto Integrador de Extensão I, sob a orientação do professor Ana Amélia de Souza Pereira.
+Este projeto foi desenvolvido por Caio Moreira Cancela, Luis Vitor Carvalho Dutra , Juan Pablo Nunes Ferraz, Kaio Henrique Teixeira Ferreira, Rafael Toledo Ferraz e Savio Barbosa Freitas como parte da disciplina de Projeto Integrador de Extensão I, sob a orientação do professor Ana Amélia de Souza Pereira.
 

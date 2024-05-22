@@ -366,21 +366,22 @@ function creatImage(imageSrc) {
 var platformImage = creatImage(_img_platform_png__WEBPACK_IMPORTED_MODULE_0__["default"]);
 var backgroundImage = creatImage(_img_background_png__WEBPACK_IMPORTED_MODULE_1__["default"]); //criando player
 
-var player = new Player(); //criando plataformas
+var player = new Player(); 
 
-var numPlatforms = 21;
-var initialX = -1;
-var platforms = [];
+//criando plataformas
+const numPlatforms = 21;
+let initialX = -1;
+let platforms = [];
 
-for (var i = 0; i < numPlatforms; i++) {
-  platforms.push(new Platform({
-    x: initialX + i * (platformImage.width - 3),
-    y: 452,
-    image: platformImage
-  }));
-} //criando o objeto
+for (let i = 0; i < numPlatforms; i++) {
+    platforms.push(new Platform({
+        x: initialX + i * (platformImage.width - 3),
+        y: 452,
+        image: platformImage
+    }));
+}
 
-
+//criando o objeto
 var genericObject = [new GenericObject({
   x: 0,
   y: 0,

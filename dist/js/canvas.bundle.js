@@ -233,7 +233,7 @@ var Player = /*#__PURE__*/function () {
   function Player() {
     _classCallCheck(this, Player);
 
-    this.speed = 8;
+    this.speed = 50;
     this.position = {
       x: 100,
       y: 100
@@ -366,22 +366,21 @@ function creatImage(imageSrc) {
 var platformImage = creatImage(_img_platform_png__WEBPACK_IMPORTED_MODULE_0__["default"]);
 var backgroundImage = creatImage(_img_background_png__WEBPACK_IMPORTED_MODULE_1__["default"]); //criando player
 
-var player = new Player(); 
+var player = new Player(); //criando plataformas
 
-//criando plataformas
-const numPlatforms = 21;
-let initialX = -1;
-let platforms = [];
+var numPlatforms = 21;
+var initialX = -1;
+var platforms = [];
 
-for (let i = 0; i < numPlatforms; i++) {
-    platforms.push(new Platform({
-        x: initialX + i * (platformImage.width - 3),
-        y: 452,
-        image: platformImage
-    }));
-}
+for (var i = 0; i < numPlatforms; i++) {
+  platforms.push(new Platform({
+    x: initialX + i * (platformImage.width - 3),
+    y: 452,
+    image: platformImage
+  }));
+} //criando o objeto
 
-//criando o objeto
+
 var genericObject = [new GenericObject({
   x: 0,
   y: 0,
@@ -394,6 +393,9 @@ var keys = {
   },
   left: {
     pressed: false
+  },
+  jump: {
+    pressed: false
   }
 };
 var scrollOffSet = 0;
@@ -403,15 +405,18 @@ function init() {
   lifePoint -= 1;
   player = new Player();
   platformImage = creatImage(_img_platform_png__WEBPACK_IMPORTED_MODULE_0__["default"]);
-  platforms = [new Platform({
-    x: -1,
-    y: 452,
-    image: platformImage
-  }), new Platform({
-    x: platformImage.width - 3,
-    y: 452,
-    image: platformImage
-  })];
+  var numPlatforms = 21;
+  var initialX = -1;
+  var platforms = [];
+
+  for (var _i = 0; _i < numPlatforms; _i++) {
+    platforms.push(new Platform({
+      x: initialX + _i * (platformImage.width - 3),
+      y: 452,
+      image: platformImage
+    }));
+  }
+
   backgroundImage = creatImage(_img_background_png__WEBPACK_IMPORTED_MODULE_1__["default"]);
   genericObject = [new GenericObject({
     x: 0,
@@ -464,6 +469,7 @@ function animate() {
   platforms.forEach(function (platform) {
     if (player.position.y + player.height <= platform.position.y && player.position.y + player.height + player.velocity.y >= platform.position.y && player.position.x + player.width >= platform.position.x && player.position.x <= platform.position.x + platform.width) {
       player.velocity.y = 0;
+      jumpCont = 1;
     }
   }); //movimentos das sprites
 
@@ -488,6 +494,12 @@ function animate() {
 
   if (scrollOffSet > 10000) {
     console.log("you win!");
+
+    if (keys.right.pressed) {
+      player.speed = 0;
+    } else {
+      player.speed = 50;
+    }
   } //condição perdeu
 
 
@@ -501,7 +513,8 @@ function animate() {
   }
 }
 
-animate(); //verificar tecla
+animate();
+var jumpCont = 1; //verificar tecla
 
 addEventListener('keydown', function (_ref3) {
   var keyCode = _ref3.keyCode;
@@ -526,7 +539,13 @@ addEventListener('keydown', function (_ref3) {
     case 87:
       console.log('up');
       lastKey = 'jump';
-      player.velocity.y = -24;
+
+      if (jumpCont <= 2) {
+        player.velocity.y = -24;
+        console.log(jumpCont);
+        jumpCont++;
+      } else player.velocity.y = 0;
+
       break;
   }
 });
@@ -537,6 +556,7 @@ addEventListener('keyup', function (_ref4) {
     case 65:
       console.log('left');
       keys.left.pressed = false;
+      lastKey = 'left';
       break;
 
     case 83:
@@ -546,11 +566,13 @@ addEventListener('keyup', function (_ref4) {
     case 68:
       console.log('right');
       keys.right.pressed = false;
+      lastKey = 'right';
       break;
 
     case 87:
       console.log('up');
       player.velocity.y = 0;
+      lastKey = 'jump';
       break;
   }
 });

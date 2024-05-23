@@ -30,7 +30,8 @@ const gravity = 1.5
 class Player {
 
     constructor() {
-        this.speed = 8
+        this.speedX = 50
+        this.speedY = -24
         this.position = {
             x: 100,
             y: 100
@@ -63,7 +64,7 @@ class Player {
                 range: 34
             }
         }
-        
+
         this.currentSprite = this.sprite.stand.right
         this.currentCropWidth = 80
 
@@ -86,7 +87,7 @@ class Player {
 
     update() {
         this.frame++
-        if (this.frame > this.sprite.stand.range && (this.currentSprite === this.sprite.stand.right || this.currentSprite === this.sprite.stand.left) ) {
+        if (this.frame > this.sprite.stand.range && (this.currentSprite === this.sprite.stand.right || this.currentSprite === this.sprite.stand.left)) {
             this.frame = 0
         }
         else if (this.frame > this.sprite.run.range && (this.currentSprite === this.sprite.run.right || this.currentSprite === this.sprite.run.left)) {
@@ -185,6 +186,9 @@ const keys = {
     },
     left: {
         pressed: false
+    },
+    jump:{
+        pressed: false
     }
 }
 let scrollOffSet = 0
@@ -198,16 +202,17 @@ function init() {
 
     platformImage = creatImage(platform)
 
-    platforms = [new Platform({
-        x: -1,
-        y: 452,
-        image: platformImage
-    }),
-    new Platform({
-        x: platformImage.width - 3,
-        y: 452,
-        image: platformImage
-    })]
+    const numPlatforms = 21;
+    let initialX = -1;
+    let platforms = [];
+    
+    for (let i = 0; i < numPlatforms; i++) {
+        platforms.push(new Platform({
+            x: initialX + i * (platformImage.width - 3),
+            y: 452,
+            image: platformImage
+        }));
+    }
 
     backgroundImage = creatImage(background)
 
@@ -237,35 +242,39 @@ function animate() {
     })
     player.update()
     if (keys.right.pressed && player.position.x < 600) {
-        player.velocity.x = player.speed
-
+        player.velocity.x = player.speedX;
     }
+
+
     else if ((keys.left.pressed && player.position.x > 100) || keys.left.pressed && scrollOffSet == 0 && player.position.x > 0) {
-        player.velocity.x = -player.speed
+        player.velocity.x = -player.speedX
 
     }
+
+
     else {
         player.velocity.x = 0
 
 
         if (keys.right.pressed) {
-            scrollOffSet += player.speed
+            scrollOffSet += player.speedX
             platforms.forEach(platform => {
-                platform.position.x -= player.speed
+                platform.position.x -= player.speedX
             })
             genericObject.forEach((genericObject) => {
-                genericObject.position.x -= player.speed * 0.40
+                genericObject.position.x -= player.speedX * 0.40
             })
         } else if (keys.left.pressed && scrollOffSet > 0) {
-            scrollOffSet -= player.speed
+            scrollOffSet -= player.speedX
             platforms.forEach(platform => {
-                platform.position.x += player.speed
+                platform.position.x += player.speedX
             })
             genericObject.forEach((genericObject) => {
-                genericObject.position.x += player.speed * 0.40
+                genericObject.position.x += player.speedX * 0.40
             })
 
         }
+
     }
 
 
@@ -276,8 +285,13 @@ function animate() {
             player.position.x + player.width >= platform.position.x &&
             player.position.x <= platform.position.x + platform.width) {
             player.velocity.y = 0
+            jumpCont = 1
         }
     })
+
+    if (player.position.y + player.height >= canvas.height){
+        player.speedY = 0
+    }
 
     //movimentos das sprites
 
@@ -297,26 +311,34 @@ function animate() {
         player.currentCropWidth = player.sprite.run.cropWidth
         player.range = player.sprite.run.range
     }
-    
+
+
     else if (!keys.right.pressed &&
         lastKey === 'right' &&
         player.currentSprite !== player.sprite.stand.right) {
-            player.currentSprite = player.sprite.stand.right
-            player.currentCropWidth = player.sprite.stand.cropWidth
+        player.currentSprite = player.sprite.stand.right
+        player.currentCropWidth = player.sprite.stand.cropWidth
 
     }
     else if (!keys.left.pressed &&
         lastKey === 'left' &&
         player.currentSprite !== player.sprite.stand.left) {
-            player.currentSprite = player.sprite.stand.left
-            player.currentCropWidth = player.sprite.stand.cropWidth
-            player.range = player.sprite.stand.range
+        player.currentSprite = player.sprite.stand.left
+        player.currentCropWidth = player.sprite.stand.cropWidth
+        player.range = player.sprite.stand.range
     }
+
+
 
 
     //condição ganhou
     if (scrollOffSet > 10000) {
         console.log("you win!")
+        if (keys.right.pressed){
+            player.speedX = 0
+        }else{
+            player.speedX = 50
+        }
     }
 
     //condição perdeu
@@ -324,13 +346,15 @@ function animate() {
         init()
         console.log(lifePoint)
         if (lifePoint == 0) {
-            player.speed = 0
+            player.speedX = 0
         }
     }
 }
 
-animate()
 
+
+animate()
+var jumpCont = 1
 //verificar tecla
 addEventListener('keydown', ({ keyCode }) => {
     switch (keyCode) {
@@ -350,7 +374,11 @@ addEventListener('keydown', ({ keyCode }) => {
         case 87:
             console.log('up')
             lastKey = 'jump'
-            player.velocity.y = -24
+            /*if (jumpCont <= 2){
+                player.velocity.y += player.speedY
+                console.log(jumpCont)
+                jumpCont++
+            } else player.velocity.y = 0*/
             break
 
 
@@ -363,6 +391,7 @@ addEventListener('keyup', ({ keyCode }) => {
         case 65:
             console.log('left')
             keys.left.pressed = false
+            lastKey = 'left'
             break
         case 83:
             console.log('down')
@@ -370,11 +399,13 @@ addEventListener('keyup', ({ keyCode }) => {
         case 68:
             console.log('right')
             keys.right.pressed = false
+            lastKey = 'right'
 
             break
         case 87:
             console.log('up')
             player.velocity.y = 0
+            lastKey = 'jump'
             break
 
 

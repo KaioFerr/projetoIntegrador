@@ -426,8 +426,9 @@ function init() {
     image: backgroundImage
   })];
   scrollOffSet = 0;
-} //animação
+}
 
+startTimer(); //animação
 
 function animate() {
   requestAnimationFrame(animate);
@@ -494,11 +495,19 @@ function animate() {
     player.currentSprite = player.sprite.stand.left;
     player.currentCropWidth = player.sprite.stand.cropWidth;
     player.range = player.sprite.stand.range;
+  }
+
+  if ((scrollOffSet == 500 || scrollOffSet == 1000 || scrollOffSet == 1200 || scrollOffSet == 3500 || scrollOffSet == 5000) && keys.right.pressed == true) {
+    keys.right.pressed = false;
+    principal();
   } //condição ganhou
 
 
-  if (scrollOffSet > 10000) {
+  var i = 0;
+
+  if (scrollOffSet == 10150) {
     console.log("you win!");
+    showElapsedTime();
   } //condição perdeu
 
 
@@ -539,7 +548,6 @@ addEventListener('keydown', function (_ref3) {
       console.log('up');
       lastKey = 'jump';
       player.velocity.y += player.speedY;
-      console.log(player.position.y);
       break;
   }
 });
@@ -570,6 +578,86 @@ addEventListener('keyup', function (_ref4) {
       break;
   }
 });
+var res = 0;
+var fator1 = [];
+var fator2 = [];
+var operador = [];
+var operacao = [];
+
+function createOperation() {
+  randomNumber();
+
+  if (operador == "+") {
+    res = parseInt(fator1) + parseInt(fator2);
+  } else {
+    var teste = fator1 - fator2;
+
+    if (teste < 0) {
+      var apoio = fator1;
+      fator1 = fator2;
+      fator2 = apoio;
+    }
+
+    res = parseInt(fator1) - parseInt(fator2);
+  }
+
+  operacao = fator1 + operador + fator2;
+}
+
+function randomNumber() {
+  var numbers1 = "0123";
+  var numbers2 = "123456789";
+  var operator = "+-";
+  var i = 0;
+  var randomNumber1 = Math.floor(Math.random() * numbers1.length);
+  fator1 += numbers1.substring(randomNumber1, randomNumber1 + 1);
+  randomNumber1 = Math.floor(Math.random() * numbers2.length);
+  fator1 += numbers2.substring(randomNumber1, randomNumber1 + 1);
+  var randomNumberO = Math.floor(Math.random() * operator.length);
+  operador += operator.substring(randomNumberO, randomNumberO + 1);
+  var randomNumber2 = Math.floor(Math.random() * numbers1.length);
+  fator2 += numbers1.substring(randomNumber2, randomNumber2 + 1);
+  randomNumber2 = Math.floor(Math.random() * numbers2.length);
+  fator2 += numbers2.substring(randomNumber2, randomNumber2 + 1);
+  console.log(fator1, fator2, operador);
+}
+
+function alertFunction() {
+  var resposta = prompt("Digite o resultado da opera\xE7\xE3o: ".concat(operacao));
+
+  if (resposta == res) {
+    fator1 = [];
+    fator2 = [];
+    operador = [];
+    operacao = [];
+    return 0;
+  } else {
+    alertFunction();
+  }
+}
+
+function principal() {
+  createOperation();
+  alertFunction();
+}
+
+var contador = 0;
+var podeContar = true;
+var startTime; // Variável para armazenar o tempo de início do jogo
+// Função para iniciar o tempo
+
+function startTimer() {
+  startTime = Date.now(); // Armazena o tempo atual
+} // Função para calcular e mostrar o tempo decorrido no console
+
+
+function showElapsedTime() {
+  var elapsedTime = Date.now() - startTime; // Calcula o tempo decorrido
+
+  var seconds = Math.floor(elapsedTime / 1000); // Converte milissegundos para segundos
+
+  console.log("Tempo decorrido: ".concat(seconds, " segundos"));
+}
 
 /***/ })
 

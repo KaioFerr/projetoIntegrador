@@ -67,6 +67,7 @@ class Player {
 
         this.currentSprite = this.sprite.stand.right
         this.currentCropWidth = 80
+        this.doubleJump;
 
     }
 
@@ -187,7 +188,7 @@ const keys = {
     left: {
         pressed: false
     },
-    jump:{
+    jump: {
         pressed: false
     }
 }
@@ -205,7 +206,7 @@ function init() {
     const numPlatforms = 21;
     let initialX = -1;
     let platforms = [];
-    
+
     for (let i = 0; i < numPlatforms; i++) {
         platforms.push(new Platform({
             x: initialX + i * (platformImage.width - 3),
@@ -251,6 +252,11 @@ function animate() {
 
     }
 
+    else if ((keys.right.pressed && player.position.x < 600) || keys.right.pressed && scrollOffSet == 10200 && player.position.x < 10200) {
+        player.velocity.x = 0
+
+    }
+
 
     else {
         player.velocity.x = 0
@@ -280,18 +286,15 @@ function animate() {
 
     //verificar colisão
     platforms.forEach((platform) => {
-        if (player.position.y + player.height <= platform.position.y && player.position.y
+        const inFloor = player.position.y + player.height <= platform.position.y && player.position.y
             + player.height + player.velocity.y >= platform.position.y &&
             player.position.x + player.width >= platform.position.x &&
-            player.position.x <= platform.position.x + platform.width) {
+            player.position.x <= platform.position.x + platform.width
+
+        if (inFloor) {
             player.velocity.y = 0
-            jumpCont = 1
         }
     })
-
-    if (player.position.y + player.height >= canvas.height){
-        player.speedY = 0
-    }
 
     //movimentos das sprites
 
@@ -334,11 +337,6 @@ function animate() {
     //condição ganhou
     if (scrollOffSet > 10000) {
         console.log("you win!")
-        if (keys.right.pressed){
-            player.speedX = 0
-        }else{
-            player.speedX = 50
-        }
     }
 
     //condição perdeu
@@ -374,14 +372,9 @@ addEventListener('keydown', ({ keyCode }) => {
         case 87:
             console.log('up')
             lastKey = 'jump'
-            /*if (jumpCont <= 2){
-                player.velocity.y += player.speedY
-                console.log(jumpCont)
-                jumpCont++
-            } else player.velocity.y = 0*/
+            player.velocity.y += player.speedY
+            console.log(player.position.y)
             break
-
-
     }
 })
 

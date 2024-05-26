@@ -233,7 +233,8 @@ var Player = /*#__PURE__*/function () {
   function Player() {
     _classCallCheck(this, Player);
 
-    this.speed = 50;
+    this.speedX = 50;
+    this.speedY = -24;
     this.position = {
       x: 100,
       y: 100
@@ -268,6 +269,7 @@ var Player = /*#__PURE__*/function () {
     };
     this.currentSprite = this.sprite.stand.right;
     this.currentCropWidth = 80;
+    this.doubleJump;
   }
 
   _createClass(Player, [{
@@ -440,36 +442,39 @@ function animate() {
   player.update();
 
   if (keys.right.pressed && player.position.x < 600) {
-    player.velocity.x = player.speed;
+    player.velocity.x = player.speedX;
   } else if (keys.left.pressed && player.position.x > 100 || keys.left.pressed && scrollOffSet == 0 && player.position.x > 0) {
-    player.velocity.x = -player.speed;
+    player.velocity.x = -player.speedX;
+  } else if (keys.right.pressed && player.position.x < 600 || keys.right.pressed && scrollOffSet == 10200 && player.position.x < 10200) {
+    player.velocity.x = 0;
   } else {
     player.velocity.x = 0;
 
     if (keys.right.pressed) {
-      scrollOffSet += player.speed;
+      scrollOffSet += player.speedX;
       platforms.forEach(function (platform) {
-        platform.position.x -= player.speed;
+        platform.position.x -= player.speedX;
       });
       genericObject.forEach(function (genericObject) {
-        genericObject.position.x -= player.speed * 0.40;
+        genericObject.position.x -= player.speedX * 0.40;
       });
     } else if (keys.left.pressed && scrollOffSet > 0) {
-      scrollOffSet -= player.speed;
+      scrollOffSet -= player.speedX;
       platforms.forEach(function (platform) {
-        platform.position.x += player.speed;
+        platform.position.x += player.speedX;
       });
       genericObject.forEach(function (genericObject) {
-        genericObject.position.x += player.speed * 0.40;
+        genericObject.position.x += player.speedX * 0.40;
       });
     }
   } //verificar colisão
 
 
   platforms.forEach(function (platform) {
-    if (player.position.y + player.height <= platform.position.y && player.position.y + player.height + player.velocity.y >= platform.position.y && player.position.x + player.width >= platform.position.x && player.position.x <= platform.position.x + platform.width) {
+    var inFloor = player.position.y + player.height <= platform.position.y && player.position.y + player.height + player.velocity.y >= platform.position.y && player.position.x + player.width >= platform.position.x && player.position.x <= platform.position.x + platform.width;
+
+    if (inFloor) {
       player.velocity.y = 0;
-      jumpCont = 1;
     }
   }); //movimentos das sprites
 
@@ -494,12 +499,6 @@ function animate() {
 
   if (scrollOffSet > 10000) {
     console.log("you win!");
-
-    if (keys.right.pressed) {
-      player.speed = 0;
-    } else {
-      player.speed = 50;
-    }
   } //condição perdeu
 
 
@@ -508,7 +507,7 @@ function animate() {
     console.log(lifePoint);
 
     if (lifePoint == 0) {
-      player.speed = 0;
+      player.speedX = 0;
     }
   }
 }
@@ -539,13 +538,8 @@ addEventListener('keydown', function (_ref3) {
     case 87:
       console.log('up');
       lastKey = 'jump';
-
-      if (jumpCont <= 2) {
-        player.velocity.y = -24;
-        console.log(jumpCont);
-        jumpCont++;
-      } else player.velocity.y = 0;
-
+      player.velocity.y += player.speedY;
+      console.log(player.position.y);
       break;
   }
 });

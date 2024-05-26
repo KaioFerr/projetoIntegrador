@@ -333,7 +333,7 @@ function animate() {
     }
 
 
-    if ((scrollOffSet == 500 ||scrollOffSet == 1000 || scrollOffSet == 1200 || scrollOffSet == 3500 || scrollOffSet == 5000) && keys.right.pressed == true) {
+    if ((scrollOffSet == 500 ||scrollOffSet == 1000 || scrollOffSet == 1500 || scrollOffSet == 3500 || scrollOffSet == 5000) && keys.right.pressed == true) {
         keys.right.pressed = false
         principal()
     }

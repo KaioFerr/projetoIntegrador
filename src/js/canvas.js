@@ -1,5 +1,6 @@
 //sprites
 import platform from '../img/platform.png'
+import miniPlatform from '../img/miniPlatform.png'
 import background from '../img/background.png'
 
 
@@ -15,6 +16,9 @@ import spriteJumpRight from '../img/spriteJumpRight.png'
 import spriteJumpLeft from '../img/spriteJumpLeft.png'
 
 
+import banner from '../img/banner.png'
+
+
 
 //Tela
 const canvas = document.querySelector('canvas');
@@ -25,13 +29,16 @@ canvas.width = 1024
 canvas.height = 576
 
 
+
 const gravity = 1.5
 
 //class de Objetos
 class Player {
 
     constructor() {
-        this.speedX = 50
+        this.points = 0
+        this.callCalculator
+        this.speedX = 8
         this.speedY = -24
         this.position = {
             x: 100,
@@ -41,8 +48,8 @@ class Player {
             x: 0,
             y: 0
         }
-        this.width = 160
-        this.height = 160
+        this.width = 100
+        this.height = 100
         this.image = creatImage(spriteStandRight)
         this.frame = 0
         this.sprite = {
@@ -105,6 +112,16 @@ class Player {
         if (this.position.y + this.height + this.velocity.y <= canvas.height) {
             this.velocity.y += gravity
         }
+
+        if (this.callCalculator == true && keys.select.pressed == true) {
+            calculator()
+        }
+
+        if(player.points == 8){
+            console.log("You win")
+            showElapsedTime()
+            player.points = 9
+        }
     }
 }
 
@@ -149,27 +166,109 @@ function creatImage(imageSrc) {
 }
 //criando imagens
 let platformImage = creatImage(platform)
-
-
+let miniPlatformImage = creatImage(miniPlatform)
 let backgroundImage = creatImage(background)
+let bannerImage = creatImage(banner)
 
 //criando player
 let player = new Player()
 
 
 //criando plataformas
-const numPlatforms = 21;
+const numPlatforms = 3;
+const numMiniPlatforms = 4;
+const numBanner = 1
 let initialX = -1;
 let platforms = [];
+let miniPlatforms = []
+let bannerList = []
 
-for (let i = 0; i < numPlatforms; i++) {
-    platforms.push(new Platform({
-        x: initialX + i * (platformImage.width - 3),
-        y: 452,
-        image: platformImage
-    }));
+
+function createPlatforms(listObject, x, numObject) {
+    for (let i = 0; i < numObject; i++) {
+        listObject.push(new Platform({
+            x: x + i * (platformImage.width - 3),
+            y: 452,
+            image: platformImage
+        }));
+    }
 }
 
+
+function createMiniPlatforms(listObject, x, y, numObject) {
+    for (let i = 0; i < numObject; i++) {
+        listObject.push(new GenericObject({
+            x: x + i * (miniPlatformImage.width - 16),
+            y: y,
+            image: miniPlatformImage
+        }));
+    }
+}
+
+function createBanners(listObject, x, y) {
+    for (let i = 0; i < 1; i++) {
+        listObject.push(new GenericObject({
+            x: x,
+            y: y,
+            image: bannerImage
+        }));
+    }
+}
+
+
+//plataformas
+createPlatforms(platforms, -1, 3)
+createPlatforms(platforms, 2000, 2)
+createPlatforms(platforms, 3800, 2)
+createPlatforms(platforms, 5600, 2)
+createPlatforms(platforms, 7700, 2)
+createPlatforms(platforms, 10230, 2)
+
+
+//mini plataformas
+createMiniPlatforms(miniPlatforms, 500, 300, 4)
+createMiniPlatforms(miniPlatforms, 800, 400, 4)
+createMiniPlatforms(miniPlatforms, 1000, 300, 4)
+createMiniPlatforms(miniPlatforms, 1300, 200, 4)
+createMiniPlatforms(miniPlatforms, 2000, 80, 4)
+createMiniPlatforms(miniPlatforms, 2300, 160, 4)
+createMiniPlatforms(miniPlatforms, 2300, 400, 4)
+createMiniPlatforms(miniPlatforms, 2600, 300, 4)
+createMiniPlatforms(miniPlatforms, 3500, 300, 4)
+createMiniPlatforms(miniPlatforms, 4200, 300, 4)
+createMiniPlatforms(miniPlatforms, 4200, 100, 4)
+createMiniPlatforms(miniPlatforms, 5050, 400, 2)
+createMiniPlatforms(miniPlatforms, 5200, 300, 2)
+createMiniPlatforms(miniPlatforms, 5350, 200, 2)
+createMiniPlatforms(miniPlatforms, 5350, 200, 2)
+createMiniPlatforms(miniPlatforms, 5550, 100, 3)
+createMiniPlatforms(miniPlatforms, 5800, 200, 1)
+createMiniPlatforms(miniPlatforms, 6000, 200, 1)
+createMiniPlatforms(miniPlatforms, 6200, 200, 1)
+createMiniPlatforms(miniPlatforms, 6650, 200, 4)
+createMiniPlatforms(miniPlatforms, 7100, 200, 2)
+createMiniPlatforms(miniPlatforms, 7300, 200, 2)
+createMiniPlatforms(miniPlatforms, 7500, 200, 2)
+createMiniPlatforms(miniPlatforms, 8600, 400, 2)
+createMiniPlatforms(miniPlatforms, 8800, 300, 2)
+createMiniPlatforms(miniPlatforms, 9000, 200, 2)
+createMiniPlatforms(miniPlatforms, 8800, 100, 2)
+createMiniPlatforms(miniPlatforms, 8600, 80, 3)
+createMiniPlatforms(miniPlatforms, 9300, 200, 2)
+createMiniPlatforms(miniPlatforms, 9600, 200, 2)
+createMiniPlatforms(miniPlatforms, 9900, 200, 2)
+createMiniPlatforms(miniPlatforms, 10150, 200, 4)
+
+
+//banners
+createBanners(bannerList, 580, 240)
+createBanners(bannerList, 1380, 144)
+createBanners(bannerList, 2024, 15)
+createBanners(bannerList, 4280, 42)
+createBanners(bannerList, 5580, 44)
+createBanners(bannerList, 6730, 146)
+createBanners(bannerList, 8640, 20)
+createBanners(bannerList, 10230, 144)
 
 //criando o objeto
 let genericObject = [
@@ -180,6 +279,7 @@ let genericObject = [
     })
 ]
 
+let scrollOffSet = 0
 
 let lastKey
 const keys = {
@@ -191,33 +291,121 @@ const keys = {
     },
     jump: {
         pressed: false
+    },
+    select: {
+        pressed: false
     }
 }
-let scrollOffSet = 0
 
 let lifePoint = 5
 
 //função que recomeça o jogo
 function init() {
     lifePoint -= 1
+    platformImage = creatImage(platform)
+    miniPlatformImage = creatImage(miniPlatform)
+    backgroundImage = creatImage(background)
+    bannerImage = creatImage(banner)
+
+    //criando player
     player = new Player()
 
-    platformImage = creatImage(platform)
 
-    const numPlatforms = 21;
-    let initialX = -1;
-    let platforms = [];
+    //criando plataformas
+    const numPlatforms = 3;
+    const numMiniPlatforms = 4;
+    const numBanner = 1
+    initialX = -1;
+    platforms = [];
+    miniPlatforms = []
+    bannerList = []
 
-    for (let i = 0; i < numPlatforms; i++) {
-        platforms.push(new Platform({
-            x: initialX + i * (platformImage.width - 3),
-            y: 452,
-            image: platformImage
-        }));
+
+    function createPlatforms(listObject, x, numObject) {
+        for (let i = 0; i < numObject; i++) {
+            listObject.push(new Platform({
+                x: x + i * (platformImage.width - 3),
+                y: 452,
+                image: platformImage
+            }));
+        }
     }
 
-    backgroundImage = creatImage(background)
 
+    function createMiniPlatforms(listObject, x, y, numObject) {
+        for (let i = 0; i < numObject; i++) {
+            listObject.push(new GenericObject({
+                x: x + i * (miniPlatformImage.width - 16),
+                y: y,
+                image: miniPlatformImage
+            }));
+        }
+    }
+
+    function createBanners(listObject, x, y) {
+        for (let i = 0; i < 1; i++) {
+            listObject.push(new GenericObject({
+                x: x,
+                y: y,
+                image: bannerImage
+            }));
+        }
+    }
+
+
+    //plataformas
+    createPlatforms(platforms, -1, 3)
+    createPlatforms(platforms, 2000, 2)
+    createPlatforms(platforms, 3800, 2)
+    createPlatforms(platforms, 5600, 2)
+    createPlatforms(platforms, 7700, 2)
+    createPlatforms(platforms, 10230, 2)
+
+
+    //mini plataformas
+    createMiniPlatforms(miniPlatforms, 500, 300, 4)
+    createMiniPlatforms(miniPlatforms, 800, 400, 4)
+    createMiniPlatforms(miniPlatforms, 1000, 300, 4)
+    createMiniPlatforms(miniPlatforms, 1300, 200, 4)
+    createMiniPlatforms(miniPlatforms, 2000, 80, 4)
+    createMiniPlatforms(miniPlatforms, 2300, 160, 4)
+    createMiniPlatforms(miniPlatforms, 2300, 400, 4)
+    createMiniPlatforms(miniPlatforms, 2600, 300, 4)
+    createMiniPlatforms(miniPlatforms, 3500, 300, 4)
+    createMiniPlatforms(miniPlatforms, 4200, 300, 4)
+    createMiniPlatforms(miniPlatforms, 4200, 100, 4)
+    createMiniPlatforms(miniPlatforms, 5050, 400, 2)
+    createMiniPlatforms(miniPlatforms, 5050, 300, 2)
+    createMiniPlatforms(miniPlatforms, 5350, 200, 2)
+    createMiniPlatforms(miniPlatforms, 5800, 200, 1)
+    createMiniPlatforms(miniPlatforms, 6000, 200, 1)
+    createMiniPlatforms(miniPlatforms, 6200, 200, 1)
+    createMiniPlatforms(miniPlatforms, 6650, 200, 4)
+    createMiniPlatforms(miniPlatforms, 7100, 200, 2)
+    createMiniPlatforms(miniPlatforms, 7300, 200, 2)
+    createMiniPlatforms(miniPlatforms, 7500, 200, 2)
+    createMiniPlatforms(miniPlatforms, 8600, 400, 2)
+    createMiniPlatforms(miniPlatforms, 8800, 300, 2)
+    createMiniPlatforms(miniPlatforms, 9000, 200, 2)
+    createMiniPlatforms(miniPlatforms, 8800, 100, 2)
+    createMiniPlatforms(miniPlatforms, 8600, 80, 3)
+    createMiniPlatforms(miniPlatforms, 9300, 200, 2)
+    createMiniPlatforms(miniPlatforms, 9600, 200, 2)
+    createMiniPlatforms(miniPlatforms, 9900, 200, 2)
+    createMiniPlatforms(miniPlatforms, 10150, 200, 4)
+
+
+    //banners
+    createBanners(bannerList, 580, 240)
+    createBanners(bannerList, 1380, 144)
+    createBanners(bannerList, 2024, 15)
+    createBanners(bannerList, 4280, 42)
+    createBanners(bannerList, 5580, 44)
+    createBanners(bannerList, 6730, 146)
+    createBanners(bannerList, 8640, 20)
+    createBanners(bannerList, 10230, 144)
+
+    //criando o objeto
     genericObject = [
         new GenericObject({
             x: 0,
@@ -227,6 +415,7 @@ function init() {
     ]
 
     scrollOffSet = 0
+
 }
 startTimer()
 //animação
@@ -237,6 +426,14 @@ function animate() {
 
     genericObject.forEach((genericObject) => {
         genericObject.draw()
+    })
+
+    bannerList.forEach((bannerObject) => {
+        bannerObject.draw()
+    })
+
+    miniPlatforms.forEach((mPlatform) => {
+        mPlatform.draw()
     })
 
     platforms.forEach((platform) => {
@@ -271,6 +468,12 @@ function animate() {
             genericObject.forEach((genericObject) => {
                 genericObject.position.x -= player.speedX * 0.40
             })
+            miniPlatforms.forEach((mPlatform) => {
+                mPlatform.position.x -= player.speedX
+            })
+            bannerList.forEach((bannerObject) => {
+                bannerObject.position.x -= player.speedX
+            })
         } else if (keys.left.pressed && scrollOffSet > 0) {
             scrollOffSet -= player.speedX
             platforms.forEach(platform => {
@@ -278,6 +481,12 @@ function animate() {
             })
             genericObject.forEach((genericObject) => {
                 genericObject.position.x += player.speedX * 0.40
+            })
+            miniPlatforms.forEach((miniPlatform) => {
+                miniPlatform.position.x += player.speedX
+            })
+            bannerList.forEach((bannerObject) => {
+                bannerObject.position.x += player.speedX
             })
 
         }
@@ -294,6 +503,16 @@ function animate() {
 
         if (inFloor) {
             player.velocity.y = 0
+            player.callCalculator = false
+        }
+    })
+    miniPlatforms.forEach((miniPlatform) => {
+        if (player.position.y + player.height <= miniPlatform.position.y && player.position.y
+            + player.height + player.velocity.y >= miniPlatform.position.y &&
+            player.position.x + player.width >= miniPlatform.position.x &&
+            player.position.x <= miniPlatform.position.x + miniPlatform.width) {
+            player.velocity.y = 0
+            player.callCalculator = true
         }
     })
 
@@ -302,7 +521,7 @@ function animate() {
     if (keys.right.pressed &&
         lastKey === 'right' &&
         player.currentSprite !== player.sprite.run.right) {
-        player.frames = 1
+        player.frame = 1
         player.currentSprite = player.sprite.run.right
         player.range = player.sprite.run.range
         player.currentSprite = player.sprite.run.right
@@ -333,17 +552,11 @@ function animate() {
     }
 
 
-    if ((scrollOffSet == 500 ||scrollOffSet == 1000 || scrollOffSet == 1500 || scrollOffSet == 3500 || scrollOffSet == 5000) && keys.right.pressed == true) {
-        keys.right.pressed = false
-        principal()
-    }
-
-    //condição ganhou
-    var i = 0
-    if (scrollOffSet == 10150) {
-        console.log("you win!")
-        showElapsedTime()
-
+    if (scrollOffSet == 500 && keys.right.pressed) {
+        console.log("Condição atendida. scrollOffSet:", scrollOffSet);
+        keys.right.pressed = false;
+        console.log("Chamando principal()");
+        calculator();
     }
 
     //condição perdeu
@@ -378,8 +591,10 @@ addEventListener('keydown', ({ keyCode }) => {
             break
         case 87:
             console.log('up')
-            lastKey = 'jump'
             player.velocity.y += player.speedY
+            break
+        case 69:
+            keys.select.pressed = true
             break
     }
 })
@@ -399,12 +614,13 @@ addEventListener('keyup', ({ keyCode }) => {
             console.log('right')
             keys.right.pressed = false
             lastKey = 'right'
-
             break
         case 87:
             console.log('up')
             player.velocity.y = 0
-            lastKey = 'jump'
+            break
+        case 69:
+            keys.select.pressed = false
             break
 
 
@@ -467,19 +683,20 @@ function alertFunction() {
         fator2 = []
         operador = []
         operacao = []
+        player.callCalculator = false
+        keys.select.pressed = false
+        player.points++
+        console.log(player.points)
         return 0;
     } else {
         alertFunction()
     }
 }
 
-function principal() {
+function calculator() {
     createOperation()
     alertFunction()
 }
-
-var contador = 0;
-var podeContar = true
 
 let startTime; // Variável para armazenar o tempo de início do jogo
 

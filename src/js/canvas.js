@@ -30,7 +30,7 @@ canvas.height = 576
 
 
 
-const gravity = 1.5
+const gravity = 1.4
 
 //class de Objetos
 class Player {
@@ -42,14 +42,14 @@ class Player {
         this.speedY = -24
         this.position = {
             x: 100,
-            y: 100
+            y: 324
         }
         this.velocity = {
             x: 0,
             y: 0
         }
-        this.width = 100
-        this.height = 100
+        this.width = 80
+        this.height = 80
         this.image = creatImage(spriteStandRight)
         this.frame = 0
         this.sprite = {
@@ -75,7 +75,8 @@ class Player {
 
         this.currentSprite = this.sprite.stand.right
         this.currentCropWidth = 80
-        this.doubleJump;
+        this.jump
+        this.doubleJump
 
     }
 
@@ -122,6 +123,10 @@ class Player {
             showElapsedTime()
             player.points = 9
         }
+        this.jump = false
+        
+        
+        
     }
 }
 
@@ -230,7 +235,7 @@ createMiniPlatforms(miniPlatforms, 500, 300, 4)
 createMiniPlatforms(miniPlatforms, 800, 400, 4)
 createMiniPlatforms(miniPlatforms, 1000, 300, 4)
 createMiniPlatforms(miniPlatforms, 1300, 200, 4)
-createMiniPlatforms(miniPlatforms, 2000, 80, 4)
+createMiniPlatforms(miniPlatforms, 2000, 100, 4)
 createMiniPlatforms(miniPlatforms, 2300, 160, 4)
 createMiniPlatforms(miniPlatforms, 2300, 400, 4)
 createMiniPlatforms(miniPlatforms, 2600, 300, 4)
@@ -263,7 +268,7 @@ createMiniPlatforms(miniPlatforms, 10150, 200, 4)
 //banners
 createBanners(bannerList, 580, 240)
 createBanners(bannerList, 1380, 144)
-createBanners(bannerList, 2024, 15)
+createBanners(bannerList, 2024, 44)
 createBanners(bannerList, 4280, 42)
 createBanners(bannerList, 5580, 44)
 createBanners(bannerList, 6730, 146)
@@ -367,7 +372,7 @@ function init() {
     createMiniPlatforms(miniPlatforms, 800, 400, 4)
     createMiniPlatforms(miniPlatforms, 1000, 300, 4)
     createMiniPlatforms(miniPlatforms, 1300, 200, 4)
-    createMiniPlatforms(miniPlatforms, 2000, 80, 4)
+    createMiniPlatforms(miniPlatforms, 2000, 100, 4)
     createMiniPlatforms(miniPlatforms, 2300, 160, 4)
     createMiniPlatforms(miniPlatforms, 2300, 400, 4)
     createMiniPlatforms(miniPlatforms, 2600, 300, 4)
@@ -442,10 +447,15 @@ function animate() {
         platform.draw()
     })
     player.update()
-    if (keys.right.pressed && player.position.x < 600) {
-        player.velocity.x = player.speedX;
+    
+    if (player.position.y + player.height <= 0){
+        player.velocity.y = 0
+        player.position.y = 0
     }
 
+    if (keys.right.pressed && player.position.x < 600) {
+        player.velocity.x = player.speedX;
+    }    
 
     else if ((keys.left.pressed && player.position.x > 100) || keys.left.pressed && scrollOffSet == 0 && player.position.x > 0) {
         player.velocity.x = -player.speedX
@@ -506,6 +516,7 @@ function animate() {
         if (inFloor) {
             player.velocity.y = 0
             player.callCalculator = false
+            player.jump = true
         }
     })
     miniPlatforms.forEach((miniPlatform) => {
@@ -515,7 +526,9 @@ function animate() {
             player.position.x <= miniPlatform.position.x + miniPlatform.width) {
             player.velocity.y = 0
             player.callCalculator = true
+            player.jump = true
         }
+
     })
 
     //movimentos das sprites
@@ -574,7 +587,6 @@ function animate() {
 
 
 animate()
-var jumpCont = 1
 //verificar tecla
 addEventListener('keydown', ({ keyCode }) => {
     switch (keyCode) {
@@ -583,17 +595,25 @@ addEventListener('keydown', ({ keyCode }) => {
             keys.left.pressed = true
             lastKey = 'left'
             break
-        case 83:
-            console.log('down')
-            break
-        case 68:
-            console.log('right')
-            keys.right.pressed = true
-            lastKey = 'right'
+            case 83:
+                console.log('down')
+                break
+                case 68:
+                    console.log('right')
+                    keys.right.pressed = true
+                    lastKey = 'right'
             break
         case 87:
+            if (player.jump == true) {
+                player.velocity.y += player.speedY;
+                player.doubleJump = true
+            } else if (player.doubleJump == true){
+                console.log("sim")
+                player.velocity.y += player.speedY;
+                player.doubleJump = false
+            }
+            
             console.log('up')
-            player.velocity.y += player.speedY
             break
         case 69:
             keys.select.pressed = true

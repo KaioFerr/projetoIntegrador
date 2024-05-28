@@ -257,7 +257,7 @@ var canvas = document.querySelector('canvas');
 var c = canvas.getContext('2d');
 canvas.width = 1024;
 canvas.height = 576;
-var gravity = 1.5; //class de Objetos
+var gravity = 1.4; //class de Objetos
 
 var Player = /*#__PURE__*/function () {
   function Player() {
@@ -269,14 +269,14 @@ var Player = /*#__PURE__*/function () {
     this.speedY = -24;
     this.position = {
       x: 100,
-      y: 100
+      y: 324
     };
     this.velocity = {
       x: 0,
       y: 0
     };
-    this.width = 100;
-    this.height = 100;
+    this.width = 80;
+    this.height = 80;
     this.image = creatImage(_img_spriteStandRight_png__WEBPACK_IMPORTED_MODULE_3__["default"]);
     this.frame = 0;
     this.sprite = {
@@ -301,6 +301,7 @@ var Player = /*#__PURE__*/function () {
     };
     this.currentSprite = this.sprite.stand.right;
     this.currentCropWidth = 80;
+    this.jump;
     this.doubleJump;
   }
 
@@ -339,6 +340,8 @@ var Player = /*#__PURE__*/function () {
         showElapsedTime();
         player.points = 9;
       }
+
+      this.jump = false;
     }
   }]);
 
@@ -464,7 +467,7 @@ createMiniPlatforms(miniPlatforms, 500, 300, 4);
 createMiniPlatforms(miniPlatforms, 800, 400, 4);
 createMiniPlatforms(miniPlatforms, 1000, 300, 4);
 createMiniPlatforms(miniPlatforms, 1300, 200, 4);
-createMiniPlatforms(miniPlatforms, 2000, 80, 4);
+createMiniPlatforms(miniPlatforms, 2000, 100, 4);
 createMiniPlatforms(miniPlatforms, 2300, 160, 4);
 createMiniPlatforms(miniPlatforms, 2300, 400, 4);
 createMiniPlatforms(miniPlatforms, 2600, 300, 4);
@@ -495,7 +498,7 @@ createMiniPlatforms(miniPlatforms, 10150, 200, 4); //banners
 
 createBanners(bannerList, 580, 240);
 createBanners(bannerList, 1380, 144);
-createBanners(bannerList, 2024, 15);
+createBanners(bannerList, 2024, 44);
 createBanners(bannerList, 4280, 42);
 createBanners(bannerList, 5580, 44);
 createBanners(bannerList, 6730, 146);
@@ -584,7 +587,7 @@ function init() {
   createMiniPlatforms(miniPlatforms, 800, 400, 4);
   createMiniPlatforms(miniPlatforms, 1000, 300, 4);
   createMiniPlatforms(miniPlatforms, 1300, 200, 4);
-  createMiniPlatforms(miniPlatforms, 2000, 80, 4);
+  createMiniPlatforms(miniPlatforms, 2000, 100, 4);
   createMiniPlatforms(miniPlatforms, 2300, 160, 4);
   createMiniPlatforms(miniPlatforms, 2300, 400, 4);
   createMiniPlatforms(miniPlatforms, 2600, 300, 4);
@@ -650,6 +653,11 @@ function animate() {
   });
   player.update();
 
+  if (player.position.y + player.height <= 0) {
+    player.velocity.y = 0;
+    player.position.y = 0;
+  }
+
   if (keys.right.pressed && player.position.x < 600) {
     player.velocity.x = player.speedX;
   } else if (keys.left.pressed && player.position.x > 100 || keys.left.pressed && scrollOffSet == 0 && player.position.x > 0) {
@@ -697,12 +705,14 @@ function animate() {
     if (inFloor) {
       player.velocity.y = 0;
       player.callCalculator = false;
+      player.jump = true;
     }
   });
   miniPlatforms.forEach(function (miniPlatform) {
     if (player.position.y + player.height <= miniPlatform.position.y && player.position.y + player.height + player.velocity.y >= miniPlatform.position.y && player.position.x + player.width >= miniPlatform.position.x && player.position.x <= miniPlatform.position.x + miniPlatform.width) {
       player.velocity.y = 0;
       player.callCalculator = true;
+      player.jump = true;
     }
   }); //movimentos das sprites
 
@@ -742,8 +752,7 @@ function animate() {
   }
 }
 
-animate();
-var jumpCont = 1; //verificar tecla
+animate(); //verificar tecla
 
 addEventListener('keydown', function (_ref3) {
   var keyCode = _ref3.keyCode;
@@ -766,8 +775,16 @@ addEventListener('keydown', function (_ref3) {
       break;
 
     case 87:
+      if (player.jump == true) {
+        player.velocity.y += player.speedY;
+        player.doubleJump = true;
+      } else if (player.doubleJump == true) {
+        console.log("sim");
+        player.velocity.y += player.speedY;
+        player.doubleJump = false;
+      }
+
       console.log('up');
-      player.velocity.y += player.speedY;
       break;
 
     case 69:

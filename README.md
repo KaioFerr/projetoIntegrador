@@ -9,6 +9,7 @@ O jogo foi desenvolvido utilizando as tecnologias web JavaScript, HTML e CSS. At
 ## Funcionalidades
 
 - Exercícios de adição, subtração, multiplicação e divisão.
+- use as teclas "A, W, S, D e E" para movimentar o player.
 - Interface intuitiva e atrativa para crianças.
 
 ## Como Executar o Jogo
@@ -22,4 +23,7 @@ Contribuições são bem-vindas! Sinta-se à vontade para propor melhorias, corr
 ## Autores
 
 Este projeto foi desenvolvido por Caio Moreira Cancela, Luis Vitor Carvalho Dutra , Juan Pablo Nunes Ferraz, Kaio Henrique Teixeira Ferreira, Rafael Toledo Ferraz e Savio Barbosa Freitas como parte da disciplina de Projeto Integrador de Extensão I, sob a orientação do professor Ana Amélia de Souza Pereira.
+
+## Observações
+O jogo está em desenvolvimento, ou seja, ainda possui alguns bugs que iremos resolver. É necessário dar um refresh na página para todos os itens carregarem.
 

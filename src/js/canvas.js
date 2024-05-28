@@ -117,7 +117,7 @@ class Player {
             calculator()
         }
 
-        if(player.points == 8){
+        if (player.points == 8) {
             console.log("You win")
             showElapsedTime()
             player.points = 9
@@ -375,8 +375,10 @@ function init() {
     createMiniPlatforms(miniPlatforms, 4200, 300, 4)
     createMiniPlatforms(miniPlatforms, 4200, 100, 4)
     createMiniPlatforms(miniPlatforms, 5050, 400, 2)
-    createMiniPlatforms(miniPlatforms, 5050, 300, 2)
+    createMiniPlatforms(miniPlatforms, 5200, 300, 2)
     createMiniPlatforms(miniPlatforms, 5350, 200, 2)
+    createMiniPlatforms(miniPlatforms, 5350, 200, 2)
+    createMiniPlatforms(miniPlatforms, 5550, 100, 3)
     createMiniPlatforms(miniPlatforms, 5800, 200, 1)
     createMiniPlatforms(miniPlatforms, 6000, 200, 1)
     createMiniPlatforms(miniPlatforms, 6200, 200, 1)

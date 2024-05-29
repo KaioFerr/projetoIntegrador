@@ -336,9 +336,10 @@ var Player = /*#__PURE__*/function () {
       }
 
       if (player.points == 8) {
-        console.log("You win");
         showElapsedTime();
-        player.points = 9;
+        alert("Voc\xEA ganhou!!!");
+        player.speedX = 0;
+        player.points = 0;
       }
 
       this.jump = false;
@@ -471,21 +472,24 @@ createMiniPlatforms(miniPlatforms, 2000, 100, 4);
 createMiniPlatforms(miniPlatforms, 2300, 160, 4);
 createMiniPlatforms(miniPlatforms, 2300, 400, 4);
 createMiniPlatforms(miniPlatforms, 2600, 300, 4);
+createMiniPlatforms(miniPlatforms, 3300, 350, 2);
 createMiniPlatforms(miniPlatforms, 3500, 300, 4);
 createMiniPlatforms(miniPlatforms, 4200, 300, 4);
 createMiniPlatforms(miniPlatforms, 4200, 100, 4);
 createMiniPlatforms(miniPlatforms, 5050, 400, 2);
 createMiniPlatforms(miniPlatforms, 5200, 300, 2);
 createMiniPlatforms(miniPlatforms, 5350, 200, 2);
-createMiniPlatforms(miniPlatforms, 5350, 200, 2);
+createMiniPlatforms(miniPlatforms, 5800, 350, 4);
 createMiniPlatforms(miniPlatforms, 5550, 100, 3);
 createMiniPlatforms(miniPlatforms, 5800, 200, 1);
 createMiniPlatforms(miniPlatforms, 6000, 200, 1);
 createMiniPlatforms(miniPlatforms, 6200, 200, 3);
-createMiniPlatforms(miniPlatforms, 6650, 200, 4);
+createMiniPlatforms(miniPlatforms, 6400, 200, 4);
+createMiniPlatforms(miniPlatforms, 6800, 350, 4);
 createMiniPlatforms(miniPlatforms, 7100, 200, 2);
 createMiniPlatforms(miniPlatforms, 7300, 200, 2);
 createMiniPlatforms(miniPlatforms, 7500, 200, 2);
+createMiniPlatforms(miniPlatforms, 7800, 350, 4);
 createMiniPlatforms(miniPlatforms, 8600, 400, 2);
 createMiniPlatforms(miniPlatforms, 8800, 300, 2);
 createMiniPlatforms(miniPlatforms, 9000, 200, 2);
@@ -501,7 +505,7 @@ createBanners(bannerList, 1380, 144);
 createBanners(bannerList, 2024, 44);
 createBanners(bannerList, 4280, 42);
 createBanners(bannerList, 5580, 44);
-createBanners(bannerList, 6730, 146);
+createBanners(bannerList, 6480, 146);
 createBanners(bannerList, 8640, 20);
 createBanners(bannerList, 10230, 144); //criando o objeto
 
@@ -537,9 +541,6 @@ function init() {
 
   player = new Player(); //criando plataformas
 
-  var numPlatforms = 3;
-  var numMiniPlatforms = 4;
-  var numBanner = 1;
   initialX = -1;
   platforms = [];
   miniPlatforms = [];
@@ -591,21 +592,24 @@ function init() {
   createMiniPlatforms(miniPlatforms, 2300, 160, 4);
   createMiniPlatforms(miniPlatforms, 2300, 400, 4);
   createMiniPlatforms(miniPlatforms, 2600, 300, 4);
+  createMiniPlatforms(miniPlatforms, 3300, 350, 2);
   createMiniPlatforms(miniPlatforms, 3500, 300, 4);
   createMiniPlatforms(miniPlatforms, 4200, 300, 4);
   createMiniPlatforms(miniPlatforms, 4200, 100, 4);
   createMiniPlatforms(miniPlatforms, 5050, 400, 2);
   createMiniPlatforms(miniPlatforms, 5200, 300, 2);
   createMiniPlatforms(miniPlatforms, 5350, 200, 2);
-  createMiniPlatforms(miniPlatforms, 5350, 200, 2);
+  createMiniPlatforms(miniPlatforms, 5800, 350, 4);
   createMiniPlatforms(miniPlatforms, 5550, 100, 3);
-  createMiniPlatforms(miniPlatforms, 5880, 200, 2);
-  createMiniPlatforms(miniPlatforms, 6200, 200, 2);
+  createMiniPlatforms(miniPlatforms, 5800, 200, 1);
+  createMiniPlatforms(miniPlatforms, 6000, 200, 1);
   createMiniPlatforms(miniPlatforms, 6200, 200, 3);
-  createMiniPlatforms(miniPlatforms, 6650, 200, 4);
+  createMiniPlatforms(miniPlatforms, 6400, 200, 4);
+  createMiniPlatforms(miniPlatforms, 6800, 350, 4);
   createMiniPlatforms(miniPlatforms, 7100, 200, 2);
   createMiniPlatforms(miniPlatforms, 7300, 200, 2);
   createMiniPlatforms(miniPlatforms, 7500, 200, 2);
+  createMiniPlatforms(miniPlatforms, 7800, 350, 4);
   createMiniPlatforms(miniPlatforms, 8600, 400, 2);
   createMiniPlatforms(miniPlatforms, 8800, 300, 2);
   createMiniPlatforms(miniPlatforms, 9000, 200, 2);
@@ -618,10 +622,10 @@ function init() {
 
   createBanners(bannerList, 580, 240);
   createBanners(bannerList, 1380, 144);
-  createBanners(bannerList, 2024, 15);
+  createBanners(bannerList, 2024, 44);
   createBanners(bannerList, 4280, 42);
   createBanners(bannerList, 5580, 44);
-  createBanners(bannerList, 6730, 146);
+  createBanners(bannerList, 6480, 146);
   createBanners(bannerList, 8640, 20);
   createBanners(bannerList, 10230, 144); //criando o objeto
 
@@ -652,11 +656,6 @@ function animate() {
     platform.draw();
   });
   player.update();
-
-  if (player.position.y + player.height <= 0) {
-    player.velocity.y = 0;
-    player.position.y = 0;
-  }
 
   if (keys.right.pressed && player.position.x < 600) {
     player.velocity.x = player.speedX;
@@ -732,21 +731,16 @@ function animate() {
     player.currentSprite = player.sprite.stand.left;
     player.currentCropWidth = player.sprite.stand.cropWidth;
     player.range = player.sprite.stand.range;
-  }
-
-  if (scrollOffSet == 500 && keys.right.pressed) {
-    console.log("Condição atendida. scrollOffSet:", scrollOffSet);
-    keys.right.pressed = false;
-    console.log("Chamando principal()");
-    calculator();
   } //condição perdeu
 
 
   if (player.position.y > canvas.height) {
     init();
+    alert("Vidas: ".concat(lifePoint, "/5"));
     console.log(lifePoint);
 
     if (lifePoint == 0) {
+      alert("Vidas: 0/5.\nVocê perdeu :(");
       player.speedX = 0;
     }
   }
@@ -759,17 +753,14 @@ addEventListener('keydown', function (_ref3) {
 
   switch (keyCode) {
     case 65:
-      console.log('left');
       keys.left.pressed = true;
       lastKey = 'left';
       break;
 
     case 83:
-      console.log('down');
       break;
 
     case 68:
-      console.log('right');
       keys.right.pressed = true;
       lastKey = 'right';
       break;
@@ -777,14 +768,8 @@ addEventListener('keydown', function (_ref3) {
     case 87:
       if (player.jump == true) {
         player.velocity.y += player.speedY;
-        player.doubleJump = true;
-      } else if (player.doubleJump == true) {
-        console.log("sim");
-        player.velocity.y += player.speedY;
-        player.doubleJump = false;
       }
 
-      console.log('up');
       break;
 
     case 69:
@@ -797,23 +782,19 @@ addEventListener('keyup', function (_ref4) {
 
   switch (keyCode) {
     case 65:
-      console.log('left');
       keys.left.pressed = false;
       lastKey = 'left';
       break;
 
     case 83:
-      console.log('down');
       break;
 
     case 68:
-      console.log('right');
       keys.right.pressed = false;
       lastKey = 'right';
       break;
 
     case 87:
-      console.log('up');
       player.velocity.y = 0;
       break;
 
@@ -877,7 +858,7 @@ function alertFunction() {
     player.callCalculator = false;
     keys.select.pressed = false;
     player.points++;
-    console.log(player.points);
+    alert("Voc\xEA tem: ".concat(player.points, " ponto"));
     return 0;
   } else {
     alertFunction();
@@ -902,7 +883,7 @@ function showElapsedTime() {
 
   var seconds = Math.floor(elapsedTime / 1000); // Converte milissegundos para segundos
 
-  console.log("Tempo decorrido: ".concat(seconds, " segundos"));
+  alert("Tempo decorrido: ".concat(seconds, " segundos"));
 }
 
 /***/ })

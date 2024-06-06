@@ -119,8 +119,7 @@ class Player {
         }
 
         if (player.points == 8) {
-            showElapsedTime()
-            alert(`Você ganhou!!!`)
+            alert(`Pontos: 8\nVocê ganhou!!!\n` + showElapsedTime())
             player.speedX = 0
             player.points = 0
         }
@@ -568,6 +567,8 @@ function animate() {
     //condição perdeu
     if (player.position.y > canvas.height) {
         init()
+        keys.left.pressed = false
+        keys.right.pressed = false
         alert(`Vidas: ${lifePoint}/5`)
         console.log(lifePoint)
         if (lifePoint == 0) {
@@ -688,7 +689,9 @@ function alertFunction() {
         player.callCalculator = false
         keys.select.pressed = false
         player.points++
-        alert(`Você tem: ${player.points} ponto`)
+        if(player.points <= 7){
+            alert(`Você tem: ${player.points} ponto`)
+        }
         return 0;
     } else {
         alertFunction()
@@ -712,6 +715,6 @@ function showElapsedTime() {
     const elapsedTime = Date.now() - startTime; // Calcula o tempo decorrido
     const seconds = Math.floor(elapsedTime / 1000); // Converte milissegundos para segundos
 
-    alert(`Tempo decorrido: ${seconds} segundos`);
+    return `Tempo decorrido: ${seconds} segundos`;
 }
 

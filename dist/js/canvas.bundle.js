@@ -336,8 +336,7 @@ var Player = /*#__PURE__*/function () {
       }
 
       if (player.points == 8) {
-        showElapsedTime();
-        alert("Voc\xEA ganhou!!!");
+        alert("Pontos: 8\nVoc\xEA ganhou!!!\n" + showElapsedTime());
         player.speedX = 0;
         player.points = 0;
       }
@@ -736,6 +735,8 @@ function animate() {
 
   if (player.position.y > canvas.height) {
     init();
+    keys.left.pressed = false;
+    keys.right.pressed = false;
     alert("Vidas: ".concat(lifePoint, "/5"));
     console.log(lifePoint);
 
@@ -858,7 +859,11 @@ function alertFunction() {
     player.callCalculator = false;
     keys.select.pressed = false;
     player.points++;
-    alert("Voc\xEA tem: ".concat(player.points, " ponto"));
+
+    if (player.points <= 7) {
+      alert("Voc\xEA tem: ".concat(player.points, " ponto"));
+    }
+
     return 0;
   } else {
     alertFunction();
@@ -883,7 +888,7 @@ function showElapsedTime() {
 
   var seconds = Math.floor(elapsedTime / 1000); // Converte milissegundos para segundos
 
-  alert("Tempo decorrido: ".concat(seconds, " segundos"));
+  return "Tempo decorrido: ".concat(seconds, " segundos");
 }
 
 /***/ })

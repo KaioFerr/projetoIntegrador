@@ -1,0 +1,65 @@
+@import url('https://fonts.googleapis.com/css2?family=Jockey+One&display=swap');
+*{
+    margin: 0;
+    padding: 0;
+}
+body{
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: black;
+}
+
+section {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-image: url('https://s3-alpha-sig.figma.com/img/a793/be59/2bf2c1c63297969c61ec5b2aaf4d97a9?Expires=1717372800&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=jRoevQzBfhPmm~yZP8TSaW1KLGskSG-xgHSxYzWbOqmS2olTGVaEwBje1Ps1qry4z3iOxLkSav00908utAiZZ1ULRf29qmXsr185EBEI4BPzjwf5vO8Li3j8ysQc9AvI1rv-uiL20yRgDyw-ogaOhP-O7XCxtH11RWldrSSaGOPH--RLP6tk7IxQ8pjnL6Vm1v8S9W5xxyxUhbmHgwmuWbAlEkmCibRkgFFWg8KyOOD7U87rv7mNZAPt~HuyWNuiiAjDuJTmRj6kFpZD4V3cckdUp8QaTu4MkCq6cMY~cERvfwSZpav~LnBzqbQRqrdX895ZoAz0ajOlI2n-~ssTwg__');
+    background-size: cover;
+    width: 1024px;
+    height: 576px;
+}
+h1{
+    color: #FFFF8A;
+    font-size: 96px;
+    font-family: "Jockey One", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+    margin: 10px;
+}
+h2{
+    display: flex;
+    justify-content: center;
+    background-color: #970000;
+    padding: 8px;
+    border-radius: 8px;
+    color: #FFFF8A;
+    font-size: 40px;
+    font-family: "Jockey One", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+    margin: 10px;
+}
+input{
+    width: 561px;
+    height: 56px;
+    top: 320px;
+    left: 232px;
+    border-radius: 16px;
+    border: 2px;
+    font-size: 2rem;
+    text-align: center;
+    margin: 20px;
+}
+button{
+    background: #970000;
+    border: 2px solid #000000;
+    Width: 160px;
+    Height: 56px;
+    margin: 20px;
+    border-radius: 16px;
+    color: #FFFF8A;
+    font-size: 25px;
+}

@@ -8,8 +8,8 @@ O jogo foi desenvolvido utilizando as tecnologias web JavaScript, HTML e CSS. At
 
 ## Funcionalidades
 
-- Exercícios de adição, subtração, multiplicação e divisão.
-- use as teclas "A, W, S, D e E" para movimentar o player.
+- use as teclas "A, W, S, D e E" para movimentar o player, subir em plataformas e alcançar os banners para fazer as contas.
+- Exercícios de adição, subtração que são geradas a partir de um algoritmo randomico.
 - Interface intuitiva e atrativa para crianças.
 
 ## Como Executar o Jogo

@@ -2478,12 +2478,51 @@ function bindPauseButton(onPause) {
 function bindFullscreen() {
   var el = document.documentElement;
   var can = !!(el.requestFullscreen && document.fullscreenEnabled) && document.body.classList.contains('touch');
+  var userExited = false; // se a pessoa saiu da tela cheia pelo botão, não insiste
+
+  var landscape = function landscape() {
+    return matchMedia('(orientation: landscape)').matches;
+  };
+
+  var enter = function enter() {
+    if (!can || document.fullscreenElement || userExited || !landscape()) return;
+    el.requestFullscreen({
+      navigationUI: 'hide'
+    }).then(function () {
+      return screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape')["catch"](function () {});
+    })["catch"](function () {});
+  };
+
   document.querySelectorAll('[data-fs]').forEach(function (b) {
     b.hidden = !can;
 
     b.onclick = function () {
-      if (document.fullscreenElement) document.exitFullscreen();else el.requestFullscreen()["catch"](function () {});
+      if (document.fullscreenElement) {
+        userExited = true;
+        document.exitFullscreen();
+      } else {
+        userExited = false;
+        el.requestFullscreen()["catch"](function () {});
+      }
     };
+  });
+  if (!can) return; // ao girar para a horizontal tenta entrar em tela cheia; o navegador pode exigir um toque,
+  // então o primeiro toque na tela (em qualquer lugar) também entra
+
+  matchMedia('(orientation: landscape)').addEventListener('change', function (e) {
+    if (e.matches) enter();else userExited = false;
+  });
+  document.addEventListener('touchend', function (e) {
+    if (!e.target.closest('[data-fs]')) enter();
+  }, {
+    capture: true,
+    passive: true
+  });
+  document.addEventListener('pointerup', function (e) {
+    if (e.pointerType !== 'mouse' && !e.target.closest('[data-fs]')) enter();
+  }, {
+    capture: true,
+    passive: true
   });
 }
 /* ---------- tela inicial e seleção ---------- */

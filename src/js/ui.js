@@ -100,13 +100,39 @@ export function bindPauseButton(onPause) {
 export function bindFullscreen() {
     const el = document.documentElement
     const can = !!(el.requestFullscreen && document.fullscreenEnabled) && document.body.classList.contains('touch')
+    let userExited = false // se a pessoa saiu da tela cheia pelo botão, não insiste
+    const landscape = () => matchMedia('(orientation: landscape)').matches
+    const enter = () => {
+        if (!can || document.fullscreenElement || userExited || !landscape()) return
+        el.requestFullscreen({ navigationUI: 'hide' })
+            .then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(() => {}))
+            .catch(() => {})
+    }
     document.querySelectorAll('[data-fs]').forEach(b => {
         b.hidden = !can
         b.onclick = () => {
-            if (document.fullscreenElement) document.exitFullscreen()
-            else el.requestFullscreen().catch(() => {})
+            if (document.fullscreenElement) {
+                userExited = true
+                document.exitFullscreen()
+            } else {
+                userExited = false
+                el.requestFullscreen().catch(() => {})
+            }
         }
     })
+    if (!can) return
+    // ao girar para a horizontal tenta entrar em tela cheia; o navegador pode exigir um toque,
+    // então o primeiro toque na tela (em qualquer lugar) também entra
+    matchMedia('(orientation: landscape)').addEventListener('change', e => {
+        if (e.matches) enter()
+        else userExited = false
+    })
+    document.addEventListener('touchend', e => {
+        if (!e.target.closest('[data-fs]')) enter()
+    }, { capture: true, passive: true })
+    document.addEventListener('pointerup', e => {
+        if (e.pointerType !== 'mouse' && !e.target.closest('[data-fs]')) enter()
+    }, { capture: true, passive: true })
 }
 
 /* ---------- tela inicial e seleção ---------- */

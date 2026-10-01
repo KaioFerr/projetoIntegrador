@@ -461,29 +461,16 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
-/***/ "./src/img/banner-lock.png":
+/***/ "./src/img/banner-base.png":
 /*!*********************************!*\
-  !*** ./src/img/banner-lock.png ***!
+  !*** ./src/img/banner-base.png ***!
   \*********************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony default export */ __webpack_exports__["default"] = (__webpack_require__.p + "5a6fc4b767531c503b0017b96e6e801d.png");
-
-/***/ }),
-
-/***/ "./src/img/banner-open.png":
-/*!*********************************!*\
-  !*** ./src/img/banner-open.png ***!
-  \*********************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony default export */ __webpack_exports__["default"] = (__webpack_require__.p + "e8abc70e0a364738759e69739b423675.png");
+/* harmony default export */ __webpack_exports__["default"] = (__webpack_require__.p + "3f0125ad9e9bd56705a5e93d79a10adf.png");
 
 /***/ }),
 
@@ -660,6 +647,32 @@ __webpack_require__.r(__webpack_exports__);
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony default export */ __webpack_exports__["default"] = (__webpack_require__.p + "037defb85a9f46bf41b8f87f6cbc0ff2.png");
+
+/***/ }),
+
+/***/ "./src/img/lock-closed.png":
+/*!*********************************!*\
+  !*** ./src/img/lock-closed.png ***!
+  \*********************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = (__webpack_require__.p + "cfdf4e5cb76a999d597796443a01ad5a.png");
+
+/***/ }),
+
+/***/ "./src/img/lock-open.png":
+/*!*******************************!*\
+  !*** ./src/img/lock-open.png ***!
+  \*******************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = (__webpack_require__.p + "64c672771f66a8619d2fd3aff4fba2f5.png");
 
 /***/ }),
 
@@ -845,12 +858,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _img_platform_png__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../img/platform.png */ "./src/img/platform.png");
 /* harmony import */ var _img_miniPlatform_png__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../img/miniPlatform.png */ "./src/img/miniPlatform.png");
 /* harmony import */ var _img_background_png__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../img/background.png */ "./src/img/background.png");
-/* harmony import */ var _img_banner_lock_png__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../img/banner-lock.png */ "./src/img/banner-lock.png");
-/* harmony import */ var _img_banner_open_png__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../img/banner-open.png */ "./src/img/banner-open.png");
-/* harmony import */ var _levels__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./levels */ "./src/js/levels.js");
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./math */ "./src/js/math.js");
-/* harmony import */ var _storage__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./storage */ "./src/js/storage.js");
-/* harmony import */ var _ui__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./ui */ "./src/js/ui.js");
+/* harmony import */ var _img_banner_base_png__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../img/banner-base.png */ "./src/img/banner-base.png");
+/* harmony import */ var _img_lock_closed_png__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../img/lock-closed.png */ "./src/img/lock-closed.png");
+/* harmony import */ var _img_lock_open_png__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../img/lock-open.png */ "./src/img/lock-open.png");
+/* harmony import */ var _levels__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./levels */ "./src/js/levels.js");
+/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./math */ "./src/js/math.js");
+/* harmony import */ var _storage__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./storage */ "./src/js/storage.js");
+/* harmony import */ var _ui__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./ui */ "./src/js/ui.js");
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
 
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
@@ -872,6 +886,7 @@ function _iterableToArrayLimit(arr, i) { if (typeof Symbol === "undefined" || !(
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
 //sprites e cenário
+
 
 
 
@@ -932,8 +947,12 @@ var SPRITES = {
 var platformImage = creatImage(_img_platform_png__WEBPACK_IMPORTED_MODULE_0__["default"]);
 var miniPlatformImage = creatImage(_img_miniPlatform_png__WEBPACK_IMPORTED_MODULE_1__["default"]);
 var backgroundImage = creatImage(_img_background_png__WEBPACK_IMPORTED_MODULE_2__["default"]);
-var bannerLockImage = creatImage(_img_banner_lock_png__WEBPACK_IMPORTED_MODULE_3__["default"]);
-var bannerOpenImage = creatImage(_img_banner_open_png__WEBPACK_IMPORTED_MODULE_4__["default"]); //estado do jogo
+var bannerBaseImage = creatImage(_img_banner_base_png__WEBPACK_IMPORTED_MODULE_3__["default"]);
+var lockClosedImage = creatImage(_img_lock_closed_png__WEBPACK_IMPORTED_MODULE_4__["default"]);
+var lockOpenImage = creatImage(_img_lock_open_png__WEBPACK_IMPORTED_MODULE_5__["default"]);
+var LOCK_X = 35; // posição do cadeado dentro da tela do painel
+
+var LOCK_Y = 6; //estado do jogo
 
 var keys = {
   left: false,
@@ -946,7 +965,7 @@ var game = {
   state: 'title',
   // title | select | playing | math | paused | celebrate | results | gameover
   levelIndex: 0,
-  level: _levels__WEBPACK_IMPORTED_MODULE_5__["LEVELS"][0],
+  level: _levels__WEBPACK_IMPORTED_MODULE_6__["LEVELS"][0],
   character: 'boy',
   camera: 0,
   camY: 0,
@@ -974,7 +993,7 @@ var game = {
 function newPlayer() {
   return {
     x: 100,
-    y: _levels__WEBPACK_IMPORTED_MODULE_5__["GROUND_Y"] - 80,
+    y: _levels__WEBPACK_IMPORTED_MODULE_6__["GROUND_Y"] - 80,
     vx: 0,
     vy: 0,
     w: 80,
@@ -988,7 +1007,7 @@ function newPlayer() {
 
 
 function loadLevel(index) {
-  var level = _levels__WEBPACK_IMPORTED_MODULE_5__["LEVELS"][index];
+  var level = _levels__WEBPACK_IMPORTED_MODULE_6__["LEVELS"][index];
   game.levelIndex = index;
   game.level = level;
   game.camera = 0;
@@ -1014,11 +1033,11 @@ function loadLevel(index) {
         x = _ref2[0],
         n = _ref2[1];
 
-    var w = (n - 1) * _levels__WEBPACK_IMPORTED_MODULE_5__["GROUND_STEP"] + _levels__WEBPACK_IMPORTED_MODULE_5__["GROUND_TILE_W"];
+    var w = (n - 1) * _levels__WEBPACK_IMPORTED_MODULE_6__["GROUND_STEP"] + _levels__WEBPACK_IMPORTED_MODULE_6__["GROUND_TILE_W"];
     game.platforms.push({
       kind: 'ground',
       x: x,
-      y: _levels__WEBPACK_IMPORTED_MODULE_5__["GROUND_Y"],
+      y: _levels__WEBPACK_IMPORTED_MODULE_6__["GROUND_Y"],
       w: w,
       n: n
     });
@@ -1037,7 +1056,7 @@ function loadLevel(index) {
       kind: 'mini',
       x: x,
       y: y,
-      w: _levels__WEBPACK_IMPORTED_MODULE_5__["MINI_W"] + (n - 1) * _levels__WEBPACK_IMPORTED_MODULE_5__["MINI_STEP"],
+      w: _levels__WEBPACK_IMPORTED_MODULE_6__["MINI_W"] + (n - 1) * _levels__WEBPACK_IMPORTED_MODULE_6__["MINI_STEP"],
       n: n
     });
   });
@@ -1125,7 +1144,7 @@ function spawnSparks() {
         x = _chunks$i[0],
         n = _chunks$i[1];
 
-    var gx0 = x + (n - 1) * _levels__WEBPACK_IMPORTED_MODULE_5__["GROUND_STEP"] + _levels__WEBPACK_IMPORTED_MODULE_5__["GROUND_TILE_W"];
+    var gx0 = x + (n - 1) * _levels__WEBPACK_IMPORTED_MODULE_6__["GROUND_STEP"] + _levels__WEBPACK_IMPORTED_MODULE_6__["GROUND_TILE_W"];
     var gx1 = chunks[i + 1][0];
     if (gx1 < game.camera || gx0 > game.camera + W) continue;
 
@@ -1161,7 +1180,7 @@ function step() {
     b.unlockT++; // momento em que o cadeado abre
 
     if (b.unlockT === LOCK_OPEN_AT) {
-      burst(b.x + _levels__WEBPACK_IMPORTED_MODULE_5__["BANNER_W"] / 2, b.y + 26, 28, ['255,255,138', '56,214,196', '120,255,170'], {
+      burst(b.x + _levels__WEBPACK_IMPORTED_MODULE_6__["BANNER_W"] / 2, b.y + 26, 28, ['255,255,138', '56,214,196', '120,255,170'], {
         spread: 6,
         up: 8,
         life: 60,
@@ -1250,7 +1269,7 @@ function step() {
 
 function pendingBefore(flag) {
   return game.banners.filter(function (b) {
-    return !b.solved && b.x + _levels__WEBPACK_IMPORTED_MODULE_5__["BANNER_W"] <= flag.x;
+    return !b.solved && b.x + _levels__WEBPACK_IMPORTED_MODULE_6__["BANNER_W"] <= flag.x;
   }).length;
 }
 
@@ -1258,30 +1277,30 @@ function saveCheckpoint(flag) {
   var pending = pendingBefore(flag);
 
   if (pending > 0) {
-    _ui__WEBPACK_IMPORTED_MODULE_8__["toast"]("Hackeie ".concat(pending === 1 ? 'o painel que falta' : "os ".concat(pending, " pain\xE9is que faltam"), " antes de salvar!"), 2200, 'lock');
+    _ui__WEBPACK_IMPORTED_MODULE_9__["toast"]("Hackeie ".concat(pending === 1 ? 'o painel que falta' : "os ".concat(pending, " pain\xE9is que faltam"), " antes de salvar!"), 2200, 'lock');
     return;
   }
 
   flag.active = true;
   game.checkpoint = flag;
-  burst(flag.x, _levels__WEBPACK_IMPORTED_MODULE_5__["GROUND_Y"] - 50, 10, ['255,255,138', '56,214,196'], {
+  burst(flag.x, _levels__WEBPACK_IMPORTED_MODULE_6__["GROUND_Y"] - 50, 10, ['255,255,138', '56,214,196'], {
     spread: 3,
     up: 5
   });
-  _ui__WEBPACK_IMPORTED_MODULE_8__["toast"]('Checkpoint salvo!', 1200, 'flag');
+  _ui__WEBPACK_IMPORTED_MODULE_9__["toast"]('Checkpoint salvo!', 1200, 'flag');
 }
 
 function fall() {
   game.falls++;
   game.lives--;
   game.shake = 14;
-  _ui__WEBPACK_IMPORTED_MODULE_8__["flash"]();
-  _ui__WEBPACK_IMPORTED_MODULE_8__["resetHudCache"]();
+  _ui__WEBPACK_IMPORTED_MODULE_9__["flash"]();
+  _ui__WEBPACK_IMPORTED_MODULE_9__["resetHudCache"]();
 
   if (game.lives <= 0) {
     game.state = 'gameover';
     resetInput();
-    _ui__WEBPACK_IMPORTED_MODULE_8__["showPause"]({
+    _ui__WEBPACK_IMPORTED_MODULE_9__["showPause"]({
       title: 'Fim de jogo',
       text: 'Suas vidas acabaram. Tente de novo!',
       mainLabel: 'Tentar de novo',
@@ -1297,12 +1316,12 @@ function fall() {
 
   var p = game.player;
   p.x = game.checkpoint.x - (game.checkpoint.x === 100 ? 0 : 20);
-  p.y = _levels__WEBPACK_IMPORTED_MODULE_5__["GROUND_Y"] - p.h;
+  p.y = _levels__WEBPACK_IMPORTED_MODULE_6__["GROUND_Y"] - p.h;
   p.vx = p.vy = 0;
   p.grounded = true;
   p.invuln = 90;
   updateCamera(true);
-  _ui__WEBPACK_IMPORTED_MODULE_8__["toast"]('Ops! -1 vida. Voltou ao checkpoint.', 2200, 'fall');
+  _ui__WEBPACK_IMPORTED_MODULE_9__["toast"]('Ops! -1 vida. Voltou ao checkpoint.', 2200, 'fall');
 } // banner [E] mais próximo que ainda não foi resolvido
 
 
@@ -1318,9 +1337,9 @@ function findNear() {
     for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
       var b = _step2.value;
       if (b.solved) continue;
-      var bottom = b.y + _levels__WEBPACK_IMPORTED_MODULE_5__["BANNER_H"];
+      var bottom = b.y + _levels__WEBPACK_IMPORTED_MODULE_6__["BANNER_H"];
 
-      if (Math.abs(cx - (b.x + _levels__WEBPACK_IMPORTED_MODULE_5__["BANNER_W"] / 2)) < 75 && Math.abs(p.y + p.h - bottom) < 40) {
+      if (Math.abs(cx - (b.x + _levels__WEBPACK_IMPORTED_MODULE_6__["BANNER_W"] / 2)) < 75 && Math.abs(p.y + p.h - bottom) < 40) {
         game.near = b;
         break;
       }
@@ -1333,7 +1352,7 @@ function findNear() {
   }
 
   game.nearFlag = null;
-  if (game.near || !p.grounded || p.y + p.h !== _levels__WEBPACK_IMPORTED_MODULE_5__["GROUND_Y"]) return;
+  if (game.near || !p.grounded || p.y + p.h !== _levels__WEBPACK_IMPORTED_MODULE_6__["GROUND_Y"]) return;
   game.nearFlag = game.flags.find(function (f) {
     return !f.active && Math.abs(cx - f.x) < 60;
   }) || null;
@@ -1349,14 +1368,14 @@ function tryInteract() {
 
   var banner = game.near;
   var level = game.level;
-  var question = Object(_math__WEBPACK_IMPORTED_MODULE_6__["createQuestion"])(level.math);
+  var question = Object(_math__WEBPACK_IMPORTED_MODULE_7__["createQuestion"])(level.math);
   var stats = game.byOp[question.op] || (game.byOp[question.op] = {
     ok: 0,
     n: 0
   });
   resetInput();
   game.state = 'math';
-  _ui__WEBPACK_IMPORTED_MODULE_8__["openMath"]({
+  _ui__WEBPACK_IMPORTED_MODULE_9__["openMath"]({
     title: "Hackeando painel ".concat(game.contas + 1, " de ").concat(game.banners.length),
     question: question,
     onSubmit: function onSubmit(value) {
@@ -1392,15 +1411,15 @@ function tryInteract() {
 function complete() {
   var level = game.level;
   var stars = game.errors === 0 && game.time <= level.goal ? 3 : game.errors <= 2 ? 2 : 1;
-  var bestInfo = Object(_storage__WEBPACK_IMPORTED_MODULE_7__["saveResult"])(level.id, {
+  var bestInfo = Object(_storage__WEBPACK_IMPORTED_MODULE_8__["saveResult"])(level.id, {
     stars: stars,
     time: Math.round(game.time)
   });
   game.state = 'results';
-  _ui__WEBPACK_IMPORTED_MODULE_8__["setHudVisible"](false);
-  _ui__WEBPACK_IMPORTED_MODULE_8__["renderResults"]({
+  _ui__WEBPACK_IMPORTED_MODULE_9__["setHudVisible"](false);
+  _ui__WEBPACK_IMPORTED_MODULE_9__["renderResults"]({
     level: level,
-    levels: _levels__WEBPACK_IMPORTED_MODULE_5__["LEVELS"].length,
+    levels: _levels__WEBPACK_IMPORTED_MODULE_6__["LEVELS"].length,
     stars: stars,
     time: game.time,
     goal: level.goal,
@@ -1423,14 +1442,14 @@ function complete() {
 
 
 function goTitle() {
-  var profile = Object(_storage__WEBPACK_IMPORTED_MODULE_7__["getProfile"])();
+  var profile = Object(_storage__WEBPACK_IMPORTED_MODULE_8__["getProfile"])();
   game.character = profile.character;
-  _ui__WEBPACK_IMPORTED_MODULE_8__["setGroupName"](profile.group);
+  _ui__WEBPACK_IMPORTED_MODULE_9__["setGroupName"](profile.group);
   loadLevel(0);
   game.state = 'title';
-  _ui__WEBPACK_IMPORTED_MODULE_8__["setHudVisible"](false);
-  _ui__WEBPACK_IMPORTED_MODULE_8__["showScreen"]('title');
-  _ui__WEBPACK_IMPORTED_MODULE_8__["focusGroupName"]();
+  _ui__WEBPACK_IMPORTED_MODULE_9__["setHudVisible"](false);
+  _ui__WEBPACK_IMPORTED_MODULE_9__["showScreen"]('title');
+  _ui__WEBPACK_IMPORTED_MODULE_9__["focusGroupName"]();
 }
 
 var selectedLevel = 1;
@@ -1438,9 +1457,9 @@ var selectedLevel = 1;
 function goSelect() {
   loadLevel(0);
   game.state = 'select';
-  _ui__WEBPACK_IMPORTED_MODULE_8__["setHudVisible"](false);
-  var progress = Object(_storage__WEBPACK_IMPORTED_MODULE_7__["getProgress"])();
-  var unlocked = _levels__WEBPACK_IMPORTED_MODULE_5__["LEVELS"].filter(function (l) {
+  _ui__WEBPACK_IMPORTED_MODULE_9__["setHudVisible"](false);
+  var progress = Object(_storage__WEBPACK_IMPORTED_MODULE_8__["getProgress"])();
+  var unlocked = _levels__WEBPACK_IMPORTED_MODULE_6__["LEVELS"].filter(function (l) {
     return l.id === 1 || progress[l.id - 1] && progress[l.id - 1].stars > 0;
   });
   if (!unlocked.some(function (l) {
@@ -1450,19 +1469,19 @@ function goSelect() {
 }
 
 function drawSelect() {
-  _ui__WEBPACK_IMPORTED_MODULE_8__["renderSelect"]({
-    levels: _levels__WEBPACK_IMPORTED_MODULE_5__["LEVELS"],
-    progress: Object(_storage__WEBPACK_IMPORTED_MODULE_7__["getProgress"])(),
+  _ui__WEBPACK_IMPORTED_MODULE_9__["renderSelect"]({
+    levels: _levels__WEBPACK_IMPORTED_MODULE_6__["LEVELS"],
+    progress: Object(_storage__WEBPACK_IMPORTED_MODULE_8__["getProgress"])(),
     selected: selectedLevel,
     character: game.character,
-    group: Object(_storage__WEBPACK_IMPORTED_MODULE_7__["getProfile"])().group,
+    group: Object(_storage__WEBPACK_IMPORTED_MODULE_8__["getProfile"])().group,
     onSelect: function onSelect(id) {
       selectedLevel = id;
       drawSelect();
     },
     onCharacter: function onCharacter(ch) {
       game.character = ch;
-      Object(_storage__WEBPACK_IMPORTED_MODULE_7__["saveProfile"])(_objectSpread({}, Object(_storage__WEBPACK_IMPORTED_MODULE_7__["getProfile"])(), {
+      Object(_storage__WEBPACK_IMPORTED_MODULE_8__["saveProfile"])(_objectSpread({}, Object(_storage__WEBPACK_IMPORTED_MODULE_8__["getProfile"])(), {
         character: ch
       }));
       drawSelect();
@@ -1471,7 +1490,7 @@ function drawSelect() {
       return startLevel(selectedLevel - 1);
     }
   });
-  _ui__WEBPACK_IMPORTED_MODULE_8__["showScreen"]('select');
+  _ui__WEBPACK_IMPORTED_MODULE_9__["showScreen"]('select');
 }
 
 function startLevel(index) {
@@ -1479,9 +1498,9 @@ function startLevel(index) {
   selectedLevel = index + 1;
   resetInput();
   game.state = 'playing';
-  _ui__WEBPACK_IMPORTED_MODULE_8__["resetHudCache"]();
-  _ui__WEBPACK_IMPORTED_MODULE_8__["setHudVisible"](true);
-  _ui__WEBPACK_IMPORTED_MODULE_8__["showScreen"](null);
+  _ui__WEBPACK_IMPORTED_MODULE_9__["resetHudCache"]();
+  _ui__WEBPACK_IMPORTED_MODULE_9__["setHudVisible"](true);
+  _ui__WEBPACK_IMPORTED_MODULE_9__["showScreen"](null);
   if (document.activeElement) document.activeElement.blur();
 }
 
@@ -1489,7 +1508,7 @@ function togglePause() {
   if (game.state === 'playing') {
     game.state = 'paused';
     resetInput();
-    _ui__WEBPACK_IMPORTED_MODULE_8__["showPause"]({
+    _ui__WEBPACK_IMPORTED_MODULE_9__["showPause"]({
       title: 'Pausado',
       text: 'O tempo está parado.',
       mainLabel: 'Continuar',
@@ -1499,7 +1518,7 @@ function togglePause() {
     });
   } else if (game.state === 'paused') {
     game.state = 'playing';
-    _ui__WEBPACK_IMPORTED_MODULE_8__["showScreen"](null);
+    _ui__WEBPACK_IMPORTED_MODULE_9__["showScreen"](null);
   }
 }
 /* ---------- desenho ---------- */
@@ -1525,7 +1544,7 @@ function voidGaps() {
         x = _chunks$i2[0],
         n = _chunks$i2[1];
 
-    var x0 = x + (n - 1) * _levels__WEBPACK_IMPORTED_MODULE_5__["GROUND_STEP"] + _levels__WEBPACK_IMPORTED_MODULE_5__["GROUND_TILE_W"] - game.camera;
+    var x0 = x + (n - 1) * _levels__WEBPACK_IMPORTED_MODULE_6__["GROUND_STEP"] + _levels__WEBPACK_IMPORTED_MODULE_6__["GROUND_TILE_W"] - game.camera;
     var x1 = chunks[i + 1][0] - game.camera;
     if (x1 > 0 && x0 < W) gaps.push([x0, x1]);
   }
@@ -1544,18 +1563,18 @@ function drawNeon(gaps, alpha, topY) {
     c.rect(x0, topY, x1 - x0, H - topY);
     c.clip();
     c.globalAlpha = alpha;
-    var g = c.createLinearGradient(0, _levels__WEBPACK_IMPORTED_MODULE_5__["GROUND_Y"], 0, H);
+    var g = c.createLinearGradient(0, _levels__WEBPACK_IMPORTED_MODULE_6__["GROUND_Y"], 0, H);
     g.addColorStop(0, '#ff7a2a');
     g.addColorStop(0.55, '#d11a7a');
     g.addColorStop(1, '#5c0a45');
     c.fillStyle = g;
-    c.fillRect(x0, _levels__WEBPACK_IMPORTED_MODULE_5__["GROUND_Y"], x1 - x0, H - _levels__WEBPACK_IMPORTED_MODULE_5__["GROUND_Y"]);
+    c.fillRect(x0, _levels__WEBPACK_IMPORTED_MODULE_6__["GROUND_Y"], x1 - x0, H - _levels__WEBPACK_IMPORTED_MODULE_6__["GROUND_Y"]);
     c.fillStyle = '#ffd58a';
     var wave = game.tick * 0.6 % 24;
 
     for (var x = x0 - 24 + wave; x < x1 + 24; x += 24) {
       c.beginPath();
-      c.arc(x, _levels__WEBPACK_IMPORTED_MODULE_5__["GROUND_Y"] + 2 + Math.sin(x * 0.2 + game.tick * 0.1) * 2, 9, Math.PI, 0);
+      c.arc(x, _levels__WEBPACK_IMPORTED_MODULE_6__["GROUND_Y"] + 2 + Math.sin(x * 0.2 + game.tick * 0.1) * 2, 9, Math.PI, 0);
       c.fill();
     }
 
@@ -1569,18 +1588,18 @@ function drawGlow(gaps) {
         x0 = _ref11[0],
         x1 = _ref11[1];
 
-    var g = c.createLinearGradient(0, _levels__WEBPACK_IMPORTED_MODULE_5__["GROUND_Y"] - 90, 0, _levels__WEBPACK_IMPORTED_MODULE_5__["GROUND_Y"]);
+    var g = c.createLinearGradient(0, _levels__WEBPACK_IMPORTED_MODULE_6__["GROUND_Y"] - 90, 0, _levels__WEBPACK_IMPORTED_MODULE_6__["GROUND_Y"]);
     g.addColorStop(0, 'rgba(209,26,122,0)');
     g.addColorStop(1, 'rgba(209,26,122,0.45)');
     c.fillStyle = g;
-    c.fillRect(x0, _levels__WEBPACK_IMPORTED_MODULE_5__["GROUND_Y"] - 90, x1 - x0, 90);
+    c.fillRect(x0, _levels__WEBPACK_IMPORTED_MODULE_6__["GROUND_Y"] - 90, x1 - x0, 90);
   });
 }
 
 function drawFlag(f) {
   var x = f.x - game.camera;
   if (x < -60 || x > W + 60) return;
-  var top = _levels__WEBPACK_IMPORTED_MODULE_5__["GROUND_Y"] - 62;
+  var top = _levels__WEBPACK_IMPORTED_MODULE_6__["GROUND_Y"] - 62;
   c.save();
 
   if (f.active) {
@@ -1612,25 +1631,31 @@ function drawFlag(f) {
 
 function drawBanner(b) {
   var x = b.x - game.camera;
-  if (x < -_levels__WEBPACK_IMPORTED_MODULE_5__["BANNER_W"] || x > W) return;
-  var near = game.near === b;
-  c.save();
+  if (x < -_levels__WEBPACK_IMPORTED_MODULE_6__["BANNER_W"] || x > W) return;
   var y = b.y;
-
-  if (near) {
-    y -= 2 + Math.sin(game.tick * 0.12) * 2;
-    c.shadowColor = '#38d6c4';
-    c.shadowBlur = 18;
-  } // t: passo da animação de desbloqueio (-1 = ainda trancado)
-
+  var near = game.near === b; // t: passo da animação de desbloqueio (-1 = ainda trancado)
 
   var t = b.solved ? b.unlockT < 0 ? UNLOCK_TICKS : b.unlockT : -1;
   var opened = t >= LOCK_OPEN_AT;
-  var hacking = t >= 0 && !opened;
-  if (opened) c.filter = 'hue-rotate(115deg) saturate(1.1)'; // falha de sinal enquanto está sendo hackeado
+  var hacking = t >= 0 && !opened; // o painel fica parado; só o cadeado da tela se mexe
 
-  if (hacking && t % 4 < 2) c.globalAlpha = 0.75;
-  c.drawImage(opened ? bannerOpenImage : bannerLockImage, x + (hacking ? (Math.random() - 0.5) * 4 : 0), y);
+  c.save();
+  if (opened) c.filter = 'hue-rotate(115deg) saturate(1.1)';
+  c.drawImage(bannerBaseImage, x, y);
+  c.beginPath();
+  c.rect(x + 12, y + 4, 66, 40);
+  c.clip();
+  var lx = 0;
+  var ly = 0;
+
+  if (near && !b.solved) {
+    ly = Math.round(Math.sin(game.tick * 0.12) * 2);
+    c.shadowColor = '#ffff8a';
+    c.shadowBlur = 10;
+  }
+
+  if (hacking) lx = Math.round(Math.sin(t * 2.2) * 2);
+  c.drawImage(opened ? lockOpenImage : lockClosedImage, x + LOCK_X + lx, y + LOCK_Y + ly);
   c.restore(); // clarão na tela quando o cadeado abre
 
   var flash = opened ? 1 - (t - LOCK_OPEN_AT) / 10 : 0;
@@ -1640,12 +1665,12 @@ function drawBanner(b) {
     c.fillRect(x + 12, y + 3, 66, 42);
   }
 
-  if (near && game.state === 'playing') drawPrompt(x + _levels__WEBPACK_IMPORTED_MODULE_5__["BANNER_W"] / 2, b.y - 40, 'Hackear o painel');
+  if (near && game.state === 'playing') drawPrompt(x + _levels__WEBPACK_IMPORTED_MODULE_6__["BANNER_W"] / 2, y - 40, 'Hackear o painel');
 } // depois que o cadeado da tela abre: anel de luz e "ACESSO LIBERADO"
 
 
 function drawUnlock(b, x, t) {
-  var cx = x + _levels__WEBPACK_IMPORTED_MODULE_5__["BANNER_W"] / 2;
+  var cx = x + _levels__WEBPACK_IMPORTED_MODULE_6__["BANNER_W"] / 2;
   var out = clamp((t - 55) / (UNLOCK_TICKS - 55), 0, 1);
 
   if (t >= LOCK_OPEN_AT) {
@@ -1780,18 +1805,18 @@ function render() {
   c.translate(0, -game.camY);
   var gaps = voidGaps();
   drawGlow(gaps);
-  drawNeon(gaps, 1, _levels__WEBPACK_IMPORTED_MODULE_5__["GROUND_Y"]);
+  drawNeon(gaps, 1, _levels__WEBPACK_IMPORTED_MODULE_6__["GROUND_Y"]);
   game.platforms.forEach(function (pl) {
     var x0 = pl.x - game.camera;
     if (x0 > W || x0 + pl.w < 0) return;
 
     if (pl.kind === 'ground') {
       for (var i = 0; i < pl.n; i++) {
-        c.drawImage(platformImage, x0 + i * _levels__WEBPACK_IMPORTED_MODULE_5__["GROUND_STEP"], pl.y);
+        c.drawImage(platformImage, x0 + i * _levels__WEBPACK_IMPORTED_MODULE_6__["GROUND_STEP"], pl.y);
       }
     } else {
       for (var _i2 = 0; _i2 < pl.n; _i2++) {
-        c.drawImage(miniPlatformImage, x0 + _i2 * _levels__WEBPACK_IMPORTED_MODULE_5__["MINI_STEP"], pl.y);
+        c.drawImage(miniPlatformImage, x0 + _i2 * _levels__WEBPACK_IMPORTED_MODULE_6__["MINI_STEP"], pl.y);
       }
     }
   });
@@ -1801,18 +1826,18 @@ function render() {
 
   game.banners.forEach(function (b) {
     var x = b.x - game.camera;
-    if (b.unlockT >= 0 && b.unlockT < UNLOCK_TICKS && x > -_levels__WEBPACK_IMPORTED_MODULE_5__["BANNER_W"] * 2 && x < W + _levels__WEBPACK_IMPORTED_MODULE_5__["BANNER_W"]) drawUnlock(b, x, b.unlockT);
+    if (b.unlockT >= 0 && b.unlockT < UNLOCK_TICKS && x > -_levels__WEBPACK_IMPORTED_MODULE_6__["BANNER_W"] * 2 && x < W + _levels__WEBPACK_IMPORTED_MODULE_6__["BANNER_W"]) drawUnlock(b, x, b.unlockT);
   }); //o jogador afunda no néon ao cair
 
-  drawNeon(gaps, 0.6, _levels__WEBPACK_IMPORTED_MODULE_5__["GROUND_Y"] + 14);
+  drawNeon(gaps, 0.6, _levels__WEBPACK_IMPORTED_MODULE_6__["GROUND_Y"] + 14);
   drawParticles();
   c.restore();
-  _ui__WEBPACK_IMPORTED_MODULE_8__["setActionReady"](game.state === 'playing' && game.player.grounded && (!!game.near || !!game.nearFlag && pendingBefore(game.nearFlag) === 0));
+  _ui__WEBPACK_IMPORTED_MODULE_9__["setActionReady"](game.state === 'playing' && game.player.grounded && (!!game.near || !!game.nearFlag && pendingBefore(game.nearFlag) === 0));
 
   if (game.state === 'playing' || game.state === 'celebrate' || game.state === 'math' || game.state === 'paused') {
-    _ui__WEBPACK_IMPORTED_MODULE_8__["setHud"]({
+    _ui__WEBPACK_IMPORTED_MODULE_9__["setHud"]({
       level: game.level.id,
-      levels: _levels__WEBPACK_IMPORTED_MODULE_5__["LEVELS"].length,
+      levels: _levels__WEBPACK_IMPORTED_MODULE_6__["LEVELS"].length,
       time: game.time,
       lives: game.lives,
       maxLives: MAX_LIVES,
@@ -1883,7 +1908,7 @@ var KEY_ACTIONS = {
   KeyE: 'act'
 };
 addEventListener('keydown', function (e) {
-  if (_ui__WEBPACK_IMPORTED_MODULE_8__["mathKeydown"](e)) return;
+  if (_ui__WEBPACK_IMPORTED_MODULE_9__["mathKeydown"](e)) return;
   if (e.target && e.target.tagName === 'INPUT') return;
 
   if (e.code === 'KeyP' || e.code === 'Escape') {
@@ -1922,18 +1947,18 @@ function fit() {
 addEventListener('resize', fit);
 if (window.visualViewport) window.visualViewport.addEventListener('resize', fit);
 fit();
-_ui__WEBPACK_IMPORTED_MODULE_8__["init"]();
-_ui__WEBPACK_IMPORTED_MODULE_8__["buildPad"]();
-_ui__WEBPACK_IMPORTED_MODULE_8__["bindTouch"](action);
-_ui__WEBPACK_IMPORTED_MODULE_8__["bindPauseButton"](togglePause);
-_ui__WEBPACK_IMPORTED_MODULE_8__["bindFullscreen"]();
-_ui__WEBPACK_IMPORTED_MODULE_8__["setCharImages"]({
+_ui__WEBPACK_IMPORTED_MODULE_9__["init"]();
+_ui__WEBPACK_IMPORTED_MODULE_9__["buildPad"]();
+_ui__WEBPACK_IMPORTED_MODULE_9__["bindTouch"](action);
+_ui__WEBPACK_IMPORTED_MODULE_9__["bindPauseButton"](togglePause);
+_ui__WEBPACK_IMPORTED_MODULE_9__["bindFullscreen"]();
+_ui__WEBPACK_IMPORTED_MODULE_9__["setCharImages"]({
   boy: SPRITES.boy.idle[0].src,
   girl: SPRITES.girl.idle[0].src
 });
-_ui__WEBPACK_IMPORTED_MODULE_8__["bindTitle"]({
+_ui__WEBPACK_IMPORTED_MODULE_9__["bindTitle"]({
   onStart: function onStart(name) {
-    Object(_storage__WEBPACK_IMPORTED_MODULE_7__["saveProfile"])({
+    Object(_storage__WEBPACK_IMPORTED_MODULE_8__["saveProfile"])({
       group: name || 'Equipe',
       character: game.character
     });

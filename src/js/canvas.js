@@ -2,8 +2,9 @@
 import platform from '../img/platform.png'
 import miniPlatform from '../img/miniPlatform.png'
 import background from '../img/background.png'
-import bannerLock from '../img/banner-lock.png'
-import bannerOpen from '../img/banner-open.png'
+import bannerBase from '../img/banner-base.png'
+import lockClosed from '../img/lock-closed.png'
+import lockOpen from '../img/lock-open.png'
 
 import { LEVELS, GROUND_Y, GROUND_STEP, GROUND_TILE_W, MINI_STEP, MINI_W, MINI_H, BANNER_W, BANNER_H } from './levels'
 import { createQuestion } from './math'
@@ -62,8 +63,11 @@ const SPRITES = {
 const platformImage = creatImage(platform)
 const miniPlatformImage = creatImage(miniPlatform)
 const backgroundImage = creatImage(background)
-const bannerLockImage = creatImage(bannerLock)
-const bannerOpenImage = creatImage(bannerOpen)
+const bannerBaseImage = creatImage(bannerBase)
+const lockClosedImage = creatImage(lockClosed)
+const lockOpenImage = creatImage(lockOpen)
+const LOCK_X = 35 // posição do cadeado dentro da tela do painel
+const LOCK_Y = 6
 
 //estado do jogo
 const keys = { left: false, right: false, jump: false }
@@ -564,22 +568,28 @@ function drawFlag(f) {
 function drawBanner(b) {
     const x = b.x - game.camera
     if (x < -BANNER_W || x > W) return
+    const y = b.y
     const near = game.near === b
-    c.save()
-    let y = b.y
-    if (near) {
-        y -= 2 + Math.sin(game.tick * 0.12) * 2
-        c.shadowColor = '#38d6c4'
-        c.shadowBlur = 18
-    }
     // t: passo da animação de desbloqueio (-1 = ainda trancado)
     const t = b.solved ? (b.unlockT < 0 ? UNLOCK_TICKS : b.unlockT) : -1
     const opened = t >= LOCK_OPEN_AT
     const hacking = t >= 0 && !opened
+    // o painel fica parado; só o cadeado da tela se mexe
+    c.save()
     if (opened) c.filter = 'hue-rotate(115deg) saturate(1.1)'
-    // falha de sinal enquanto está sendo hackeado
-    if (hacking && t % 4 < 2) c.globalAlpha = 0.75
-    c.drawImage(opened ? bannerOpenImage : bannerLockImage, x + (hacking ? (Math.random() - 0.5) * 4 : 0), y)
+    c.drawImage(bannerBaseImage, x, y)
+    c.beginPath()
+    c.rect(x + 12, y + 4, 66, 40)
+    c.clip()
+    let lx = 0
+    let ly = 0
+    if (near && !b.solved) {
+        ly = Math.round(Math.sin(game.tick * 0.12) * 2)
+        c.shadowColor = '#ffff8a'
+        c.shadowBlur = 10
+    }
+    if (hacking) lx = Math.round(Math.sin(t * 2.2) * 2)
+    c.drawImage(opened ? lockOpenImage : lockClosedImage, x + LOCK_X + lx, y + LOCK_Y + ly)
     c.restore()
     // clarão na tela quando o cadeado abre
     const flash = opened ? 1 - (t - LOCK_OPEN_AT) / 10 : 0
@@ -587,7 +597,7 @@ function drawBanner(b) {
         c.fillStyle = `rgba(255,255,255,${flash * 0.8})`
         c.fillRect(x + 12, y + 3, 66, 42)
     }
-    if (near && game.state === 'playing') drawPrompt(x + BANNER_W / 2, b.y - 40, 'Hackear o painel')
+    if (near && game.state === 'playing') drawPrompt(x + BANNER_W / 2, y - 40, 'Hackear o painel')
 }
 
 // depois que o cadeado da tela abre: anel de luz e "ACESSO LIBERADO"

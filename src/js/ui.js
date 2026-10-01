@@ -171,23 +171,36 @@ export function setGroupName(name) { $('group-name').value = name }
 
 // teclado próprio do jogo para o nome do grupo; no celular substitui o teclado do sistema
 const NAME_ROWS = ['1234567890', 'QWERTYUIOP', 'ASDFGHJKLÇ', 'ZXCVBNM']
+// com a tecla de acentos, as duas linhas de letras viram as letras acentuadas
+const ACCENT_ROWS = ['1234567890', 'ÁÀÂÃÉÊÍ', 'ÓÔÕÚ', 'ZXCVBNM']
+let accentMode = false
+
+function renderNamePad() {
+    const rows = accentMode ? ACCENT_ROWS : NAME_ROWS
+    const row = (r, extra = '') => `<div class="row">${r.split('').map(ch => `<button class="key" data-ch="${ch}">${ch}</button>`).join('')}${extra}</div>`
+    const tail = `<button class="key accent${accentMode ? ' on' : ''}" data-ch="accent" aria-label="${accentMode ? 'Letras sem acento' : 'Letras com acento'}">${accentMode ? 'ABC' : 'ÁÃ'}</button>` +
+        '<button class="key space" data-ch=" ">espaço</button>' +
+        `<button class="key del" data-ch="del" aria-label="Apagar">${icon('backspace')}</button>`
+    $('name-pad').innerHTML = rows.slice(0, 3).map(r => row(r)).join('') + row(rows[3], tail)
+}
+
 export function buildNamePad() {
     const input = $('group-name')
-    const pad = $('name-pad')
     if (document.body.classList.contains('touch')) {
         input.readOnly = true
         input.setAttribute('inputmode', 'none')
     }
-    const keys = NAME_ROWS.join('').split('').map(ch => `<button class="key" data-ch="${ch}">${ch}</button>`)
-    keys.push('<button class="key space" data-ch=" ">espaço</button>')
-    keys.push(`<button class="key del" data-ch="del" aria-label="Apagar">${icon('backspace')}</button>`)
-    pad.innerHTML = keys.join('')
-    pad.onclick = e => {
+    renderNamePad()
+    $('name-pad').onclick = e => {
         const k = e.target.closest('.key')
         if (!k) return
         sfx.key()
-        let v = input.value
         const ch = k.dataset.ch
+        if (ch === 'accent') {
+            accentMode = !accentMode
+            return renderNamePad()
+        }
+        let v = input.value
         if (ch === 'del') v = v.slice(0, -1)
         else if (ch === ' ') { if (v && !v.endsWith(' ')) v += ' ' }
         else if (v.length < input.maxLength) {
@@ -195,8 +208,14 @@ export function buildNamePad() {
             v += !v || v.endsWith(' ') ? ch : ch.toLowerCase()
         }
         input.value = v
+        // depois de uma letra acentuada, volta para o teclado normal (como o Shift do celular)
+        if (accentMode && /[ÁÀÂÃÉÊÍÓÔÕÚ]/.test(ch)) {
+            accentMode = false
+            renderNamePad()
+        }
     }
 }
+
 export function focusGroupName() {
     // no celular o teclado virtual só abre quando a pessoa toca no campo
     if (!document.body.classList.contains('touch')) $('group-name').focus()

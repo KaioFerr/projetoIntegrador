@@ -3326,36 +3326,61 @@ function setGroupName(name) {
   $('group-name').value = name;
 } // teclado próprio do jogo para o nome do grupo; no celular substitui o teclado do sistema
 
-var NAME_ROWS = ['1234567890', 'QWERTYUIOP', 'ASDFGHJKLÇ', 'ZXCVBNM'];
+var NAME_ROWS = ['1234567890', 'QWERTYUIOP', 'ASDFGHJKLÇ', 'ZXCVBNM']; // com a tecla de acentos, as duas linhas de letras viram as letras acentuadas
+
+var ACCENT_ROWS = ['1234567890', 'ÁÀÂÃÉÊÍ', 'ÓÔÕÚ', 'ZXCVBNM'];
+var accentMode = false;
+
+function renderNamePad() {
+  var rows = accentMode ? ACCENT_ROWS : NAME_ROWS;
+
+  var row = function row(r) {
+    var extra = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
+    return "<div class=\"row\">".concat(r.split('').map(function (ch) {
+      return "<button class=\"key\" data-ch=\"".concat(ch, "\">").concat(ch, "</button>");
+    }).join('')).concat(extra, "</div>");
+  };
+
+  var tail = "<button class=\"key accent".concat(accentMode ? ' on' : '', "\" data-ch=\"accent\" aria-label=\"").concat(accentMode ? 'Letras sem acento' : 'Letras com acento', "\">").concat(accentMode ? 'ABC' : 'ÁÃ', "</button>") + '<button class="key space" data-ch=" ">espaço</button>' + "<button class=\"key del\" data-ch=\"del\" aria-label=\"Apagar\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_2__["icon"])('backspace'), "</button>");
+  $('name-pad').innerHTML = rows.slice(0, 3).map(function (r) {
+    return row(r);
+  }).join('') + row(rows[3], tail);
+}
+
 function buildNamePad() {
   var input = $('group-name');
-  var pad = $('name-pad');
 
   if (document.body.classList.contains('touch')) {
     input.readOnly = true;
     input.setAttribute('inputmode', 'none');
   }
 
-  var keys = NAME_ROWS.join('').split('').map(function (ch) {
-    return "<button class=\"key\" data-ch=\"".concat(ch, "\">").concat(ch, "</button>");
-  });
-  keys.push('<button class="key space" data-ch=" ">espaço</button>');
-  keys.push("<button class=\"key del\" data-ch=\"del\" aria-label=\"Apagar\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_2__["icon"])('backspace'), "</button>"));
-  pad.innerHTML = keys.join('');
+  renderNamePad();
 
-  pad.onclick = function (e) {
+  $('name-pad').onclick = function (e) {
     var k = e.target.closest('.key');
     if (!k) return;
     _sfx__WEBPACK_IMPORTED_MODULE_1__["sfx"].key();
-    var v = input.value;
     var ch = k.dataset.ch;
+
+    if (ch === 'accent') {
+      accentMode = !accentMode;
+      return renderNamePad();
+    }
+
+    var v = input.value;
     if (ch === 'del') v = v.slice(0, -1);else if (ch === ' ') {
       if (v && !v.endsWith(' ')) v += ' ';
     } else if (v.length < input.maxLength) {
       // primeira letra de cada palavra maiúscula, o resto minúscula
       v += !v || v.endsWith(' ') ? ch : ch.toLowerCase();
     }
-    input.value = v;
+    input.value = v; // depois de uma letra acentuada, volta para o teclado normal (como o Shift do celular)
+
+    if (accentMode && /[ÁÀÂÃÉÊÍÓÔÕÚ]/.test(ch)) {
+      accentMode = false;
+      renderNamePad();
+    }
   };
 }
 function focusGroupName() {

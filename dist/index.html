@@ -89,11 +89,14 @@
       .overlay { position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; background: rgba(0,0,0,.6); }
       .overlay.shade { background: rgba(0,0,0,.45); }
       /* teclado do jogo para o nome do grupo (só no celular, no lugar do teclado do sistema) */
-      .namepad { display: none; grid-template-columns: repeat(10, 54px); gap: 6px; }
-      body.touch .namepad { display: grid; }
-      .namepad .key { font-size: 24px; padding: 0; height: 42px; border-color: var(--yellow); }
+      .namepad { display: none; flex-direction: column; gap: 6px; }
+      body.touch .namepad { display: flex; }
+      .namepad .row { display: flex; justify-content: center; gap: 6px; }
+      .namepad .key { width: 54px; font-size: 24px; padding: 0; height: 42px; border-color: var(--yellow); }
       .namepad .key .icon-slot { font-size: 24px; }
-      .namepad .space { grid-column: span 2; font-size: 18px; }
+      .namepad .space { width: 114px; font-size: 18px; }
+      .namepad .accent { background: var(--red-d); }
+      .namepad .accent.on { background: var(--yellow); color: var(--black); font-size: 18px; }
       body.touch #screen-title { gap: 8px; }
       body.touch #screen-title h1 { font-size: 56px; }
       body.touch #screen-title h2 { font-size: 26px; padding: 4px 16px; }

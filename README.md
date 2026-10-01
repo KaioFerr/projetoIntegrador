@@ -9,7 +9,7 @@ O jogo foi desenvolvido utilizando as tecnologias web JavaScript, HTML e CSS. At
 ## Funcionalidades
 
 - Controles: setas ou "A, D" para andar, seta para cima, "W" ou espaço para pular, "E" para hackear o painel ou salvar o checkpoint e "P" para pausar.
-- Para avançar é preciso hackear os painéis [E]: cada painel tem uma conta como senha e, ao acertar, o cadeado abre. As contas são de adição e subtração, geradas de forma aleatória e com dificuldade crescente.
+- Para avançar é preciso hackear os painéis com cadeado (aperte "E" perto deles): cada painel tem uma conta como senha e, ao acertar, o cadeado abre. As contas são de adição e subtração, geradas de forma aleatória e com dificuldade crescente.
 - 4 fases (Soma, Subtração, Mistas e Desafio), cada uma com 8 contas. A fase seguinte é liberada ao concluir a anterior.
 - Painel compacto com fase, tempo, contas resolvidas e vidas. A câmera também sobe quando você chega nas plataformas altas.
 - Funciona no celular na horizontal, com botões de toque (andar, pular e E) e opção de tela cheia.

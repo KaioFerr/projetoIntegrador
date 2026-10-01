@@ -2,7 +2,8 @@
 import platform from '../img/platform.png'
 import miniPlatform from '../img/miniPlatform.png'
 import background from '../img/background.png'
-import banner from '../img/banner.png'
+import bannerLock from '../img/banner-lock.png'
+import bannerOpen from '../img/banner-open.png'
 
 import { LEVELS, GROUND_Y, GROUND_STEP, GROUND_TILE_W, MINI_STEP, MINI_W, MINI_H, BANNER_W, BANNER_H } from './levels'
 import { createQuestion } from './math'
@@ -61,7 +62,8 @@ const SPRITES = {
 const platformImage = creatImage(platform)
 const miniPlatformImage = creatImage(miniPlatform)
 const backgroundImage = creatImage(background)
-const bannerImage = creatImage(banner)
+const bannerLockImage = creatImage(bannerLock)
+const bannerOpenImage = creatImage(bannerOpen)
 
 //estado do jogo
 const keys = { left: false, right: false, jump: false }
@@ -569,82 +571,28 @@ function drawBanner(b) {
         c.shadowColor = '#38d6c4'
         c.shadowBlur = 18
     }
+    // t: passo da animação de desbloqueio (-1 = ainda trancado)
     const t = b.solved ? (b.unlockT < 0 ? UNLOCK_TICKS : b.unlockT) : -1
-    const unlocking = t >= 0 && t < UNLOCK_TICKS
-    if (t >= LOCK_OPEN_AT) c.filter = 'hue-rotate(115deg) saturate(1.1)'
+    const opened = t >= LOCK_OPEN_AT
+    const hacking = t >= 0 && !opened
+    if (opened) c.filter = 'hue-rotate(115deg) saturate(1.1)'
     // falha de sinal enquanto está sendo hackeado
-    if (unlocking && t < LOCK_OPEN_AT && t % 4 < 2) c.globalAlpha = 0.75
-    c.drawImage(bannerImage, x + (unlocking && t < LOCK_OPEN_AT ? (Math.random() - 0.5) * 4 : 0), y)
+    if (hacking && t % 4 < 2) c.globalAlpha = 0.75
+    c.drawImage(opened ? bannerOpenImage : bannerLockImage, x + (hacking ? (Math.random() - 0.5) * 4 : 0), y)
     c.restore()
-    if (!b.solved) {
-        drawLock(x + BANNER_W - 8, y + 6, 0.45, 0, 1)
-    }
-    if (b.solved && !unlocking) {
-        c.fillStyle = '#fff'
-        c.strokeStyle = '#000'
-        c.lineWidth = 3
-        c.font = `42px ${FONT}`
-        c.textAlign = 'center'
-        c.strokeText('✓', x + BANNER_W / 2, b.y + 42)
-        c.fillText('✓', x + BANNER_W / 2, b.y + 42)
+    // clarão na tela quando o cadeado abre
+    const flash = opened ? 1 - (t - LOCK_OPEN_AT) / 10 : 0
+    if (flash > 0) {
+        c.fillStyle = `rgba(255,255,255,${flash * 0.8})`
+        c.fillRect(x + 12, y + 3, 66, 42)
     }
     if (near && game.state === 'playing') drawPrompt(x + BANNER_W / 2, b.y - 40, 'Hackear o painel')
 }
 
-// cadeado: (cx, cy) é o centro do corpo; open vai de 0 (fechado) a 1 (aberto)
-function drawLock(cx, cy, scale, open, alpha) {
-    const green = open >= 0.5
-    c.save()
-    c.globalAlpha = alpha
-    c.translate(cx, cy)
-    c.scale(scale, scale)
-    c.lineJoin = 'round'
-    // haste: sobe e gira em torno da perna direita
-    c.save()
-    c.translate(10, -12 - open * 10)
-    c.rotate(-open * 0.7)
-    c.translate(-10, 0)
-    c.beginPath()
-    c.moveTo(-10, 4)
-    c.lineTo(-10, -8)
-    c.arc(0, -8, 10, Math.PI, 0)
-    c.lineTo(10, 4)
-    c.strokeStyle = '#000'
-    c.lineWidth = 10
-    c.stroke()
-    c.strokeStyle = green ? '#ffff8a' : '#bdbdd0'
-    c.lineWidth = 5
-    c.stroke()
-    c.restore()
-    // corpo
-    c.shadowColor = green ? '#38d6c4' : '#ff5d73'
-    c.shadowBlur = 16
-    roundRect(-17, -13, 34, 28, 6)
-    c.fillStyle = green ? '#1fb89a' : '#c8102e'
-    c.fill()
-    c.shadowBlur = 0
-    c.strokeStyle = '#000'
-    c.lineWidth = 3
-    c.stroke()
-    // fechadura
-    c.fillStyle = '#000'
-    c.beginPath()
-    c.arc(0, -2, 4, 0, Math.PI * 2)
-    c.fill()
-    c.fillRect(-2, -1, 4, 9)
-    c.restore()
-}
-
-// sequência: cadeado aparece e treme, a haste abre, fica verde e sobe sumindo
+// depois que o cadeado da tela abre: anel de luz e "ACESSO LIBERADO"
 function drawUnlock(b, x, t) {
     const cx = x + BANNER_W / 2
-    const pop = Math.min(1, t / 10)
-    const scale = 1.3 * (pop < 1 ? 0.4 + pop * 0.75 : 1)
-    const shakeX = t > 10 && t < LOCK_OPEN_AT ? Math.sin(t * 2.2) * 3 : 0
-    const open = clamp((t - LOCK_OPEN_AT + 6) / 8, 0, 1)
     const out = clamp((t - 55) / (UNLOCK_TICKS - 55), 0, 1)
-    const cy = b.y + 28 - out * 30
-    drawLock(cx + shakeX, cy, scale, open, 1 - out)
     if (t >= LOCK_OPEN_AT) {
         // anel de luz quando abre
         const r = (t - LOCK_OPEN_AT) * 3
@@ -781,7 +729,7 @@ function render() {
     game.flags.forEach(drawFlag)
     game.banners.forEach(drawBanner)
     drawPlayer()
-    //cadeados abrindo ficam na frente do jogador
+    //efeitos de desbloqueio ficam na frente do jogador
     game.banners.forEach(b => {
         const x = b.x - game.camera
         if (b.unlockT >= 0 && b.unlockT < UNLOCK_TICKS && x > -BANNER_W * 2 && x < W + BANNER_W) drawUnlock(b, x, b.unlockT)

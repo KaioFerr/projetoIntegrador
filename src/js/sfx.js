@@ -15,12 +15,39 @@ function audio() {
         master.gain.value = muted ? 0 : 0.35
         master.connect(ctx.destination)
     }
-    if (ctx.state === 'suspended') ctx.resume()
+    // nunca religa o áudio com o jogo fora da tela
+    if (ctx.state === 'suspended' && !away()) ctx.resume()
     return ctx
 }
 
-// libera o áudio no primeiro gesto da pessoa
-const unlock = () => audio()
+// jogo fora da tela: outro app, outra aba ou celular bloqueado
+let blurred = false
+const away = () => document.hidden || blurred
+
+function suspendAudio() {
+    if (ctx && ctx.state === 'running') ctx.suspend()
+}
+
+function resumeAudio() {
+    if (ctx && ctx.state === 'suspended' && !away()) ctx.resume()
+}
+
+document.addEventListener('visibilitychange', () => (document.hidden ? suspendAudio() : resumeAudio()))
+addEventListener('pagehide', suspendAudio)
+addEventListener('blur', () => {
+    blurred = true
+    suspendAudio()
+})
+addEventListener('focus', () => {
+    blurred = false
+    resumeAudio()
+})
+
+// libera o áudio no primeiro gesto da pessoa (e volta a tocar se tinha parado)
+const unlock = () => {
+    blurred = false
+    audio()
+}
 addEventListener('pointerdown', unlock, { capture: true, passive: true })
 addEventListener('keydown', unlock, { capture: true })
 

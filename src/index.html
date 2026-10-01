@@ -88,7 +88,18 @@
       /* camadas de tela */
       .overlay { position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; background: rgba(0,0,0,.6); }
       .overlay.shade { background: rgba(0,0,0,.45); }
-      .overlay .iconbtn.fs { position: absolute; top: 12px; right: 12px; }
+      /* teclado do jogo para o nome do grupo (só no celular, no lugar do teclado do sistema) */
+      .namepad { display: none; grid-template-columns: repeat(10, 54px); gap: 6px; }
+      body.touch .namepad { display: grid; }
+      .namepad .key { font-size: 24px; padding: 0; height: 42px; border-color: var(--yellow); }
+      .namepad .key .icon-slot { font-size: 24px; }
+      .namepad .space { grid-column: span 2; font-size: 18px; }
+      body.touch #screen-title { gap: 8px; }
+      body.touch #screen-title h1 { font-size: 56px; }
+      body.touch #screen-title h2 { font-size: 26px; padding: 4px 16px; }
+      body.touch #screen-title h2 .icon-slot { font-size: 26px; }
+      body.touch #group-name { height: 48px; caret-color: transparent; }
+      .overlay .corner { position: absolute; top: 12px; right: 12px; display: flex; gap: 8px; }
       h1 { font-weight: 400; font-size: 96px; margin: 0; line-height: 1; text-shadow: 4px 4px 0 #000; }
       h2 { font-weight: 400; background: var(--red); border-radius: 8px; padding: 8px 20px; font-size: 40px; margin: 0; display: flex; align-items: center; gap: 12px; }
       h2 .icon-slot { font-size: 40px; }
@@ -188,6 +199,7 @@
         <div class="chip"><span data-icon="calc"></span><strong id="hud-contas">0/8</strong><div class="pips" id="hud-pips"></div></div>
         <div class="chip"><div class="hearts" id="hud-hearts"></div></div>
         <button class="iconbtn" id="btn-fs-hud" data-fs hidden aria-label="Tela cheia"><span data-icon="fullscreen"></span></button>
+        <button class="iconbtn" data-music aria-label="Música"><span data-icon="music"></span></button>
         <button class="iconbtn" id="btn-sound" aria-label="Som"><span data-icon="sound"></span></button>
         <button class="iconbtn" id="btn-pause" aria-label="Pausar"><span data-icon="pause"></span></button>
       </div>
@@ -209,16 +221,17 @@
 
       <!-- tela inicial: nome do grupo -->
       <div class="overlay shade" id="screen-title">
-        <button class="iconbtn fs" data-fs hidden aria-label="Tela cheia"><span data-icon="fullscreen"></span></button>
+        <div class="corner"><button class="iconbtn" data-music aria-label="Música"><span data-icon="music"></span></button><button class="iconbtn" data-fs hidden aria-label="Tela cheia"><span data-icon="fullscreen"></span></button></div>
         <h1>McLover's Game</h1>
         <h2><span data-icon="users"></span>Digite o nome do seu grupo</h2>
         <input type="text" id="group-name" maxlength="24" autocomplete="off" placeholder="Os Matemáticos" />
+        <div class="namepad" id="name-pad"></div>
         <button class="big" id="btn-start"><span data-icon="play"></span>START</button>
       </div>
 
       <!-- escolha de fase e personagem -->
       <div class="overlay shade" id="screen-select" hidden>
-        <button class="iconbtn fs" data-fs hidden aria-label="Tela cheia"><span data-icon="fullscreen"></span></button>
+        <div class="corner"><button class="iconbtn" data-music aria-label="Música"><span data-icon="music"></span></button><button class="iconbtn" data-fs hidden aria-label="Tela cheia"><span data-icon="fullscreen"></span></button></div>
         <h2 id="select-title">Escolha a fase</h2>
         <div class="lvls" id="lvls"></div>
         <div class="who">Jogar com:
@@ -266,16 +279,19 @@
             <span class="k kb-only"><kbd>↑</kbd> <kbd>W</kbd> ou <kbd>Espaço</kbd></span><span class="kb-only">Pular</span>
             <span class="k kb-only"><kbd>E</kbd></span><span class="kb-only">Hackear painel / salvar checkpoint</span>
             <span class="k kb-only"><kbd>P</kbd> ou <kbd>Esc</kbd></span><span class="kb-only">Pausar / continuar</span>
-            <span class="k kb-only"><kbd>M</kbd></span><span class="kb-only">Ligar / desligar o som</span>
+            <span class="k kb-only"><kbd>N</kbd></span><span class="kb-only">Ligar / desligar a música</span>
+            <span class="k kb-only"><kbd>M</kbd></span><span class="kb-only">Ligar / desligar todos os sons</span>
             <span class="k touch-only"><kbd>←</kbd><kbd>→</kbd></span><span class="touch-only">Andar</span>
             <span class="k touch-only"><kbd>↑</kbd></span><span class="touch-only">Pular</span>
             <span class="k touch-only"><kbd>E</kbd></span><span class="touch-only">Hackear painel / salvar checkpoint</span>
             <span class="k touch-only"><kbd><span data-icon="pause"></span></kbd></span><span class="touch-only">Pausar</span>
-            <span class="k touch-only"><kbd><span data-icon="sound"></span></kbd></span><span class="touch-only">Ligar / desligar o som</span>
+            <span class="k touch-only"><kbd><span data-icon="music"></span></kbd></span><span class="touch-only">Ligar / desligar a música</span>
+            <span class="k touch-only"><kbd><span data-icon="sound"></span></kbd></span><span class="touch-only">Ligar / desligar todos os sons</span>
           </div>
           <div class="acts">
             <button class="key ok" id="pause-main"><span data-icon="play"></span><span id="pause-main-label">Continuar</span></button>
             <button class="key del" id="pause-menu"><span data-icon="home"></span>Menu</button>
+            <button class="key del" data-music data-label aria-label="Música"><span data-icon="music"></span>Música</button>
           </div>
         </div>
       </div>

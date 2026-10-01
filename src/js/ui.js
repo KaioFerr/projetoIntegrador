@@ -105,6 +105,19 @@ export function setSoundIcon(muted) {
     b.setAttribute('aria-label', muted ? 'Ligar o som' : 'Desligar o som')
 }
 
+// botões de música (painel, menus e pausa); onToggle() troca e devolve se ficou ligada
+export function bindMusicButtons(onToggle) {
+    document.querySelectorAll('[data-music]').forEach(b => b.addEventListener('click', () => setMusicIcons(onToggle())))
+}
+
+export function setMusicIcons(on) {
+    document.querySelectorAll('[data-music]').forEach(b => {
+        const label = 'label' in b.dataset ? (on ? 'Música' : 'Sem música') : ''
+        b.innerHTML = `<span class="icon-slot">${icon(on ? 'music' : 'music-off')}</span>${label}`
+        b.setAttribute('aria-label', on ? 'Desligar a música' : 'Ligar a música')
+    })
+}
+
 export function bindPauseButton(onPause) {
     $('btn-pause').addEventListener('click', onPause)
 }
@@ -155,6 +168,35 @@ export function bindTitle({ onStart }) {
 }
 
 export function setGroupName(name) { $('group-name').value = name }
+
+// teclado próprio do jogo para o nome do grupo; no celular substitui o teclado do sistema
+const NAME_ROWS = ['1234567890', 'QWERTYUIOP', 'ASDFGHJKLÇ', 'ZXCVBNM']
+export function buildNamePad() {
+    const input = $('group-name')
+    const pad = $('name-pad')
+    if (document.body.classList.contains('touch')) {
+        input.readOnly = true
+        input.setAttribute('inputmode', 'none')
+    }
+    const keys = NAME_ROWS.join('').split('').map(ch => `<button class="key" data-ch="${ch}">${ch}</button>`)
+    keys.push('<button class="key space" data-ch=" ">espaço</button>')
+    keys.push(`<button class="key del" data-ch="del" aria-label="Apagar">${icon('backspace')}</button>`)
+    pad.innerHTML = keys.join('')
+    pad.onclick = e => {
+        const k = e.target.closest('.key')
+        if (!k) return
+        sfx.key()
+        let v = input.value
+        const ch = k.dataset.ch
+        if (ch === 'del') v = v.slice(0, -1)
+        else if (ch === ' ') { if (v && !v.endsWith(' ')) v += ' ' }
+        else if (v.length < input.maxLength) {
+            // primeira letra de cada palavra maiúscula, o resto minúscula
+            v += !v || v.endsWith(' ') ? ch : ch.toLowerCase()
+        }
+        input.value = v
+    }
+}
 export function focusGroupName() {
     // no celular o teclado virtual só abre quando a pessoa toca no campo
     if (!document.body.classList.contains('touch')) $('group-name').focus()

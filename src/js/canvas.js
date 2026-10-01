@@ -11,7 +11,7 @@ import { createQuestion } from './math'
 import { getProfile, saveProfile, getProgress, saveResult } from './storage'
 import * as ui from './ui'
 import { sfx, isMuted, setMuted } from './sfx'
-import { startMusic, setMusicMode } from './music'
+import { startMusic, setMusicMode, isMusicOn, setMusicOn } from './music'
 
 //Tela
 const canvas = document.querySelector('canvas')
@@ -472,6 +472,11 @@ function startLevel(index) {
     if (document.activeElement) document.activeElement.blur()
 }
 
+function toggleMusic() {
+    setMusicOn(!isMusicOn())
+    return isMusicOn()
+}
+
 function toggleSound() {
     setMuted(!isMuted())
     ui.setSoundIcon(isMuted())
@@ -856,6 +861,8 @@ addEventListener('keydown', e => {
     if (e.target && e.target.tagName === 'INPUT') return
     if (e.code === 'KeyM' && !e.repeat) {
         toggleSound()
+    } else if (e.code === 'KeyN' && !e.repeat) {
+        ui.setMusicIcons(toggleMusic())
     } else if (e.code === 'KeyP' || e.code === 'Escape') {
         if (!e.repeat) togglePause()
     } else if (KEY_ACTIONS[e.code] && !e.repeat) {
@@ -872,6 +879,13 @@ addEventListener('keyup', e => {
 })
 
 addEventListener('blur', () => {
+    resetInput()
+    if (game.state === 'playing') togglePause()
+})
+
+// saiu para outro app ou bloqueou o celular: pausa o jogo também
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) return
     resetInput()
     if (game.state === 'playing') togglePause()
 })
@@ -895,13 +909,16 @@ fit()
 
 ui.init()
 ui.buildPad()
+ui.buildNamePad()
 ui.bindTouch(action)
 ui.bindPauseButton(togglePause)
 ui.bindSoundButton(toggleSound)
 ui.setSoundIcon(isMuted())
+ui.bindMusicButtons(toggleMusic)
+ui.setMusicIcons(isMusicOn())
 // clique de interface em qualquer botão (menus, resultados, pausa)
 document.addEventListener('click', e => {
-    if (e.target.closest('button') && !e.target.closest('#math-pad, #touch, #btn-sound')) sfx.click()
+    if (e.target.closest('button') && !e.target.closest('#math-pad, #touch, #btn-sound, #name-pad')) sfx.click()
 })
 ui.bindFullscreen()
 ui.setCharImages({ boy: SPRITES.boy.idle[0].src, girl: SPRITES.girl.idle[0].src })

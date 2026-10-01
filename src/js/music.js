@@ -2,6 +2,7 @@
 // pads largos com reverb, baixo pulsando, arpejo com eco e uma melodia de sinos esparsa.
 // Nos menus toca só o ambiente; durante a fase entram a batida e o chimbal.
 import { getAudio } from './sfx'
+import { getMusicOn, saveMusicOn } from './storage'
 
 const BPM = 84
 const EIGHTH = 60 / BPM / 2
@@ -203,8 +204,8 @@ function scheduleStep(ctx, t) {
 }
 
 function tick() {
-    const a = getAudio()
-    if (!a) return
+    const a = getAudio(false)
+    if (!a || document.hidden) return
     const { ctx } = a
     if (ctx.state !== 'running') return
     if (nextTime < ctx.currentTime) nextTime = ctx.currentTime + 0.05
@@ -215,30 +216,46 @@ function tick() {
 }
 
 const LEVELS = { menu: 1.1, play: 0.9, pause: 0.4 }
+let musicOn = getMusicOn()
+let started = false
+
+function applyVolume(seconds) {
+    const a = getAudio(false)
+    if (bus && a) bus.out.gain.setTargetAtTime(musicOn ? LEVELS[mode] : 0, a.ctx.currentTime, seconds)
+}
 
 // começa a música (chamar depois de um gesto da pessoa)
 export function startMusic() {
+    started = true
+    if (!musicOn) return
     const a = getAudio()
     if (!a) return
     if (!bus) bus = build(a.ctx, a.master)
     if (!timer) {
-        bus.out.gain.setTargetAtTime(LEVELS[mode], a.ctx.currentTime, 1.5)
+        applyVolume(1.5)
         timer = setInterval(tick, 60)
         tick()
     }
 }
 
+function stopMusic() {
+    clearInterval(timer)
+    timer = null
+    applyVolume(0.3)
+}
+
+export function isMusicOn() { return musicOn }
+
+// botão de música: desliga só a música (os efeitos continuam)
+export function setMusicOn(on) {
+    musicOn = on
+    saveMusicOn(on)
+    if (!on) stopMusic()
+    else if (started) startMusic()
+}
+
 // menu: só ambiente; play: com batida; pause: mais baixo e sem batida
 export function setMusicMode(next) {
     mode = next
-    const a = getAudio()
-    if (bus && a) bus.out.gain.setTargetAtTime(LEVELS[mode], a.ctx.currentTime, 0.4)
+    applyVolume(0.4)
 }
-
-// aba escondida ou app em segundo plano: para tudo para não gastar bateria
-document.addEventListener('visibilitychange', () => {
-    const a = getAudio(false)
-    if (!a) return
-    if (document.hidden) a.ctx.suspend()
-    else a.ctx.resume()
-})

@@ -8,7 +8,7 @@ O jogo foi desenvolvido utilizando as tecnologias web JavaScript, HTML e CSS. At
 
 ## Funcionalidades
 
-- Controles: setas ou "A, D" para andar, seta para cima, "W" ou espaço para pular, "E" para hackear o painel ou salvar o checkpoint "P" para pausar e "M" para ligar/desligar o som.
+- Controles: setas ou "A, D" para andar, seta para cima, "W" ou espaço para pular, "E" para hackear o painel ou salvar o checkpoint "P" para pausar, "N" para ligar/desligar a música e "M" para ligar/desligar todos os sons.
 - Para avançar é preciso hackear os painéis com cadeado (aperte "E" perto deles): cada painel tem uma conta como senha e, ao acertar, o cadeado abre. As contas são de adição e subtração, geradas de forma aleatória e com dificuldade crescente.
 - 4 fases (Soma, Subtração, Mistas e Desafio), cada uma com 8 contas. A fase seguinte é liberada ao concluir a anterior.
 - Painel compacto com fase, tempo, contas resolvidas e vidas. A câmera também sobe quando você chega nas plataformas altas.
@@ -16,7 +16,8 @@ O jogo foi desenvolvido utilizando as tecnologias web JavaScript, HTML e CSS. At
 - Checkpoints (bandeiras): aperte "E" perto da bandeira para salvar. Só dá para salvar depois de hackear todos os painéis que ficam antes dela.
 - Cair no vazio custa uma vida e volta ao último checkpoint salvo.
 - Tela de resultados no fim de cada fase: estrelas, tempo, acertos, erros, quedas e melhor tempo.
-- Efeitos sonoros 8-bit gerados no próprio navegador (sem arquivos de áudio): pulo, painel, senha certa/errada, cadeado abrindo, checkpoint, queda e fim de fase. Música de fundo synthwave no clima de Blade Runner, também gerada no navegador: nos menus e durante as contas toca só o ambiente, e na fase entra a batida. Botão de som no painel (liga/desliga música e efeitos).
+- Efeitos sonoros 8-bit gerados no próprio navegador (sem arquivos de áudio): pulo, painel, senha certa/errada, cadeado abrindo, checkpoint, queda e fim de fase. Música de fundo synthwave no clima de Blade Runner, também gerada no navegador: nos menus e durante as contas toca só o ambiente, e na fase entra a batida. Botões separados para a música e para todos os sons (no painel, nos menus e na pausa). O som para quando o jogo sai da tela do celular.
+- No celular, o nome do grupo é digitado num teclado do próprio jogo, sem abrir o teclado do sistema.
 - Escolha de personagem (Adam ou Olive). Nome do grupo e melhores resultados ficam salvos no navegador.
 
 ## Desenvolvimento

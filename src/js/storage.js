@@ -33,6 +33,15 @@ export function saveSound(on) {
     write({ ...read(), sound: on })
 }
 
+// música de fundo ligada (padrão) ou desligada, separada dos efeitos
+export function getMusicOn() {
+    return read().music !== false
+}
+
+export function saveMusicOn(on) {
+    write({ ...read(), music: on })
+}
+
 // { [fase]: { stars, best } }
 export function getProgress() {
     const data = read()

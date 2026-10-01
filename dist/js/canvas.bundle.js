@@ -1521,6 +1521,11 @@ function startLevel(index) {
   if (document.activeElement) document.activeElement.blur();
 }
 
+function toggleMusic() {
+  Object(_music__WEBPACK_IMPORTED_MODULE_11__["setMusicOn"])(!Object(_music__WEBPACK_IMPORTED_MODULE_11__["isMusicOn"])());
+  return Object(_music__WEBPACK_IMPORTED_MODULE_11__["isMusicOn"])();
+}
+
 function toggleSound() {
   Object(_sfx__WEBPACK_IMPORTED_MODULE_10__["setMuted"])(!Object(_sfx__WEBPACK_IMPORTED_MODULE_10__["isMuted"])());
   _ui__WEBPACK_IMPORTED_MODULE_9__["setSoundIcon"](Object(_sfx__WEBPACK_IMPORTED_MODULE_10__["isMuted"])());
@@ -1956,6 +1961,8 @@ addEventListener('keydown', function (e) {
 
   if (e.code === 'KeyM' && !e.repeat) {
     toggleSound();
+  } else if (e.code === 'KeyN' && !e.repeat) {
+    _ui__WEBPACK_IMPORTED_MODULE_9__["setMusicIcons"](toggleMusic());
   } else if (e.code === 'KeyP' || e.code === 'Escape') {
     if (!e.repeat) togglePause();
   } else if (KEY_ACTIONS[e.code] && !e.repeat) {
@@ -1971,6 +1978,12 @@ addEventListener('keyup', function (e) {
   if (name && name !== 'act') action(name, false);
 });
 addEventListener('blur', function () {
+  resetInput();
+  if (game.state === 'playing') togglePause();
+}); // saiu para outro app ou bloqueou o celular: pausa o jogo também
+
+document.addEventListener('visibilitychange', function () {
+  if (!document.hidden) return;
   resetInput();
   if (game.state === 'playing') togglePause();
 });
@@ -1994,13 +2007,16 @@ if (window.visualViewport) window.visualViewport.addEventListener('resize', fit)
 fit();
 _ui__WEBPACK_IMPORTED_MODULE_9__["init"]();
 _ui__WEBPACK_IMPORTED_MODULE_9__["buildPad"]();
+_ui__WEBPACK_IMPORTED_MODULE_9__["buildNamePad"]();
 _ui__WEBPACK_IMPORTED_MODULE_9__["bindTouch"](action);
 _ui__WEBPACK_IMPORTED_MODULE_9__["bindPauseButton"](togglePause);
 _ui__WEBPACK_IMPORTED_MODULE_9__["bindSoundButton"](toggleSound);
-_ui__WEBPACK_IMPORTED_MODULE_9__["setSoundIcon"](Object(_sfx__WEBPACK_IMPORTED_MODULE_10__["isMuted"])()); // clique de interface em qualquer botão (menus, resultados, pausa)
+_ui__WEBPACK_IMPORTED_MODULE_9__["setSoundIcon"](Object(_sfx__WEBPACK_IMPORTED_MODULE_10__["isMuted"])());
+_ui__WEBPACK_IMPORTED_MODULE_9__["bindMusicButtons"](toggleMusic);
+_ui__WEBPACK_IMPORTED_MODULE_9__["setMusicIcons"](Object(_music__WEBPACK_IMPORTED_MODULE_11__["isMusicOn"])()); // clique de interface em qualquer botão (menus, resultados, pausa)
 
 document.addEventListener('click', function (e) {
-  if (e.target.closest('button') && !e.target.closest('#math-pad, #touch, #btn-sound')) _sfx__WEBPACK_IMPORTED_MODULE_10__["sfx"].click();
+  if (e.target.closest('button') && !e.target.closest('#math-pad, #touch, #btn-sound, #name-pad')) _sfx__WEBPACK_IMPORTED_MODULE_10__["sfx"].click();
 });
 _ui__WEBPACK_IMPORTED_MODULE_9__["bindFullscreen"]();
 _ui__WEBPACK_IMPORTED_MODULE_9__["setCharImages"]({
@@ -2065,6 +2081,8 @@ var PATHS = {
   runner: [S, '<circle cx="14" cy="4.5" r="2"/><path d="M8 21l3.5-6 3 .5L16 21"/><path d="M11.5 15l-1-5 4.5-1 2 3.5 3 .5"/><path d="M10.5 10L7 11.5"/>'],
   sound: [S, '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18 6.5a7.5 7.5 0 0 1 0 11"/>'],
   mute: [S, '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/>'],
+  music: [S, '<path d="M9 18V5.5l11-2V16"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>'],
+  'music-off': [S, '<path d="M9 18V5.5l11-2V16"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/><path d="M3 3l18 18"/>'],
   sparkle: [F, '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.8 2.2 2.2.8-2.2.8L19 21l-.8-2.2-2.2-.8 2.2-.8z"/>']
 };
 function icon(name, size) {
@@ -2275,14 +2293,17 @@ function hintFor(_ref2) {
 /*!*************************!*\
   !*** ./src/js/music.js ***!
   \*************************/
-/*! exports provided: startMusic, setMusicMode */
+/*! exports provided: startMusic, isMusicOn, setMusicOn, setMusicMode */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "startMusic", function() { return startMusic; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isMusicOn", function() { return isMusicOn; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setMusicOn", function() { return setMusicOn; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setMusicMode", function() { return setMusicMode; });
 /* harmony import */ var _sfx__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./sfx */ "./src/js/sfx.js");
+/* harmony import */ var _storage__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./storage */ "./src/js/storage.js");
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
 
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
@@ -2298,6 +2319,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 // Música de fundo gerada na hora (Web Audio), no clima synthwave / Blade Runner:
 // pads largos com reverb, baixo pulsando, arpejo com eco e uma melodia de sinos esparsa.
 // Nos menus toca só o ambiente; durante a fase entram a batida e o chimbal.
+
 
 var BPM = 84;
 var EIGHTH = 60 / BPM / 2;
@@ -2532,8 +2554,8 @@ function scheduleStep(ctx, t) {
 }
 
 function tick() {
-  var a = Object(_sfx__WEBPACK_IMPORTED_MODULE_0__["getAudio"])();
-  if (!a) return;
+  var a = Object(_sfx__WEBPACK_IMPORTED_MODULE_0__["getAudio"])(false);
+  if (!a || document.hidden) return;
   var ctx = a.ctx;
   if (ctx.state !== 'running') return;
   if (nextTime < ctx.currentTime) nextTime = ctx.currentTime + 0.05;
@@ -2548,31 +2570,50 @@ var LEVELS = {
   menu: 1.1,
   play: 0.9,
   pause: 0.4
-}; // começa a música (chamar depois de um gesto da pessoa)
+};
+var musicOn = Object(_storage__WEBPACK_IMPORTED_MODULE_1__["getMusicOn"])();
+var started = false;
+
+function applyVolume(seconds) {
+  var a = Object(_sfx__WEBPACK_IMPORTED_MODULE_0__["getAudio"])(false);
+  if (bus && a) bus.out.gain.setTargetAtTime(musicOn ? LEVELS[mode] : 0, a.ctx.currentTime, seconds);
+} // começa a música (chamar depois de um gesto da pessoa)
+
 
 function startMusic() {
+  started = true;
+  if (!musicOn) return;
   var a = Object(_sfx__WEBPACK_IMPORTED_MODULE_0__["getAudio"])();
   if (!a) return;
   if (!bus) bus = build(a.ctx, a.master);
 
   if (!timer) {
-    bus.out.gain.setTargetAtTime(LEVELS[mode], a.ctx.currentTime, 1.5);
+    applyVolume(1.5);
     timer = setInterval(tick, 60);
     tick();
   }
+}
+
+function stopMusic() {
+  clearInterval(timer);
+  timer = null;
+  applyVolume(0.3);
+}
+
+function isMusicOn() {
+  return musicOn;
+} // botão de música: desliga só a música (os efeitos continuam)
+
+function setMusicOn(on) {
+  musicOn = on;
+  Object(_storage__WEBPACK_IMPORTED_MODULE_1__["saveMusicOn"])(on);
+  if (!on) stopMusic();else if (started) startMusic();
 } // menu: só ambiente; play: com batida; pause: mais baixo e sem batida
 
 function setMusicMode(next) {
   mode = next;
-  var a = Object(_sfx__WEBPACK_IMPORTED_MODULE_0__["getAudio"])();
-  if (bus && a) bus.out.gain.setTargetAtTime(LEVELS[mode], a.ctx.currentTime, 0.4);
-} // aba escondida ou app em segundo plano: para tudo para não gastar bateria
-
-document.addEventListener('visibilitychange', function () {
-  var a = Object(_sfx__WEBPACK_IMPORTED_MODULE_0__["getAudio"])(false);
-  if (!a) return;
-  if (document.hidden) a.ctx.suspend();else a.ctx.resume();
-});
+  applyVolume(0.4);
+}
 
 /***/ }),
 
@@ -2605,15 +2646,44 @@ function audio() {
     master = ctx.createGain();
     master.gain.value = muted ? 0 : 0.35;
     master.connect(ctx.destination);
-  }
+  } // nunca religa o áudio com o jogo fora da tela
 
-  if (ctx.state === 'suspended') ctx.resume();
+
+  if (ctx.state === 'suspended' && !away()) ctx.resume();
   return ctx;
-} // libera o áudio no primeiro gesto da pessoa
+} // jogo fora da tela: outro app, outra aba ou celular bloqueado
 
+
+var blurred = false;
+
+var away = function away() {
+  return document.hidden || blurred;
+};
+
+function suspendAudio() {
+  if (ctx && ctx.state === 'running') ctx.suspend();
+}
+
+function resumeAudio() {
+  if (ctx && ctx.state === 'suspended' && !away()) ctx.resume();
+}
+
+document.addEventListener('visibilitychange', function () {
+  return document.hidden ? suspendAudio() : resumeAudio();
+});
+addEventListener('pagehide', suspendAudio);
+addEventListener('blur', function () {
+  blurred = true;
+  suspendAudio();
+});
+addEventListener('focus', function () {
+  blurred = false;
+  resumeAudio();
+}); // libera o áudio no primeiro gesto da pessoa (e volta a tocar se tinha parado)
 
 var unlock = function unlock() {
-  return audio();
+  blurred = false;
+  audio();
 };
 
 addEventListener('pointerdown', unlock, {
@@ -2879,7 +2949,7 @@ var sfx = {
 /*!***************************!*\
   !*** ./src/js/storage.js ***!
   \***************************/
-/*! exports provided: getProfile, saveProfile, getSound, saveSound, getProgress, saveResult */
+/*! exports provided: getProfile, saveProfile, getSound, saveSound, getMusicOn, saveMusicOn, getProgress, saveResult */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2888,6 +2958,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "saveProfile", function() { return saveProfile; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getSound", function() { return getSound; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "saveSound", function() { return saveSound; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getMusicOn", function() { return getMusicOn; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "saveMusicOn", function() { return saveMusicOn; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getProgress", function() { return getProgress; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "saveResult", function() { return saveResult; });
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
@@ -2938,6 +3010,15 @@ function saveSound(on) {
   write(_objectSpread({}, read(), {
     sound: on
   }));
+} // música de fundo ligada (padrão) ou desligada, separada dos efeitos
+
+function getMusicOn() {
+  return read().music !== false;
+}
+function saveMusicOn(on) {
+  write(_objectSpread({}, read(), {
+    music: on
+  }));
 } // { [fase]: { stars, best } }
 
 function getProgress() {
@@ -2976,7 +3057,7 @@ function saveResult(level, _ref2) {
 /*!**********************!*\
   !*** ./src/js/ui.js ***!
   \**********************/
-/*! exports provided: fmt, init, showScreen, setHudVisible, setHud, resetHudCache, setActionReady, toast, flash, bindTouch, bindSoundButton, setSoundIcon, bindPauseButton, bindFullscreen, bindTitle, setGroupName, focusGroupName, setCharImages, renderSelect, buildPad, isMathOpen, openMath, closeMath, mathKeydown, renderResults, showPause */
+/*! exports provided: fmt, init, showScreen, setHudVisible, setHud, resetHudCache, setActionReady, toast, flash, bindTouch, bindSoundButton, setSoundIcon, bindMusicButtons, setMusicIcons, bindPauseButton, bindFullscreen, bindTitle, setGroupName, buildNamePad, focusGroupName, setCharImages, renderSelect, buildPad, isMathOpen, openMath, closeMath, mathKeydown, renderResults, showPause */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2993,10 +3074,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindTouch", function() { return bindTouch; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindSoundButton", function() { return bindSoundButton; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setSoundIcon", function() { return setSoundIcon; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindMusicButtons", function() { return bindMusicButtons; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setMusicIcons", function() { return setMusicIcons; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindPauseButton", function() { return bindPauseButton; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindFullscreen", function() { return bindFullscreen; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindTitle", function() { return bindTitle; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setGroupName", function() { return setGroupName; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "buildNamePad", function() { return buildNamePad; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "focusGroupName", function() { return focusGroupName; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setCharImages", function() { return setCharImages; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "renderSelect", function() { return renderSelect; });
@@ -3154,6 +3238,21 @@ function setSoundIcon(muted) {
   var b = $('btn-sound');
   b.innerHTML = "<span class=\"icon-slot\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_2__["icon"])(muted ? 'mute' : 'sound'), "</span>");
   b.setAttribute('aria-label', muted ? 'Ligar o som' : 'Desligar o som');
+} // botões de música (painel, menus e pausa); onToggle() troca e devolve se ficou ligada
+
+function bindMusicButtons(onToggle) {
+  document.querySelectorAll('[data-music]').forEach(function (b) {
+    return b.addEventListener('click', function () {
+      return setMusicIcons(onToggle());
+    });
+  });
+}
+function setMusicIcons(on) {
+  document.querySelectorAll('[data-music]').forEach(function (b) {
+    var label = 'label' in b.dataset ? on ? 'Música' : 'Sem música' : '';
+    b.innerHTML = "<span class=\"icon-slot\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_2__["icon"])(on ? 'music' : 'music-off'), "</span>").concat(label);
+    b.setAttribute('aria-label', on ? 'Desligar a música' : 'Ligar a música');
+  });
 }
 function bindPauseButton(onPause) {
   $('btn-pause').addEventListener('click', onPause);
@@ -3225,6 +3324,39 @@ function bindTitle(_ref2) {
 }
 function setGroupName(name) {
   $('group-name').value = name;
+} // teclado próprio do jogo para o nome do grupo; no celular substitui o teclado do sistema
+
+var NAME_ROWS = ['1234567890', 'QWERTYUIOP', 'ASDFGHJKLÇ', 'ZXCVBNM'];
+function buildNamePad() {
+  var input = $('group-name');
+  var pad = $('name-pad');
+
+  if (document.body.classList.contains('touch')) {
+    input.readOnly = true;
+    input.setAttribute('inputmode', 'none');
+  }
+
+  var keys = NAME_ROWS.join('').split('').map(function (ch) {
+    return "<button class=\"key\" data-ch=\"".concat(ch, "\">").concat(ch, "</button>");
+  });
+  keys.push('<button class="key space" data-ch=" ">espaço</button>');
+  keys.push("<button class=\"key del\" data-ch=\"del\" aria-label=\"Apagar\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_2__["icon"])('backspace'), "</button>"));
+  pad.innerHTML = keys.join('');
+
+  pad.onclick = function (e) {
+    var k = e.target.closest('.key');
+    if (!k) return;
+    _sfx__WEBPACK_IMPORTED_MODULE_1__["sfx"].key();
+    var v = input.value;
+    var ch = k.dataset.ch;
+    if (ch === 'del') v = v.slice(0, -1);else if (ch === ' ') {
+      if (v && !v.endsWith(' ')) v += ' ';
+    } else if (v.length < input.maxLength) {
+      // primeira letra de cada palavra maiúscula, o resto minúscula
+      v += !v || v.endsWith(' ') ? ch : ch.toLowerCase();
+    }
+    input.value = v;
+  };
 }
 function focusGroupName() {
   // no celular o teclado virtual só abre quando a pessoa toca no campo

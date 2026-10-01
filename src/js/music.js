@@ -1,10 +1,10 @@
-// Música de fundo gerada na hora (Web Audio), no clima synthwave / Blade Runner:
+// Música de fundo gerada na hora (Web Audio), no clima synthwave / Blade Runner, a 104 BPM:
 // pads largos com reverb, baixo pulsando, arpejo com eco e uma melodia de sinos esparsa.
-// Nos menus toca só o ambiente; durante a fase entram a batida e o chimbal.
+// Nos menus toca só o ambiente; durante a fase entram bumbo, caixa, chimbal e o arpejo acelera.
 import { getAudio } from './sfx'
 import { getMusicOn, saveMusicOn } from './storage'
 
-const BPM = 84
+const BPM = 104
 const EIGHTH = 60 / BPM / 2
 const STEPS_PER_CHORD = 16 // 2 compassos de colcheias
 
@@ -168,7 +168,37 @@ function kick(ctx, t) {
     o.stop(t + 0.3)
 }
 
-function hat(ctx, t) {
+// caixa: ruído com um pouco de tom, mandada para o reverb (som de caixa dos anos 80)
+function snare(ctx, t) {
+    const len = Math.ceil(ctx.sampleRate * 0.18)
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate)
+    const d = buf.getChannelData(0)
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2)
+    const s = ctx.createBufferSource()
+    const f = ctx.createBiquadFilter()
+    const g = ctx.createGain()
+    s.buffer = buf
+    f.type = 'bandpass'
+    f.frequency.value = 1800
+    f.Q.value = 0.8
+    g.gain.value = 0.22
+    s.connect(f)
+    f.connect(g)
+    g.connect(bus.dry)
+    g.connect(bus.reverb)
+    s.start(t)
+    const o = ctx.createOscillator()
+    const og = ctx.createGain()
+    o.frequency.setValueAtTime(220, t)
+    o.frequency.exponentialRampToValueAtTime(140, t + 0.08)
+    env(ctx, og, t, 0.002, 0.12, 0, 0.1)
+    o.connect(og)
+    og.connect(bus.dry)
+    o.start(t)
+    o.stop(t + 0.15)
+}
+
+function hat(ctx, t, vol = 0.05) {
     const len = Math.ceil(ctx.sampleRate * 0.05)
     const buf = ctx.createBuffer(1, len, ctx.sampleRate)
     const d = buf.getChannelData(0)
@@ -179,7 +209,7 @@ function hat(ctx, t) {
     s.buffer = buf
     f.type = 'highpass'
     f.frequency.value = 7000
-    g.gain.value = 0.05
+    g.gain.value = vol
     s.connect(f)
     f.connect(g)
     g.connect(bus.dry)
@@ -194,11 +224,20 @@ function scheduleStep(ctx, t) {
 
     if (s === 0) pad(ctx, chord.pad, t, EIGHTH * STEPS_PER_CHORD)
     bass(ctx, chord.bass + (s % 2 ? 12 : 0), t)
-    pluck(ctx, chord.arp[ARP_ORDER[s % ARP_ORDER.length]], t, s % 4 === 0 ? 0.07 : 0.045)
+    if (drums) {
+        // na fase o arpejo corre em semicolcheias
+        pluck(ctx, chord.arp[ARP_ORDER[(s * 2) % ARP_ORDER.length]], t, s % 4 === 0 ? 0.07 : 0.05)
+        pluck(ctx, chord.arp[ARP_ORDER[(s * 2 + 1) % ARP_ORDER.length]], t + EIGHTH / 2, 0.04)
+    } else {
+        pluck(ctx, chord.arp[ARP_ORDER[s % ARP_ORDER.length]], t, s % 4 === 0 ? 0.07 : 0.045)
+    }
     MELODY[ci].forEach(([at, n]) => { if (at === s) bell(ctx, n, t) })
     if (drums) {
-        if (s % 4 === 0) kick(ctx, t)
+        // bumbo em todo tempo, caixa no 2 e no 4, chimbal no contratempo
+        if (s % 2 === 0) kick(ctx, t)
+        if (s % 4 === 2) snare(ctx, t)
         if (s % 2 === 1) hat(ctx, t)
+        hat(ctx, t + EIGHTH / 2, 0.02)
     }
     step++
 }

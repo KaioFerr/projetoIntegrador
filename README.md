@@ -16,7 +16,7 @@ O jogo foi desenvolvido utilizando as tecnologias web JavaScript, HTML e CSS. At
 - Checkpoints (bandeiras): aperte "E" perto da bandeira para salvar. Só dá para salvar depois de hackear todos os painéis que ficam antes dela.
 - Cair no vazio custa uma vida e volta ao último checkpoint salvo.
 - Tela de resultados no fim de cada fase: estrelas, tempo, acertos, erros, quedas e melhor tempo.
-- Efeitos sonoros 8-bit gerados no próprio navegador (sem arquivos de áudio): pulo, painel, senha certa/errada, cadeado abrindo, checkpoint, queda e fim de fase. Música de fundo synthwave no clima de Blade Runner, também gerada no navegador: nos menus e durante as contas toca só o ambiente, e na fase entra a batida. Botões separados para a música e para todos os sons (no painel, nos menus e na pausa). O som para quando o jogo sai da tela do celular.
+- Efeitos sonoros 8-bit gerados no próprio navegador (sem arquivos de áudio): pulo, painel, senha certa/errada, cadeado abrindo, checkpoint, queda e fim de fase. Música de fundo synthwave no clima de Blade Runner, também gerada no navegador: nos menus e durante as contas toca só o ambiente, e na fase entra a batida (bumbo, caixa e chimbal) com o arpejo mais rápido. Botões separados para a música e para todos os sons (no painel, nos menus e na pausa). O som para quando o jogo sai da tela do celular.
 - No celular, o nome do grupo é digitado num teclado do próprio jogo, sem abrir o teclado do sistema (com tecla de acentos).
 - Escolha de personagem (Adam ou Olive). Nome do grupo e melhores resultados ficam salvos no navegador.
 

@@ -27,6 +27,12 @@ O jogo foi desenvolvido utilizando as tecnologias web JavaScript, HTML e CSS. At
 1. acesse o site https://kaioferr.github.io/projetoIntegrador/
 2. Siga as instruções na tela para começar a jogar.
 
+### Instalar no celular (tela cheia)
+- **Android (Chrome):** abra o site, toque no menu ⋮ e em "Instalar app" ou "Adicionar à tela inicial".
+- **iPhone/iPad (Safari):** abra o site, toque em Compartilhar e em "Adicionar à Tela de Início".
+
+O ícone que aparece na tela de início abre o jogo em tela cheia, sem a barra do navegador. Os arquivos do app (manifesto e ícones) ficam em `src/public` e são copiados para a raiz do `dist` no build.
+
 ## Contribuição
 
 Contribuições são bem-vindas! Sinta-se à vontade para propor melhorias, correções de bugs ou novas funcionalidades através de pull requests.

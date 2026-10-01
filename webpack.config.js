@@ -1,5 +1,22 @@
 const BrowserSyncPlugin = require('browser-sync-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
+const fs = require('fs')
+const path = require('path')
+
+// copia src/public (manifesto e ícones do app) para a raiz do dist, sem renomear
+class CopyPublicPlugin {
+  apply(compiler) {
+    const dir = path.join(__dirname, 'src/public')
+    compiler.hooks.emit.tap('CopyPublicPlugin', compilation => {
+      fs.readdirSync(dir).forEach(name => {
+        const file = path.join(dir, name)
+        const data = fs.readFileSync(file)
+        compilation.assets[name] = { source: () => data, size: () => data.length }
+        compilation.fileDependencies.add(file)
+      })
+    })
+  }
+}
 
 module.exports = {
   mode: 'development',
@@ -38,6 +55,7 @@ module.exports = {
       files: ['./dist/*'],
       notify: false
     }),
+    new CopyPublicPlugin(),
     new HtmlWebpackPlugin({
       filename: 'index.html',
       favicon: 'favicon.ico',

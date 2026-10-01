@@ -22,6 +22,10 @@ const STEP = 1000 / 60
 const MAX_LIVES = 5
 const MIN_CAM_Y = -280 // quanto a câmera pode subir
 const FONT = '"Jockey One", "Arial Narrow", sans-serif'
+// o sprite tem 80px, mas os pés ocupam só o centro; a colisão usa essa faixa
+const FEET_L = 28
+const FEET_R = 52
+const MINI_EDGE = 9 // borda transparente de cada lado da miniPlatform.png
 
 //função que cria imagens
 function creatImage(src) {
@@ -218,9 +222,11 @@ function step() {
         p.vy += gravity
         p.grounded = false
 
-        //colisão: só pelo topo das plataformas
+        //colisão: só pelo topo das plataformas, e só se os pés estiverem sobre a parte visível
         for (const pl of game.platforms) {
-            if (prevBottom <= pl.y && p.y + p.h >= pl.y && p.x + p.w >= pl.x && p.x <= pl.x + pl.w) {
+            const edge = pl.kind === 'mini' ? MINI_EDGE : 0
+            const onTop = p.x + FEET_R > pl.x + edge && p.x + FEET_L < pl.x + pl.w - edge
+            if (prevBottom <= pl.y && p.y + p.h >= pl.y && onTop) {
                 p.y = pl.y - p.h
                 p.vy = 0
                 p.grounded = true

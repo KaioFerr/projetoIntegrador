@@ -11,7 +11,8 @@ O jogo foi desenvolvido utilizando as tecnologias web JavaScript, HTML e CSS. At
 - Controles: setas ou "A, D" para andar, seta para cima ou "W" para pular, "E" para fazer a conta e "P" para pausar.
 - As contas só abrem em frente aos banners [E]. Elas são de adição e subtração, geradas de forma aleatória e com dificuldade crescente.
 - 4 fases (Soma, Subtração, Mistas e Desafio), cada uma com 8 contas. A fase seguinte é liberada ao concluir a anterior.
-- Painel com fase, tempo, contas resolvidas e vidas.
+- Painel compacto com fase, tempo, contas resolvidas e vidas. A câmera também sobe quando você chega nas plataformas altas.
+- Funciona no celular na horizontal, com botões de toque (andar, pular e E) e opção de tela cheia.
 - Cair no vazio custa uma vida e volta ao último checkpoint (bandeira).
 - Tela de resultados no fim de cada fase: estrelas, tempo, acertos, erros, quedas e melhor tempo.
 - Escolha de personagem (Adam ou Olive). Nome do grupo e melhores resultados ficam salvos no navegador.

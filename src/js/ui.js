@@ -1,20 +1,36 @@
 // Camadas HTML por cima do canvas: painel, conta, resultados, menus
 import { hintFor } from './math'
+import { icon, hydrateIcons } from './icons'
 
 const $ = id => document.getElementById(id)
 const SCREENS = ['title', 'select', 'math', 'results', 'pause']
+const OP_ICON = { '+': 'plus', '-': 'minus' }
 
 export const fmt = s => String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(Math.floor(s % 60)).padStart(2, '0')
 
+export function init() {
+    hydrateIcons()
+}
+
 export function showScreen(name) {
     SCREENS.forEach(s => { $('screen-' + s).hidden = s !== name })
+    document.body.classList.toggle('overlay-open', !!name)
     document.querySelectorAll('.confetti').forEach(c => c.remove())
 }
 
 /* ---------- painel ---------- */
+let ctrlTimer
 export function setHudVisible(visible) {
     $('hud').hidden = !visible
-    $('ctrl').hidden = !visible
+    document.body.classList.toggle('in-level', visible)
+    $('ctrl').hidden = !visible || document.body.classList.contains('touch')
+    if (visible) {
+        // a dica de teclas some sozinha para não cobrir o cenário
+        $('ctrl').classList.remove('fade')
+        clearTimeout(ctrlTimer)
+        ctrlTimer = setTimeout(() => $('ctrl').classList.add('fade'), 7000)
+    }
+    if (!visible) setActionReady(false)
 }
 
 let lastHud = ''
@@ -24,16 +40,24 @@ export function setHud({ level, levels, time, lives, maxLives, contas, totalCont
     lastHud = key
     $('hud-level').textContent = `${level}/${levels}`
     $('hud-time').textContent = fmt(time)
-    $('hud-contas-label').textContent = `Contas ${contas}/${totalContas}`
+    $('hud-contas').textContent = `${contas}/${totalContas}`
     $('hud-pips').innerHTML = Array.from({ length: totalContas }, (_, i) => `<span class="pip ${i < contas ? 'on' : ''}"></span>`).join('')
-    $('hud-hearts').innerHTML = Array.from({ length: maxLives }, (_, i) => `<span class="heart ${i < lives ? '' : 'off'}"></span>`).join('')
+    $('hud-hearts').innerHTML = Array.from({ length: maxLives }, (_, i) => `<span class="icon-slot ${i < lives ? '' : 'off'}">${icon('heart')}</span>`).join('')
 }
 export function resetHudCache() { lastHud = '' }
 
+let actionReady = false
+export function setActionReady(ready) {
+    if (ready === actionReady) return
+    actionReady = ready
+    $('t-act').classList.toggle('ready', ready)
+}
+
 let toastTimer
-export function toast(text, ms = 2200) {
+export function toast(text, ms = 2200, iconName = 'flag') {
     const t = $('toast')
-    t.textContent = text
+    t.innerHTML = `<span class="icon-slot">${icon(iconName)}</span><span></span>`
+    t.lastChild.textContent = text
     t.classList.add('show')
     clearTimeout(toastTimer)
     toastTimer = setTimeout(() => t.classList.remove('show'), ms)
@@ -46,6 +70,45 @@ export function flash() {
     f.classList.add('go')
 }
 
+/* ---------- entrada por toque e tela cheia ---------- */
+// ação: 'left' | 'right' | 'jump' | 'act' ; down(true) ao tocar e down(false) ao soltar
+export function bindTouch(handler) {
+    const map = { 't-left': 'left', 't-right': 'right', 't-jump': 'jump', 't-act': 'act' }
+    Object.keys(map).forEach(id => {
+        const b = $(id)
+        const release = e => {
+            b.classList.remove('on')
+            handler(map[id], false)
+        }
+        b.addEventListener('pointerdown', e => {
+            e.preventDefault()
+            b.setPointerCapture(e.pointerId)
+            b.classList.add('on')
+            handler(map[id], true)
+        })
+        b.addEventListener('pointerup', release)
+        b.addEventListener('pointercancel', release)
+        b.addEventListener('lostpointercapture', release)
+        b.addEventListener('contextmenu', e => e.preventDefault())
+    })
+}
+
+export function bindPauseButton(onPause) {
+    $('btn-pause').addEventListener('click', onPause)
+}
+
+export function bindFullscreen() {
+    const el = document.documentElement
+    const can = !!(el.requestFullscreen && document.fullscreenEnabled) && document.body.classList.contains('touch')
+    document.querySelectorAll('[data-fs]').forEach(b => {
+        b.hidden = !can
+        b.onclick = () => {
+            if (document.fullscreenElement) document.exitFullscreen()
+            else el.requestFullscreen().catch(() => {})
+        }
+    })
+}
+
 /* ---------- tela inicial e seleção ---------- */
 export function bindTitle({ onStart }) {
     const start = () => onStart($('group-name').value.trim())
@@ -54,7 +117,10 @@ export function bindTitle({ onStart }) {
 }
 
 export function setGroupName(name) { $('group-name').value = name }
-export function focusGroupName() { $('group-name').focus() }
+export function focusGroupName() {
+    // no celular o teclado virtual só abre quando a pessoa toca no campo
+    if (!document.body.classList.contains('touch')) $('group-name').focus()
+}
 
 export function setCharImages({ boy, girl }) {
     $('img-boy').src = boy
@@ -64,22 +130,23 @@ export function setCharImages({ boy, girl }) {
 export function renderSelect({ levels, progress, selected, character, group, onSelect, onCharacter, onPlay }) {
     $('select-title').textContent = group ? `${group}: escolha a fase` : 'Escolha a fase'
     const unlocked = n => n === 1 || (progress[n - 1] && progress[n - 1].stars > 0)
+    const kindIcon = l => (l.math.ops.length > 1 ? (l.id === levels.length ? 'trophy' : 'plusminus') : OP_ICON[l.math.ops[0]])
     $('lvls').innerHTML = levels.map(l => {
         const p = progress[l.id]
         const lock = !unlocked(l.id)
-        const stars = lock ? '' : [0, 1, 2].map(i => `<span class="star ${p && i < p.stars ? '' : 'off'}"></span>`).join('')
-        const best = lock ? 'Bloqueada' : p && p.best !== null ? `Melhor ${fmt(p.best)}` : 'Nova'
+        const stars = lock ? '' : [0, 1, 2].map(i => `<span class="icon-slot ${p && i < p.stars ? '' : 'off'}">${icon('star')}</span>`).join('')
+        const best = lock ? 'Bloqueada' : p && p.best !== null ? `<span class="icon-slot">${icon('clock')}</span>${fmt(p.best)}` : 'Nova'
         return `<button class="lvl ${lock ? 'lock' : ''} ${l.id === selected ? 'sel' : ''}" data-level="${l.id}" ${lock ? 'disabled' : ''}>
-            <span class="n">${lock ? '🔒' : l.id}</span><span>${l.name}</span><span class="mini">${stars}</span><span class="best">${best}</span></button>`
+            <span class="n">${lock ? `<span class="icon-slot">${icon('lock')}</span>` : l.id}</span>
+            <span class="op"><span class="icon-slot">${icon(kindIcon(l))}</span>${l.name}</span>
+            <span class="mini">${stars}</span><span class="best">${best}</span></button>`
     }).join('')
     $('lvls').querySelectorAll('.lvl:not(.lock)').forEach(b => { b.onclick = () => onSelect(Number(b.dataset.level)) })
     $('who-boy').classList.toggle('sel', character === 'boy')
     $('who-girl').classList.toggle('sel', character === 'girl')
     $('who-boy').onclick = () => onCharacter('boy')
     $('who-girl').onclick = () => onCharacter('girl')
-    $('btn-play').textContent = `Jogar fase ${selected}`
-    $('btn-play').style.width = 'auto'
-    $('btn-play').style.padding = '0 32px'
+    $('btn-play-label').textContent = `Jogar fase ${selected}`
     $('btn-play').onclick = onPlay
 }
 
@@ -89,7 +156,7 @@ const mathState = { open: false, answer: '', tries: 0, question: null, submit: n
 export function buildPad() {
     const pad = $('math-pad')
     const keys = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map(n => `<button class="key" data-k="${n}">${n}</button>`)
-    keys.push('<button class="key del" data-k="del">apagar</button>', '<button class="key ok" data-k="ok">OK</button>')
+    keys.push(`<button class="key del" data-k="del" aria-label="Apagar">${icon('backspace')}</button>`, `<button class="key ok" data-k="ok">${icon('check')}OK</button>`)
     pad.innerHTML = keys.join('')
     pad.onclick = e => {
         const k = e.target.closest('.key')
@@ -161,16 +228,16 @@ export function mathKeydown(e) {
 
 /* ---------- resultados ---------- */
 export function renderResults({ level, levels, stars, time, goal, correct, total, errors, falls, bestInfo, byOp, onNext, onRetry, onMenu }) {
+    const row = (ic, label, value, cls = '') => `<div class="${cls}"><span class="icon-slot">${icon(ic)}</span><span>${label}</span><b>${value}</b></div>`
     $('res-title').textContent = `Fase ${level.id} completa!`
-    $('res-stars').innerHTML = [0, 1, 2].map(i => `<span class="star ${i < stars ? '' : 'off'}"></span>`).join('')
-    const best = bestInfo.isBest ? '<div class="new"><span>Melhor tempo</span><b>novo!</b></div>' : `<div><span>Melhor tempo</span><b>${fmt(bestInfo.previousBest)}</b></div>`
-    $('res-rows').innerHTML = `<div><span>Tempo</span><b>${fmt(time)}</b></div><div><span>Meta</span><b>${fmt(goal)}</b></div>
-        <div><span>Acertos</span><b>${correct} de ${total}</b></div><div><span>Erros</span><b>${errors}</b></div>
-        <div><span>Quedas</span><b>${falls}</b></div>${best}`
+    $('res-stars').innerHTML = [0, 1, 2].map(i => `<span class="icon-slot ${i < stars ? '' : 'off'}">${icon('star')}</span>`).join('')
+    const best = bestInfo.isBest ? row('trophy', 'Melhor tempo', 'novo!', 'new') : row('trophy', 'Melhor tempo', fmt(bestInfo.previousBest))
+    $('res-rows').innerHTML = row('clock', 'Tempo', fmt(time)) + row('target', 'Meta', fmt(goal)) +
+        row('check', 'Acertos', `${correct} de ${total}`) + row('cross', 'Erros', errors) + row('fall', 'Quedas', falls) + best
     const names = { '+': 'Soma', '-': 'Subtração' }
     $('res-ops').innerHTML = Object.keys(byOp).map(op => {
         const { ok, n } = byOp[op]
-        return `<span>${names[op]}</span><div class="bar"><i style="width:${n ? Math.round(ok / n * 100) : 0}%"></i></div><span>${ok} de ${n}</span>`
+        return `<span><span class="icon-slot">${icon(OP_ICON[op])}</span>${names[op]}</span><div class="bar"><i style="width:${n ? Math.round(ok / n * 100) : 0}%"></i></div><span>${ok} de ${n}</span>`
     }).join('')
     const hasNext = level.id < levels
     $('res-next').hidden = !hasNext
@@ -194,10 +261,12 @@ function confetti() {
 }
 
 /* ---------- pausa e fim de jogo ---------- */
-export function showPause({ title, text, mainLabel, onMain, onMenu }) {
-    $('pause-title').textContent = title
+export function showPause({ title, text, mainLabel, mainIcon = 'play', titleIcon = 'pause', onMain, onMenu }) {
+    $('pause-icon').innerHTML = `<span class="icon-slot" style="font-size:52px">${icon(titleIcon)}</span>`
+    $('pause-title-text').textContent = title
     $('pause-text').textContent = text
-    $('pause-main').textContent = mainLabel
+    $('pause-main-label').textContent = mainLabel
+    $('pause-main').firstElementChild.innerHTML = icon(mainIcon)
     $('pause-main').onclick = onMain
     $('pause-menu').onclick = onMenu
     showScreen('pause')

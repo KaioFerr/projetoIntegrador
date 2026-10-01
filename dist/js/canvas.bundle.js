@@ -876,6 +876,8 @@ canvas.height = H;
 var gravity = 1.4;
 var STEP = 1000 / 60;
 var MAX_LIVES = 5;
+var MIN_CAM_Y = -280; // quanto a câmera pode subir
+
 var FONT = '"Jockey One", "Arial Narrow", sans-serif'; //função que cria imagens
 
 function creatImage(src) {
@@ -923,6 +925,7 @@ var game = {
   level: _levels__WEBPACK_IMPORTED_MODULE_4__["LEVELS"][0],
   character: 'boy',
   camera: 0,
+  camY: 0,
   time: 0,
   lives: MAX_LIVES,
   contas: 0,
@@ -964,6 +967,7 @@ function loadLevel(index) {
   game.levelIndex = index;
   game.level = level;
   game.camera = 0;
+  game.camY = 0;
   game.time = 0;
   game.lives = MAX_LIVES;
   game.contas = 0;
@@ -1031,7 +1035,11 @@ var clamp = function clamp(v, min, max) {
 function updateCamera(snap) {
   var p = game.player;
   var cam = snap ? p.x - 300 : clamp(game.camera, p.x - 600, p.x - 100);
-  game.camera = clamp(cam, 0, game.level.end - W);
+  game.camera = clamp(cam, 0, game.level.end - W); // vertical: quando o jogador sobe, a câmera acompanha para mostrar as plataformas e banners de cima
+
+  var target = clamp(p.y + p.h / 2 - 330, MIN_CAM_Y, 0);
+  game.camY = snap ? target : game.camY + (target - game.camY) * 0.1;
+  if (Math.abs(target - game.camY) < 0.2) game.camY = target;
 }
 /* ---------- partículas e efeitos ---------- */
 
@@ -1208,7 +1216,7 @@ function activateFlag(ground) {
       spread: 3,
       up: 5
     });
-    _ui__WEBPACK_IMPORTED_MODULE_7__["toast"]('Checkpoint!', 1200);
+    _ui__WEBPACK_IMPORTED_MODULE_7__["toast"]('Checkpoint!', 1200, 'flag');
   }
 }
 
@@ -1226,6 +1234,8 @@ function fall() {
       title: 'Fim de jogo',
       text: 'Suas vidas acabaram. Tente de novo!',
       mainLabel: 'Tentar de novo',
+      mainIcon: 'retry',
+      titleIcon: 'heart',
       onMain: function onMain() {
         return startLevel(game.levelIndex);
       },
@@ -1241,7 +1251,7 @@ function fall() {
   p.grounded = true;
   p.invuln = 90;
   updateCamera(true);
-  _ui__WEBPACK_IMPORTED_MODULE_7__["toast"]('Ops! -1 vida. Voltou ao checkpoint.');
+  _ui__WEBPACK_IMPORTED_MODULE_7__["toast"]('Ops! -1 vida. Voltou ao checkpoint.', 2200, 'fall');
 } // banner [E] mais próximo que ainda não foi resolvido
 
 
@@ -1638,18 +1648,30 @@ function drawParticles() {
 }
 
 function render() {
-  c.fillStyle = '#0a0a3a';
+  c.fillStyle = '#00003c'; // mesma cor do topo do fundo, para o céu continuar quando a câmera sobe
+
   c.fillRect(0, 0, W, H);
   c.save();
   if (game.shake > 0) c.translate((Math.random() - 0.5) * game.shake, (Math.random() - 0.5) * game.shake); //fundo com parallax
 
   var bgX = -game.camera * 0.4;
+  var bgY = -game.camY * 0.5;
 
   if (backgroundImage.complete) {
-    c.drawImage(backgroundImage, bgX, 0);
-    if (bgX + backgroundImage.width < W) c.drawImage(backgroundImage, bgX + backgroundImage.width, 0);
-  }
+    c.drawImage(backgroundImage, bgX, bgY);
+    if (bgX + backgroundImage.width < W) c.drawImage(backgroundImage, bgX + backgroundImage.width, bgY);
 
+    if (bgY > 0) {
+      var fade = c.createLinearGradient(0, bgY, 0, bgY + 50);
+      fade.addColorStop(0, '#00003c');
+      fade.addColorStop(1, 'rgba(0,0,60,0)');
+      c.fillStyle = fade;
+      c.fillRect(0, bgY, W, 50);
+    }
+  } //mundo (acompanha a câmera vertical)
+
+
+  c.translate(0, -game.camY);
   var gaps = voidGaps();
   drawGlow(gaps);
   drawNeon(gaps, 1, _levels__WEBPACK_IMPORTED_MODULE_4__["GROUND_Y"]);
@@ -1674,6 +1696,7 @@ function render() {
   drawNeon(gaps, 0.6, _levels__WEBPACK_IMPORTED_MODULE_4__["GROUND_Y"] + 14);
   drawParticles();
   c.restore();
+  _ui__WEBPACK_IMPORTED_MODULE_7__["setActionReady"](game.state === 'playing' && !!game.near && game.player.grounded);
 
   if (game.state === 'playing' || game.state === 'celebrate' || game.state === 'math' || game.state === 'paused') {
     _ui__WEBPACK_IMPORTED_MODULE_7__["setHud"]({
@@ -1708,79 +1731,88 @@ function loop(now) {
   if (steps === 5) acc = 0;
   render();
 }
-/* ---------- teclado ---------- */
+/* ---------- entrada: teclado e toque usam as mesmas ações ---------- */
 
 
-addEventListener('keydown', function (e) {
-  if (_ui__WEBPACK_IMPORTED_MODULE_7__["mathKeydown"](e)) return;
-  if (e.target && e.target.tagName === 'INPUT') return;
-
-  switch (e.code) {
-    case 'KeyA':
-    case 'ArrowLeft':
-      keys.left = true;
+function action(name, down) {
+  switch (name) {
+    case 'left':
+      keys.left = down;
       break;
 
-    case 'KeyD':
-    case 'ArrowRight':
-      keys.right = true;
+    case 'right':
+      keys.right = down;
       break;
 
-    case 'KeyW':
-    case 'ArrowUp':
-      if (!e.repeat) {
+    case 'jump':
+      if (down) {
+        if (!keys.jump) jumpBuffer = 6;
         keys.jump = true;
-        jumpBuffer = 6;
+      } else if (keys.jump) {
+        keys.jump = false;
+        jumpReleased = true;
       }
 
       break;
 
-    case 'KeyE':
-      if (!e.repeat) tryInteract();
+    case 'act':
+      if (down) tryInteract();
       break;
+  }
+}
 
-    case 'KeyP':
-    case 'Escape':
-      if (!e.repeat) togglePause();
-      break;
+var KEY_ACTIONS = {
+  KeyA: 'left',
+  ArrowLeft: 'left',
+  KeyD: 'right',
+  ArrowRight: 'right',
+  KeyW: 'jump',
+  ArrowUp: 'jump',
+  KeyE: 'act'
+};
+addEventListener('keydown', function (e) {
+  if (_ui__WEBPACK_IMPORTED_MODULE_7__["mathKeydown"](e)) return;
+  if (e.target && e.target.tagName === 'INPUT') return;
+
+  if (e.code === 'KeyP' || e.code === 'Escape') {
+    if (!e.repeat) togglePause();
+  } else if (KEY_ACTIONS[e.code] && !e.repeat) {
+    action(KEY_ACTIONS[e.code], true);
   }
 
   if (e.code.startsWith('Arrow')) e.preventDefault();
 });
 addEventListener('keyup', function (e) {
-  switch (e.code) {
-    case 'KeyA':
-    case 'ArrowLeft':
-      keys.left = false;
-      break;
-
-    case 'KeyD':
-    case 'ArrowRight':
-      keys.right = false;
-      break;
-
-    case 'KeyW':
-    case 'ArrowUp':
-      keys.jump = false;
-      jumpReleased = true;
-      break;
-  }
+  var name = KEY_ACTIONS[e.code];
+  if (name && name !== 'act') action(name, false);
 });
 addEventListener('blur', function () {
   resetInput();
   if (game.state === 'playing') togglePause();
 });
-/* ---------- ajuste de tamanho e início ---------- */
+/* ---------- ajuste de tamanho, celular e início ---------- */
 
+var isTouch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
+document.body.classList.toggle('touch', isTouch);
 var gameEl = document.getElementById('game');
 
 function fit() {
-  gameEl.style.transform = "scale(".concat(Math.min(innerWidth / W, innerHeight / H), ")");
+  var vv = window.visualViewport;
+  var vw = vv ? vv.width : innerWidth;
+  var vh = vv ? vv.height : innerHeight;
+  gameEl.style.transform = "scale(".concat(Math.min(vw / W, vh / H), ")"); // em pé o celular fica pequeno demais: pausa e pede para girar
+
+  if (isTouch && vh > vw && game.state === 'playing') togglePause();
 }
 
 addEventListener('resize', fit);
+if (window.visualViewport) window.visualViewport.addEventListener('resize', fit);
 fit();
+_ui__WEBPACK_IMPORTED_MODULE_7__["init"]();
 _ui__WEBPACK_IMPORTED_MODULE_7__["buildPad"]();
+_ui__WEBPACK_IMPORTED_MODULE_7__["bindTouch"](action);
+_ui__WEBPACK_IMPORTED_MODULE_7__["bindPauseButton"](togglePause);
+_ui__WEBPACK_IMPORTED_MODULE_7__["bindFullscreen"]();
 _ui__WEBPACK_IMPORTED_MODULE_7__["setCharImages"]({
   boy: SPRITES.boy.idle[0].src,
   girl: SPRITES.girl.idle[0].src
@@ -1796,6 +1828,68 @@ _ui__WEBPACK_IMPORTED_MODULE_7__["bindTitle"]({
 });
 goTitle();
 requestAnimationFrame(loop);
+
+/***/ }),
+
+/***/ "./src/js/icons.js":
+/*!*************************!*\
+  !*** ./src/js/icons.js ***!
+  \*************************/
+/*! exports provided: icon, hydrateIcons */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "icon", function() { return icon; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "hydrateIcons", function() { return hydrateIcons; });
+// Ícones em SVG (traço arredondado, herdam a cor do texto). Uso: icon('clock') ou <span data-icon="clock">
+var S = 'fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"';
+var F = 'fill="currentColor" stroke="none"';
+var PATHS = {
+  clock: [S, '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>'],
+  heart: [F, '<path d="M12 20.8C5 15.6 3 12.2 3 8.9 3 6.3 5 4.5 7.4 4.5c1.8 0 3.2 1 4.6 2.8 1.4-1.8 2.8-2.8 4.6-2.8C19 4.5 21 6.3 21 8.9c0 3.3-2 6.7-9 11.9z"/>'],
+  flag: [S, '<path d="M6 21V4"/><path d="M6 5h12l-3 4 3 4H6"/>'],
+  calc: [S, '<rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8"/><circle cx="9" cy="13" r=".8" fill="currentColor"/><circle cx="15" cy="13" r=".8" fill="currentColor"/><circle cx="9" cy="17" r=".8" fill="currentColor"/><circle cx="15" cy="17" r=".8" fill="currentColor"/>'],
+  check: [S, '<path d="M5 12.5l4.5 4.5L19 7.5"/>'],
+  cross: [S, '<path d="M6 6l12 12M18 6L6 18"/>'],
+  fall: [S, '<path d="M12 3v11"/><path d="M7.5 10L12 14.5 16.5 10"/><path d="M4 20h16"/>'],
+  target: [S, '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor"/>'],
+  trophy: [S, '<path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5v2a3 3 0 0 0 3 3"/><path d="M16 6h3v2a3 3 0 0 1-3 3"/><path d="M12 13v4"/><path d="M8.5 20h7"/>'],
+  star: [F, '<path d="M12 2.5l2.9 6.2 6.6.7-4.9 4.6 1.4 6.6L12 17.2 6 20.6l1.4-6.6L2.5 9.4l6.6-.7z"/>'],
+  play: [F, '<path d="M8 4.8l11.5 7.2L8 19.2z"/>'],
+  retry: [S, '<path d="M20 11.5a8 8 0 1 0-2.4 5.9"/><path d="M20.5 4v7.5H13"/>'],
+  home: [S, '<path d="M4 11.5L12 4l8 7.5"/><path d="M6 10v10h12V10"/><path d="M10 20v-5h4v5"/>'],
+  next: [S, '<path d="M5 12h13"/><path d="M13 6l6 6-6 6"/>'],
+  pause: [F, '<rect x="6" y="4.5" width="4.2" height="15" rx="1.2"/><rect x="13.8" y="4.5" width="4.2" height="15" rx="1.2"/>'],
+  plus: [S, '<path d="M12 5v14M5 12h14"/>'],
+  minus: [S, '<path d="M5 12h14"/>'],
+  plusminus: [S, '<path d="M8 3.5v9M3.5 8h9"/><path d="M13 19h8"/><path d="M19 5L6 19"/>'],
+  lock: [S, '<rect x="5" y="11" width="14" height="9.5" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'],
+  left: [S, '<path d="M15 5l-7 7 7 7"/>'],
+  right: [S, '<path d="M9 5l7 7-7 7"/>'],
+  up: [S, '<path d="M5 15l7-7 7 7"/>'],
+  backspace: [S, '<path d="M21 5H9l-6 7 6 7h12z"/><path d="M12.5 9.5l5 5M17.5 9.5l-5 5"/>'],
+  users: [S, '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.4 2.7-6 6-6s6 2.6 6 6"/><circle cx="17.5" cy="9" r="2.5"/><path d="M16.5 14.2c2.7.2 4.5 2.3 4.5 5.3"/>'],
+  fullscreen: [S, '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>'],
+  rotate: [S, '<rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 18h2"/>'],
+  runner: [S, '<circle cx="14" cy="4.5" r="2"/><path d="M8 21l3.5-6 3 .5L16 21"/><path d="M11.5 15l-1-5 4.5-1 2 3.5 3 .5"/><path d="M10.5 10L7 11.5"/>'],
+  sparkle: [F, '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.8 2.2 2.2.8-2.2.8L19 21l-.8-2.2-2.2-.8 2.2-.8z"/>']
+};
+function icon(name, size) {
+  var p = PATHS[name];
+  if (!p) return '';
+  var dim = size ? " width=\"".concat(size, "\" height=\"").concat(size, "\"") : '';
+  return "<svg class=\"ico\" viewBox=\"0 0 24 24\"".concat(dim, " ").concat(p[0], " aria-hidden=\"true\">").concat(p[1], "</svg>");
+} // troca <span data-icon="nome"> pelo SVG correspondente
+
+function hydrateIcons() {
+  var root = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : document;
+  root.querySelectorAll('[data-icon]').forEach(function (el) {
+    el.innerHTML = icon(el.dataset.icon);
+    el.removeAttribute('data-icon');
+    el.classList.add('icon-slot');
+  });
+}
 
 /***/ }),
 
@@ -2075,18 +2169,23 @@ function saveResult(level, _ref2) {
 /*!**********************!*\
   !*** ./src/js/ui.js ***!
   \**********************/
-/*! exports provided: fmt, showScreen, setHudVisible, setHud, resetHudCache, toast, flash, bindTitle, setGroupName, focusGroupName, setCharImages, renderSelect, buildPad, isMathOpen, openMath, closeMath, mathKeydown, renderResults, showPause */
+/*! exports provided: fmt, init, showScreen, setHudVisible, setHud, resetHudCache, setActionReady, toast, flash, bindTouch, bindPauseButton, bindFullscreen, bindTitle, setGroupName, focusGroupName, setCharImages, renderSelect, buildPad, isMathOpen, openMath, closeMath, mathKeydown, renderResults, showPause */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "fmt", function() { return fmt; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "init", function() { return init; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "showScreen", function() { return showScreen; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setHudVisible", function() { return setHudVisible; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setHud", function() { return setHud; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "resetHudCache", function() { return resetHudCache; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setActionReady", function() { return setActionReady; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "toast", function() { return toast; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "flash", function() { return flash; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindTouch", function() { return bindTouch; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindPauseButton", function() { return bindPauseButton; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindFullscreen", function() { return bindFullscreen; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindTitle", function() { return bindTitle; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setGroupName", function() { return setGroupName; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "focusGroupName", function() { return focusGroupName; });
@@ -2100,7 +2199,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "renderResults", function() { return renderResults; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "showPause", function() { return showPause; });
 /* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./math */ "./src/js/math.js");
+/* harmony import */ var _icons__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./icons */ "./src/js/icons.js");
 // Camadas HTML por cima do canvas: painel, conta, resultados, menus
+
 
 
 var $ = function $(id) {
@@ -2108,22 +2209,43 @@ var $ = function $(id) {
 };
 
 var SCREENS = ['title', 'select', 'math', 'results', 'pause'];
+var OP_ICON = {
+  '+': 'plus',
+  '-': 'minus'
+};
 var fmt = function fmt(s) {
   return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(Math.floor(s % 60)).padStart(2, '0');
 };
+function init() {
+  Object(_icons__WEBPACK_IMPORTED_MODULE_1__["hydrateIcons"])();
+}
 function showScreen(name) {
   SCREENS.forEach(function (s) {
     $('screen-' + s).hidden = s !== name;
   });
+  document.body.classList.toggle('overlay-open', !!name);
   document.querySelectorAll('.confetti').forEach(function (c) {
     return c.remove();
   });
 }
 /* ---------- painel ---------- */
 
+var ctrlTimer;
 function setHudVisible(visible) {
   $('hud').hidden = !visible;
-  $('ctrl').hidden = !visible;
+  document.body.classList.toggle('in-level', visible);
+  $('ctrl').hidden = !visible || document.body.classList.contains('touch');
+
+  if (visible) {
+    // a dica de teclas some sozinha para não cobrir o cenário
+    $('ctrl').classList.remove('fade');
+    clearTimeout(ctrlTimer);
+    ctrlTimer = setTimeout(function () {
+      return $('ctrl').classList.add('fade');
+    }, 7000);
+  }
+
+  if (!visible) setActionReady(false);
 }
 var lastHud = '';
 function setHud(_ref) {
@@ -2139,7 +2261,7 @@ function setHud(_ref) {
   lastHud = key;
   $('hud-level').textContent = "".concat(level, "/").concat(levels);
   $('hud-time').textContent = fmt(time);
-  $('hud-contas-label').textContent = "Contas ".concat(contas, "/").concat(totalContas);
+  $('hud-contas').textContent = "".concat(contas, "/").concat(totalContas);
   $('hud-pips').innerHTML = Array.from({
     length: totalContas
   }, function (_, i) {
@@ -2148,17 +2270,25 @@ function setHud(_ref) {
   $('hud-hearts').innerHTML = Array.from({
     length: maxLives
   }, function (_, i) {
-    return "<span class=\"heart ".concat(i < lives ? '' : 'off', "\"></span>");
+    return "<span class=\"icon-slot ".concat(i < lives ? '' : 'off', "\">").concat(Object(_icons__WEBPACK_IMPORTED_MODULE_1__["icon"])('heart'), "</span>");
   }).join('');
 }
 function resetHudCache() {
   lastHud = '';
 }
+var actionReady = false;
+function setActionReady(ready) {
+  if (ready === actionReady) return;
+  actionReady = ready;
+  $('t-act').classList.toggle('ready', ready);
+}
 var toastTimer;
 function toast(text) {
   var ms = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 2200;
+  var iconName = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'flag';
   var t = $('toast');
-  t.textContent = text;
+  t.innerHTML = "<span class=\"icon-slot\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_1__["icon"])(iconName), "</span><span></span>");
+  t.lastChild.textContent = text;
   t.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(function () {
@@ -2170,6 +2300,52 @@ function flash() {
   f.classList.remove('go');
   void f.offsetWidth;
   f.classList.add('go');
+}
+/* ---------- entrada por toque e tela cheia ---------- */
+// ação: 'left' | 'right' | 'jump' | 'act' ; down(true) ao tocar e down(false) ao soltar
+
+function bindTouch(handler) {
+  var map = {
+    't-left': 'left',
+    't-right': 'right',
+    't-jump': 'jump',
+    't-act': 'act'
+  };
+  Object.keys(map).forEach(function (id) {
+    var b = $(id);
+
+    var release = function release(e) {
+      b.classList.remove('on');
+      handler(map[id], false);
+    };
+
+    b.addEventListener('pointerdown', function (e) {
+      e.preventDefault();
+      b.setPointerCapture(e.pointerId);
+      b.classList.add('on');
+      handler(map[id], true);
+    });
+    b.addEventListener('pointerup', release);
+    b.addEventListener('pointercancel', release);
+    b.addEventListener('lostpointercapture', release);
+    b.addEventListener('contextmenu', function (e) {
+      return e.preventDefault();
+    });
+  });
+}
+function bindPauseButton(onPause) {
+  $('btn-pause').addEventListener('click', onPause);
+}
+function bindFullscreen() {
+  var el = document.documentElement;
+  var can = !!(el.requestFullscreen && document.fullscreenEnabled) && document.body.classList.contains('touch');
+  document.querySelectorAll('[data-fs]').forEach(function (b) {
+    b.hidden = !can;
+
+    b.onclick = function () {
+      if (document.fullscreenElement) document.exitFullscreen();else el.requestFullscreen()["catch"](function () {});
+    };
+  });
 }
 /* ---------- tela inicial e seleção ---------- */
 
@@ -2190,7 +2366,8 @@ function setGroupName(name) {
   $('group-name').value = name;
 }
 function focusGroupName() {
-  $('group-name').focus();
+  // no celular o teclado virtual só abre quando a pessoa toca no campo
+  if (!document.body.classList.contains('touch')) $('group-name').focus();
 }
 function setCharImages(_ref3) {
   var boy = _ref3.boy,
@@ -2213,14 +2390,18 @@ function renderSelect(_ref4) {
     return n === 1 || progress[n - 1] && progress[n - 1].stars > 0;
   };
 
+  var kindIcon = function kindIcon(l) {
+    return l.math.ops.length > 1 ? l.id === levels.length ? 'trophy' : 'plusminus' : OP_ICON[l.math.ops[0]];
+  };
+
   $('lvls').innerHTML = levels.map(function (l) {
     var p = progress[l.id];
     var lock = !unlocked(l.id);
     var stars = lock ? '' : [0, 1, 2].map(function (i) {
-      return "<span class=\"star ".concat(p && i < p.stars ? '' : 'off', "\"></span>");
+      return "<span class=\"icon-slot ".concat(p && i < p.stars ? '' : 'off', "\">").concat(Object(_icons__WEBPACK_IMPORTED_MODULE_1__["icon"])('star'), "</span>");
     }).join('');
-    var best = lock ? 'Bloqueada' : p && p.best !== null ? "Melhor ".concat(fmt(p.best)) : 'Nova';
-    return "<button class=\"lvl ".concat(lock ? 'lock' : '', " ").concat(l.id === selected ? 'sel' : '', "\" data-level=\"").concat(l.id, "\" ").concat(lock ? 'disabled' : '', ">\n            <span class=\"n\">").concat(lock ? '🔒' : l.id, "</span><span>").concat(l.name, "</span><span class=\"mini\">").concat(stars, "</span><span class=\"best\">").concat(best, "</span></button>");
+    var best = lock ? 'Bloqueada' : p && p.best !== null ? "<span class=\"icon-slot\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_1__["icon"])('clock'), "</span>").concat(fmt(p.best)) : 'Nova';
+    return "<button class=\"lvl ".concat(lock ? 'lock' : '', " ").concat(l.id === selected ? 'sel' : '', "\" data-level=\"").concat(l.id, "\" ").concat(lock ? 'disabled' : '', ">\n            <span class=\"n\">").concat(lock ? "<span class=\"icon-slot\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_1__["icon"])('lock'), "</span>") : l.id, "</span>\n            <span class=\"op\"><span class=\"icon-slot\">").concat(Object(_icons__WEBPACK_IMPORTED_MODULE_1__["icon"])(kindIcon(l)), "</span>").concat(l.name, "</span>\n            <span class=\"mini\">").concat(stars, "</span><span class=\"best\">").concat(best, "</span></button>");
   }).join('');
   $('lvls').querySelectorAll('.lvl:not(.lock)').forEach(function (b) {
     b.onclick = function () {
@@ -2238,9 +2419,7 @@ function renderSelect(_ref4) {
     return onCharacter('girl');
   };
 
-  $('btn-play').textContent = "Jogar fase ".concat(selected);
-  $('btn-play').style.width = 'auto';
-  $('btn-play').style.padding = '0 32px';
+  $('btn-play-label').textContent = "Jogar fase ".concat(selected);
   $('btn-play').onclick = onPlay;
 }
 /* ---------- conta ---------- */
@@ -2259,7 +2438,7 @@ function buildPad() {
   var keys = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map(function (n) {
     return "<button class=\"key\" data-k=\"".concat(n, "\">").concat(n, "</button>");
   });
-  keys.push('<button class="key del" data-k="del">apagar</button>', '<button class="key ok" data-k="ok">OK</button>');
+  keys.push("<button class=\"key del\" data-k=\"del\" aria-label=\"Apagar\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_1__["icon"])('backspace'), "</button>"), "<button class=\"key ok\" data-k=\"ok\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_1__["icon"])('check'), "OK</button>"));
   pad.innerHTML = keys.join('');
 
   pad.onclick = function (e) {
@@ -2358,12 +2537,18 @@ function renderResults(_ref6) {
       onNext = _ref6.onNext,
       onRetry = _ref6.onRetry,
       onMenu = _ref6.onMenu;
+
+  var row = function row(ic, label, value) {
+    var cls = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : '';
+    return "<div class=\"".concat(cls, "\"><span class=\"icon-slot\">").concat(Object(_icons__WEBPACK_IMPORTED_MODULE_1__["icon"])(ic), "</span><span>").concat(label, "</span><b>").concat(value, "</b></div>");
+  };
+
   $('res-title').textContent = "Fase ".concat(level.id, " completa!");
   $('res-stars').innerHTML = [0, 1, 2].map(function (i) {
-    return "<span class=\"star ".concat(i < stars ? '' : 'off', "\"></span>");
+    return "<span class=\"icon-slot ".concat(i < stars ? '' : 'off', "\">").concat(Object(_icons__WEBPACK_IMPORTED_MODULE_1__["icon"])('star'), "</span>");
   }).join('');
-  var best = bestInfo.isBest ? '<div class="new"><span>Melhor tempo</span><b>novo!</b></div>' : "<div><span>Melhor tempo</span><b>".concat(fmt(bestInfo.previousBest), "</b></div>");
-  $('res-rows').innerHTML = "<div><span>Tempo</span><b>".concat(fmt(time), "</b></div><div><span>Meta</span><b>").concat(fmt(goal), "</b></div>\n        <div><span>Acertos</span><b>").concat(correct, " de ").concat(total, "</b></div><div><span>Erros</span><b>").concat(errors, "</b></div>\n        <div><span>Quedas</span><b>").concat(falls, "</b></div>").concat(best);
+  var best = bestInfo.isBest ? row('trophy', 'Melhor tempo', 'novo!', 'new') : row('trophy', 'Melhor tempo', fmt(bestInfo.previousBest));
+  $('res-rows').innerHTML = row('clock', 'Tempo', fmt(time)) + row('target', 'Meta', fmt(goal)) + row('check', 'Acertos', "".concat(correct, " de ").concat(total)) + row('cross', 'Erros', errors) + row('fall', 'Quedas', falls) + best;
   var names = {
     '+': 'Soma',
     '-': 'Subtração'
@@ -2372,7 +2557,7 @@ function renderResults(_ref6) {
     var _byOp$op = byOp[op],
         ok = _byOp$op.ok,
         n = _byOp$op.n;
-    return "<span>".concat(names[op], "</span><div class=\"bar\"><i style=\"width:").concat(n ? Math.round(ok / n * 100) : 0, "%\"></i></div><span>").concat(ok, " de ").concat(n, "</span>");
+    return "<span><span class=\"icon-slot\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_1__["icon"])(OP_ICON[op]), "</span>").concat(names[op], "</span><div class=\"bar\"><i style=\"width:").concat(n ? Math.round(ok / n * 100) : 0, "%\"></i></div><span>").concat(ok, " de ").concat(n, "</span>");
   }).join('');
   var hasNext = level.id < levels;
   $('res-next').hidden = !hasNext;
@@ -2403,11 +2588,17 @@ function showPause(_ref7) {
   var title = _ref7.title,
       text = _ref7.text,
       mainLabel = _ref7.mainLabel,
+      _ref7$mainIcon = _ref7.mainIcon,
+      mainIcon = _ref7$mainIcon === void 0 ? 'play' : _ref7$mainIcon,
+      _ref7$titleIcon = _ref7.titleIcon,
+      titleIcon = _ref7$titleIcon === void 0 ? 'pause' : _ref7$titleIcon,
       onMain = _ref7.onMain,
       onMenu = _ref7.onMenu;
-  $('pause-title').textContent = title;
+  $('pause-icon').innerHTML = "<span class=\"icon-slot\" style=\"font-size:52px\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_1__["icon"])(titleIcon), "</span>");
+  $('pause-title-text').textContent = title;
   $('pause-text').textContent = text;
-  $('pause-main').textContent = mainLabel;
+  $('pause-main-label').textContent = mainLabel;
+  $('pause-main').firstElementChild.innerHTML = Object(_icons__WEBPACK_IMPORTED_MODULE_1__["icon"])(mainIcon);
   $('pause-main').onclick = onMain;
   $('pause-menu').onclick = onMenu;
   showScreen('pause');

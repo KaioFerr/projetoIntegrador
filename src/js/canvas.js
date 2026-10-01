@@ -20,6 +20,7 @@ canvas.height = H
 const gravity = 1.4
 const STEP = 1000 / 60
 const MAX_LIVES = 5
+const MIN_CAM_Y = -280 // quanto a câmera pode subir
 const FONT = '"Jockey One", "Arial Narrow", sans-serif'
 
 //função que cria imagens
@@ -66,6 +67,7 @@ const game = {
     level: LEVELS[0],
     character: 'boy',
     camera: 0,
+    camY: 0,
     time: 0,
     lives: MAX_LIVES,
     contas: 0,
@@ -94,6 +96,7 @@ function loadLevel(index) {
     game.levelIndex = index
     game.level = level
     game.camera = 0
+    game.camY = 0
     game.time = 0
     game.lives = MAX_LIVES
     game.contas = 0
@@ -125,6 +128,11 @@ function updateCamera(snap) {
     const p = game.player
     let cam = snap ? p.x - 300 : clamp(game.camera, p.x - 600, p.x - 100)
     game.camera = clamp(cam, 0, game.level.end - W)
+
+    // vertical: quando o jogador sobe, a câmera acompanha para mostrar as plataformas e banners de cima
+    const target = clamp(p.y + p.h / 2 - 330, MIN_CAM_Y, 0)
+    game.camY = snap ? target : game.camY + (target - game.camY) * 0.1
+    if (Math.abs(target - game.camY) < 0.2) game.camY = target
 }
 
 /* ---------- partículas e efeitos ---------- */
@@ -247,7 +255,7 @@ function activateFlag(ground) {
         flag.active = true
         game.checkpoint = flag
         burst(flag.x, GROUND_Y - 50, 10, ['255,255,138', '56,214,196'], { spread: 3, up: 5 })
-        ui.toast('Checkpoint!', 1200)
+        ui.toast('Checkpoint!', 1200, 'flag')
     }
 }
 
@@ -264,6 +272,8 @@ function fall() {
             title: 'Fim de jogo',
             text: 'Suas vidas acabaram. Tente de novo!',
             mainLabel: 'Tentar de novo',
+            mainIcon: 'retry',
+            titleIcon: 'heart',
             onMain: () => startLevel(game.levelIndex),
             onMenu: goSelect
         })
@@ -276,7 +286,7 @@ function fall() {
     p.grounded = true
     p.invuln = 90
     updateCamera(true)
-    ui.toast('Ops! -1 vida. Voltou ao checkpoint.')
+    ui.toast('Ops! -1 vida. Voltou ao checkpoint.', 2200, 'fall')
 }
 
 // banner [E] mais próximo que ainda não foi resolvido
@@ -601,7 +611,7 @@ function drawParticles() {
 }
 
 function render() {
-    c.fillStyle = '#0a0a3a'
+    c.fillStyle = '#00003c' // mesma cor do topo do fundo, para o céu continuar quando a câmera sobe
     c.fillRect(0, 0, W, H)
 
     c.save()
@@ -609,11 +619,21 @@ function render() {
 
     //fundo com parallax
     const bgX = -game.camera * 0.4
+    const bgY = -game.camY * 0.5
     if (backgroundImage.complete) {
-        c.drawImage(backgroundImage, bgX, 0)
-        if (bgX + backgroundImage.width < W) c.drawImage(backgroundImage, bgX + backgroundImage.width, 0)
+        c.drawImage(backgroundImage, bgX, bgY)
+        if (bgX + backgroundImage.width < W) c.drawImage(backgroundImage, bgX + backgroundImage.width, bgY)
+        if (bgY > 0) {
+            const fade = c.createLinearGradient(0, bgY, 0, bgY + 50)
+            fade.addColorStop(0, '#00003c')
+            fade.addColorStop(1, 'rgba(0,0,60,0)')
+            c.fillStyle = fade
+            c.fillRect(0, bgY, W, 50)
+        }
     }
 
+    //mundo (acompanha a câmera vertical)
+    c.translate(0, -game.camY)
     const gaps = voidGaps()
     drawGlow(gaps)
     drawNeon(gaps, 1, GROUND_Y)
@@ -635,6 +655,7 @@ function render() {
     drawParticles()
     c.restore()
 
+    ui.setActionReady(game.state === 'playing' && !!game.near && game.player.grounded)
     if (game.state === 'playing' || game.state === 'celebrate' || game.state === 'math' || game.state === 'paused') {
         ui.setHud({
             level: game.level.id,
@@ -665,53 +686,51 @@ function loop(now) {
     render()
 }
 
-/* ---------- teclado ---------- */
+/* ---------- entrada: teclado e toque usam as mesmas ações ---------- */
+function action(name, down) {
+    switch (name) {
+        case 'left':
+            keys.left = down
+            break
+        case 'right':
+            keys.right = down
+            break
+        case 'jump':
+            if (down) {
+                if (!keys.jump) jumpBuffer = 6
+                keys.jump = true
+            } else if (keys.jump) {
+                keys.jump = false
+                jumpReleased = true
+            }
+            break
+        case 'act':
+            if (down) tryInteract()
+            break
+    }
+}
+
+const KEY_ACTIONS = {
+    KeyA: 'left', ArrowLeft: 'left',
+    KeyD: 'right', ArrowRight: 'right',
+    KeyW: 'jump', ArrowUp: 'jump',
+    KeyE: 'act'
+}
+
 addEventListener('keydown', e => {
     if (ui.mathKeydown(e)) return
     if (e.target && e.target.tagName === 'INPUT') return
-    switch (e.code) {
-        case 'KeyA':
-        case 'ArrowLeft':
-            keys.left = true
-            break
-        case 'KeyD':
-        case 'ArrowRight':
-            keys.right = true
-            break
-        case 'KeyW':
-        case 'ArrowUp':
-            if (!e.repeat) {
-                keys.jump = true
-                jumpBuffer = 6
-            }
-            break
-        case 'KeyE':
-            if (!e.repeat) tryInteract()
-            break
-        case 'KeyP':
-        case 'Escape':
-            if (!e.repeat) togglePause()
-            break
+    if (e.code === 'KeyP' || e.code === 'Escape') {
+        if (!e.repeat) togglePause()
+    } else if (KEY_ACTIONS[e.code] && !e.repeat) {
+        action(KEY_ACTIONS[e.code], true)
     }
     if (e.code.startsWith('Arrow')) e.preventDefault()
 })
 
 addEventListener('keyup', e => {
-    switch (e.code) {
-        case 'KeyA':
-        case 'ArrowLeft':
-            keys.left = false
-            break
-        case 'KeyD':
-        case 'ArrowRight':
-            keys.right = false
-            break
-        case 'KeyW':
-        case 'ArrowUp':
-            keys.jump = false
-            jumpReleased = true
-            break
-    }
+    const name = KEY_ACTIONS[e.code]
+    if (name && name !== 'act') action(name, false)
 })
 
 addEventListener('blur', () => {
@@ -719,15 +738,28 @@ addEventListener('blur', () => {
     if (game.state === 'playing') togglePause()
 })
 
-/* ---------- ajuste de tamanho e início ---------- */
+/* ---------- ajuste de tamanho, celular e início ---------- */
+const isTouch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window
+document.body.classList.toggle('touch', isTouch)
+
 const gameEl = document.getElementById('game')
 function fit() {
-    gameEl.style.transform = `scale(${Math.min(innerWidth / W, innerHeight / H)})`
+    const vv = window.visualViewport
+    const vw = vv ? vv.width : innerWidth
+    const vh = vv ? vv.height : innerHeight
+    gameEl.style.transform = `scale(${Math.min(vw / W, vh / H)})`
+    // em pé o celular fica pequeno demais: pausa e pede para girar
+    if (isTouch && vh > vw && game.state === 'playing') togglePause()
 }
 addEventListener('resize', fit)
+if (window.visualViewport) window.visualViewport.addEventListener('resize', fit)
 fit()
 
+ui.init()
 ui.buildPad()
+ui.bindTouch(action)
+ui.bindPauseButton(togglePause)
+ui.bindFullscreen()
 ui.setCharImages({ boy: SPRITES.boy.idle[0].src, girl: SPRITES.girl.idle[0].src })
 ui.bindTitle({
     onStart: name => {
@@ -737,3 +769,4 @@ ui.bindTitle({
 })
 goTitle()
 requestAnimationFrame(loop)
+

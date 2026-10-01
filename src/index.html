@@ -2,7 +2,8 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#000000" />
     <title>McLover's Game</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jockey+One&display=swap" />
@@ -14,7 +15,7 @@
         --black: #000;
         --font: 'Jockey One', 'Arial Narrow', sans-serif;
       }
-      * { box-sizing: border-box; }
+      * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
       html, body { height: 100%; }
       body {
         margin: 0;
@@ -25,38 +26,68 @@
         overflow: hidden;
         font-family: var(--font);
         color: var(--yellow);
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: none;
       }
       #game { position: relative; width: 1024px; height: 576px; flex: none; transform-origin: center; }
       canvas { display: block; image-rendering: pixelated; }
       button { font-family: var(--font); }
       [hidden] { display: none !important; }
+      .ico { width: 1em; height: 1em; display: block; }
+      .icon-slot { display: inline-flex; width: 1em; height: 1em; flex: none; }
 
-      /* painel */
-      #hud { position: absolute; left: 16px; right: 16px; top: 14px; display: flex; gap: 10px; z-index: 5; pointer-events: none; }
+      /* painel compacto: ícone + valor, translúcido para não cobrir o cenário */
+      #hud { position: absolute; left: 12px; right: 12px; top: 10px; display: flex; gap: 8px; align-items: center; z-index: 5; pointer-events: none; }
       #hud .sp { flex: 1; }
-      .chip { background: var(--red); border: 2.5px solid var(--black); border-radius: 12px; padding: 6px 15px; display: flex; flex-direction: column; justify-content: center; }
-      .chip small { font-size: 14px; letter-spacing: .14em; text-transform: uppercase; opacity: .85; line-height: 1.1; }
-      .chip strong { font-weight: 400; font-size: 35px; line-height: 1; font-variant-numeric: tabular-nums; }
-      .hearts, .pips { display: flex; gap: 5px; margin-top: 4px; }
-      .heart { width: 23px; height: 23px; background: var(--yellow); clip-path: polygon(50% 100%, 0 38%, 0 14%, 25% 0, 50% 22%, 75% 0, 100% 14%, 100% 38%); }
-      .heart.off { background: var(--red-d); }
-      .pip { width: 18px; height: 18px; border-radius: 4px; background: var(--red-d); }
+      .chip { background: rgba(151,0,0,.86); border: 2px solid var(--black); border-radius: 12px; padding: 0 12px; height: 40px; display: flex; align-items: center; gap: 8px; font-size: 22px; }
+      .chip strong { font-weight: 400; font-size: 26px; line-height: 1; font-variant-numeric: tabular-nums; }
+      .chip .icon-slot { font-size: 22px; }
+      .hearts, .pips { display: flex; gap: 3px; align-items: center; }
+      .hearts .icon-slot { font-size: 19px; color: var(--yellow); }
+      .hearts .off { color: var(--red-d); }
+      .pip { width: 10px; height: 16px; border-radius: 3px; background: var(--red-d); }
       .pip.on { background: var(--yellow); }
-      #ctrl { position: absolute; left: 16px; top: 113px; z-index: 5; display: flex; gap: 16px; background: rgba(0,0,0,.65); border-radius: 10px; padding: 6px 14px; font-size: 17px; pointer-events: none; }
+      .iconbtn { pointer-events: auto; cursor: pointer; width: 40px; height: 40px; border-radius: 12px; border: 2px solid var(--black); background: rgba(151,0,0,.86); color: var(--yellow); font-size: 22px; display: grid; place-items: center; padding: 0; }
+      .iconbtn:hover { background: #b00000; }
+      #ctrl { position: absolute; left: 12px; top: 58px; z-index: 5; display: flex; gap: 14px; background: rgba(0,0,0,.6); border-radius: 10px; padding: 5px 12px; font-size: 16px; pointer-events: none; transition: opacity .6s; }
+      #ctrl.fade { opacity: 0; }
       kbd { background: var(--yellow); color: var(--black); border-radius: 4px; padding: 0 6px; margin-right: 3px; font-family: inherit; }
-      #toast { position: absolute; left: 50%; top: 22%; transform: translateX(-50%); background: var(--red); border: 2.5px solid var(--black); border-radius: 12px; padding: 5px 20px; font-size: 25px; z-index: 8; opacity: 0; transition: opacity .25s; white-space: nowrap; pointer-events: none; }
+      #toast { position: absolute; left: 50%; top: 70px; transform: translateX(-50%); background: var(--red); border: 2.5px solid var(--black); border-radius: 12px; padding: 4px 18px; font-size: 24px; z-index: 8; opacity: 0; transition: opacity .25s; white-space: nowrap; pointer-events: none; display: flex; align-items: center; gap: 8px; }
+      #toast .icon-slot { font-size: 24px; }
       #toast.show { opacity: 1; }
       #flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 9; }
       #flash.go { animation: flash .6s; }
       @keyframes flash { 30% { opacity: .9; } to { opacity: 0; } }
 
+      /* controles de toque */
+      #touch { position: absolute; inset: 0; z-index: 6; pointer-events: none; display: none; }
+      body.touch #touch { display: block; }
+      body:not(.in-level) #touch, body.overlay-open #touch { visibility: hidden; }
+      .tbtn { position: absolute; bottom: 20px; width: 100px; height: 100px; border-radius: 50%; background: rgba(151,0,0,.72); border: 3px solid var(--black); color: var(--yellow); font-size: 52px; display: grid; place-items: center; pointer-events: auto; touch-action: none; padding: 0; }
+      .tbtn.on { background: var(--yellow); color: var(--black); }
+      #t-left { left: 22px; }
+      #t-right { left: 138px; }
+      #t-jump { right: 22px; }
+      #t-act { right: 138px; font-size: 54px; background: rgba(0,0,0,.7); opacity: 0; transform: scale(.7); transition: opacity .15s, transform .15s; pointer-events: none; }
+      #t-act.ready { opacity: 1; transform: none; pointer-events: auto; background: var(--yellow); color: var(--black); animation: ready 1s ease-in-out infinite; }
+      @keyframes ready { 50% { box-shadow: 0 0 0 10px rgba(255,255,138,.35); } }
+
+      #rotate { position: fixed; inset: 0; z-index: 100; background: #000; color: var(--yellow); display: none; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 24px; font-size: 28px; }
+      #rotate .icon-slot { font-size: 90px; animation: tilt 1.8s ease-in-out infinite; }
+      @keyframes tilt { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(90deg); } }
+      @media (orientation: portrait) { body.touch #rotate { display: flex; } }
+
       /* camadas de tela */
       .overlay { position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; background: rgba(0,0,0,.6); }
       .overlay.shade { background: rgba(0,0,0,.45); }
+      .overlay .iconbtn.fs { position: absolute; top: 12px; right: 12px; }
       h1 { font-weight: 400; font-size: 96px; margin: 0; line-height: 1; text-shadow: 4px 4px 0 #000; }
-      h2 { font-weight: 400; background: var(--red); border-radius: 8px; padding: 8px 20px; font-size: 40px; margin: 0; }
-      input[type=text] { width: 561px; height: 56px; border-radius: 16px; border: 0; font: 400 32px var(--font); text-align: center; color: #333; }
-      .big { background: var(--red); color: var(--yellow); border: 2px solid var(--black); border-radius: 16px; width: 160px; height: 56px; font-size: 31px; cursor: pointer; }
+      h2 { font-weight: 400; background: var(--red); border-radius: 8px; padding: 8px 20px; font-size: 40px; margin: 0; display: flex; align-items: center; gap: 12px; }
+      h2 .icon-slot { font-size: 40px; }
+      input[type=text] { width: 561px; height: 56px; border-radius: 16px; border: 0; font: 400 32px var(--font); text-align: center; color: #333; user-select: text; -webkit-user-select: text; }
+      .big { background: var(--red); color: var(--yellow); border: 2px solid var(--black); border-radius: 16px; min-width: 160px; height: 56px; padding: 0 28px; font-size: 31px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
+      .big .icon-slot { font-size: 28px; }
       .big:hover { background: #b00000; }
       button:focus-visible, input:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
 
@@ -64,10 +95,14 @@
       .lvls { display: flex; gap: 14px; margin-top: 6px; }
       .lvl { cursor: pointer; width: 174px; background: var(--red); border: 2.5px solid var(--black); color: var(--yellow); border-radius: 16px; padding: 10px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 20px; }
       .lvl.sel { box-shadow: 0 0 0 4px var(--yellow); }
-      .lvl .n { font-size: 55px; line-height: 1; }
+      .lvl .n { font-size: 50px; line-height: 1; display: flex; align-items: center; gap: 6px; }
+      .lvl .n .icon-slot { font-size: 30px; }
+      .lvl .op { display: flex; align-items: center; gap: 6px; }
+      .lvl .op .icon-slot { font-size: 20px; }
       .lvl .mini { display: flex; gap: 3px; height: 25px; margin: 3px 0; }
-      .lvl .mini .star { width: 25px; height: 25px; transform: none; animation: none; }
-      .lvl .best { font-size: 18px; opacity: .85; }
+      .lvl .mini .icon-slot { font-size: 25px; color: var(--yellow); }
+      .lvl .mini .off { color: var(--red-d); }
+      .lvl .best { font-size: 18px; opacity: .85; display: flex; align-items: center; gap: 5px; }
       .lvl.lock { background: #3a1010; color: #8a6a6a; cursor: not-allowed; }
       .who { display: flex; gap: 16px; align-items: center; font-size: 26px; margin-top: 6px; }
       .who button { background: rgba(0,0,0,.6); border: 2.5px solid var(--black); border-radius: 14px; padding: 4px 16px 4px 6px; display: flex; align-items: center; gap: 8px; color: var(--yellow); font-size: 26px; cursor: pointer; }
@@ -76,41 +111,57 @@
 
       /* cartões (conta, resultados, pausa) */
       .card { background: var(--red); border: 3px solid var(--black); box-shadow: 0 0 0 3px var(--yellow); border-radius: 20px; padding: 22px 30px; width: 450px; text-align: center; }
-      .card h4 { margin: 0; font-weight: 400; font-size: 22px; letter-spacing: .1em; text-transform: uppercase; opacity: .85; }
+      .card h4 { margin: 0; font-weight: 400; font-size: 22px; letter-spacing: .1em; text-transform: uppercase; opacity: .85; display: flex; justify-content: center; align-items: center; gap: 8px; }
+      .mathcard { display: grid; grid-template-areas: "head" "pad" "hint"; gap: 0; }
+      .mc-head { grid-area: head; }
+      .mathcard .pad { grid-area: pad; }
+      .mathcard .hint { grid-area: hint; }
       .q { font-size: 76px; line-height: 1.05; margin: 4px 0 10px; font-variant-numeric: tabular-nums; }
       .ans { font-size: 49px; height: 72px; border-radius: 16px; background: #fff; color: var(--black); display: grid; place-items: center; margin-bottom: 14px; border: 2px solid var(--black); font-variant-numeric: tabular-nums; }
       .ans.bad { animation: shake .4s; background: #ffc9c9; }
       .ans.good { background: #c8f5d4; }
       @keyframes shake { 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
       .pad { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
-      .key { font: 400 31px var(--font); background: var(--black); color: var(--yellow); border: 2px solid var(--black); border-radius: 12px; padding: 8px 0; cursor: pointer; }
+      .key { font: 400 31px var(--font); background: var(--black); color: var(--yellow); border: 2px solid var(--black); border-radius: 12px; padding: 8px 0; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+      .key .icon-slot { font-size: 28px; }
       .key:hover { background: #222; }
       .key:active { transform: translateY(3px); }
       .key.ok { grid-column: span 2; background: var(--yellow); color: var(--black); }
       .key.del { background: var(--red-d); }
       .hint { font-size: 21px; margin: 10px 0 0; min-height: 26px; }
       .acts { display: flex; gap: 10px; justify-content: center; }
-      .acts .key { padding: 7px 24px; font-size: 27px; }
+      .acts .key { padding: 7px 22px; font-size: 27px; white-space: nowrap; }
       .acts .key.ok { grid-column: auto; }
+
+      /* conta no celular: cartão largo, pergunta à esquerda e teclado grande à direita */
+      body.touch .mathcard { width: 900px; grid-template-areas: "head pad" "hint pad"; grid-template-columns: 1fr 1.15fr; column-gap: 28px; align-items: center; padding: 20px 28px; }
+      body.touch .mathcard .pad { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+      body.touch .mathcard .key { font-size: 44px; padding: 14px 0; }
+      body.touch .mathcard .key.ok { grid-column: span 1; }
+      body.touch .mathcard .q { font-size: 84px; }
 
       /* resultados */
       .res { width: 573px; padding: 18px 30px 22px; }
       .res h3 { font-weight: 400; font-size: 57px; margin: 0; line-height: 1.1; }
       .stars { display: flex; justify-content: center; gap: 12px; margin: 8px 0; }
-      .star { width: 68px; height: 68px; background: var(--yellow); clip-path: polygon(50% 0, 62% 35%, 98% 36%, 69% 57%, 80% 92%, 50% 71%, 20% 92%, 31% 57%, 2% 36%, 38% 35%); transform: scale(0); animation: pop .5s cubic-bezier(.3, 1.6, .5, 1) forwards; }
-      .star.off { background: var(--red-d); }
-      .stars .star:nth-child(2) { animation-delay: .3s; }
-      .stars .star:nth-child(3) { animation-delay: .6s; }
+      .stars .icon-slot { font-size: 68px; color: var(--yellow); transform: scale(0); animation: pop .5s cubic-bezier(.3, 1.6, .5, 1) forwards; }
+      .stars .off { color: var(--red-d); }
+      .stars .icon-slot:nth-child(2) { animation-delay: .3s; }
+      .stars .icon-slot:nth-child(3) { animation-delay: .6s; }
       @keyframes pop { to { transform: scale(1); } }
       .rows { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 20px; text-align: left; margin: 10px 0; font-size: 23px; }
-      .rows div { display: flex; justify-content: space-between; border-bottom: 2px dashed rgba(255,255,138,.45); padding-bottom: 2px; gap: 10px; }
+      .rows div { display: flex; align-items: center; gap: 8px; border-bottom: 2px dashed rgba(255,255,138,.45); padding-bottom: 2px; }
+      .rows div .icon-slot { font-size: 22px; }
+      .rows div b { margin-left: auto; font-weight: 400; }
       .rows .new b { background: var(--yellow); color: var(--black); padding: 0 8px; border-radius: 6px; }
       .opbar { display: grid; grid-template-columns: auto 1fr auto; gap: 5px 10px; align-items: center; font-size: 19px; margin-bottom: 14px; text-align: left; }
+      .opbar span { display: flex; align-items: center; gap: 6px; }
       .opbar .bar { background: var(--red-d); border-radius: 99px; height: 13px; overflow: hidden; }
       .opbar i { display: block; height: 100%; background: var(--yellow); border-radius: 99px; }
       .confetti { position: absolute; top: -20px; width: 10px; height: 16px; animation: fallc 3s linear infinite; z-index: 11; pointer-events: none; }
       @keyframes fallc { to { transform: translateY(700px) rotate(720deg); } }
-      @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } .star { transform: scale(1); } }
+      #pause-title { display: flex; align-items: center; justify-content: center; gap: 12px; }
+      @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } .stars .icon-slot { transform: scale(1); } }
     </style>
   </head>
   <body>
@@ -118,11 +169,13 @@
       <canvas></canvas>
 
       <div id="hud" hidden>
-        <div class="chip"><small>Fase</small><strong id="hud-level">1/4</strong></div>
-        <div class="chip"><small>Tempo</small><strong id="hud-time">00:00</strong></div>
+        <div class="chip"><span data-icon="flag"></span><strong id="hud-level">1/4</strong></div>
+        <div class="chip"><span data-icon="clock"></span><strong id="hud-time">00:00</strong></div>
         <div class="sp"></div>
-        <div class="chip"><small id="hud-contas-label">Contas 0/8</small><div class="pips" id="hud-pips"></div></div>
-        <div class="chip"><small>Vidas</small><div class="hearts" id="hud-hearts"></div></div>
+        <div class="chip"><span data-icon="calc"></span><strong id="hud-contas">0/8</strong><div class="pips" id="hud-pips"></div></div>
+        <div class="chip"><div class="hearts" id="hud-hearts"></div></div>
+        <button class="iconbtn" id="btn-fs-hud" data-fs hidden aria-label="Tela cheia"><span data-icon="fullscreen"></span></button>
+        <button class="iconbtn" id="btn-pause" aria-label="Pausar"><span data-icon="pause"></span></button>
       </div>
       <div id="ctrl" hidden>
         <span><kbd>←</kbd><kbd>→</kbd> ou <kbd>A</kbd><kbd>D</kbd> andar</span>
@@ -133,31 +186,42 @@
       <div id="toast"></div>
       <div id="flash"></div>
 
+      <div id="touch">
+        <button class="tbtn" id="t-left" aria-label="Andar para a esquerda"><span data-icon="left"></span></button>
+        <button class="tbtn" id="t-right" aria-label="Andar para a direita"><span data-icon="right"></span></button>
+        <button class="tbtn" id="t-act" aria-label="Fazer a conta"><span>E</span></button>
+        <button class="tbtn" id="t-jump" aria-label="Pular"><span data-icon="up"></span></button>
+      </div>
+
       <!-- tela inicial: nome do grupo -->
       <div class="overlay shade" id="screen-title">
+        <button class="iconbtn fs" data-fs hidden aria-label="Tela cheia"><span data-icon="fullscreen"></span></button>
         <h1>McLover's Game</h1>
-        <h2>Digite o nome do seu grupo</h2>
+        <h2><span data-icon="users"></span>Digite o nome do seu grupo</h2>
         <input type="text" id="group-name" maxlength="24" autocomplete="off" placeholder="Os Matemáticos" />
-        <button class="big" id="btn-start">START</button>
+        <button class="big" id="btn-start"><span data-icon="play"></span>START</button>
       </div>
 
       <!-- escolha de fase e personagem -->
       <div class="overlay shade" id="screen-select" hidden>
+        <button class="iconbtn fs" data-fs hidden aria-label="Tela cheia"><span data-icon="fullscreen"></span></button>
         <h2 id="select-title">Escolha a fase</h2>
         <div class="lvls" id="lvls"></div>
         <div class="who">Jogar com:
           <button id="who-boy" data-char="boy"><img id="img-boy" alt="" />Adam</button>
           <button id="who-girl" data-char="girl"><img id="img-girl" alt="" />Olive</button>
         </div>
-        <button class="big" id="btn-play">START</button>
+        <button class="big" id="btn-play"><span data-icon="play"></span><span id="btn-play-label">Jogar fase 1</span></button>
       </div>
 
       <!-- conta no banner [E] -->
       <div class="overlay" id="screen-math" hidden>
-        <div class="card">
-          <h4 id="math-title">Banner 1 de 8</h4>
-          <div class="q" id="math-q"></div>
-          <div class="ans" id="math-ans">&nbsp;</div>
+        <div class="card mathcard">
+          <div class="mc-head">
+            <h4><span data-icon="calc"></span><span id="math-title">Banner 1 de 8</span></h4>
+            <div class="q" id="math-q"></div>
+            <div class="ans" id="math-ans">&nbsp;</div>
+          </div>
           <div class="pad" id="math-pad"></div>
           <p class="hint" id="math-hint">Digite o resultado e aperte OK.</p>
         </div>
@@ -171,9 +235,9 @@
           <div class="rows" id="res-rows"></div>
           <div class="opbar" id="res-ops"></div>
           <div class="acts">
-            <button class="key ok" id="res-next">Próxima fase</button>
-            <button class="key del" id="res-retry">Repetir</button>
-            <button class="key del" id="res-menu">Menu</button>
+            <button class="key ok" id="res-next"><span data-icon="next"></span>Próxima fase</button>
+            <button class="key del" id="res-retry"><span data-icon="retry"></span>Repetir</button>
+            <button class="key del" id="res-menu"><span data-icon="home"></span>Menu</button>
           </div>
         </div>
       </div>
@@ -181,14 +245,16 @@
       <!-- pausa e fim de jogo -->
       <div class="overlay" id="screen-pause" hidden>
         <div class="card">
-          <h3 id="pause-title" style="font-weight:400;font-size:57px;margin:0 0 12px">Pausado</h3>
+          <h3 id="pause-title" style="font-weight:400;font-size:57px;margin:0 0 12px"><span id="pause-icon"></span><span id="pause-title-text">Pausado</span></h3>
           <p class="hint" id="pause-text" style="margin:0 0 14px"></p>
           <div class="acts">
-            <button class="key ok" id="pause-main">Continuar</button>
-            <button class="key del" id="pause-menu">Menu</button>
+            <button class="key ok" id="pause-main"><span data-icon="play"></span><span id="pause-main-label">Continuar</span></button>
+            <button class="key del" id="pause-menu"><span data-icon="home"></span>Menu</button>
           </div>
         </div>
       </div>
     </div>
+
+    <div id="rotate"><span data-icon="rotate"></span>Gire o celular para jogar na horizontal.</div>
   </body>
 </html>

@@ -866,6 +866,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _storage__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./storage */ "./src/js/storage.js");
 /* harmony import */ var _ui__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./ui */ "./src/js/ui.js");
 /* harmony import */ var _sfx__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./sfx */ "./src/js/sfx.js");
+/* harmony import */ var _music__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./music */ "./src/js/music.js");
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
 
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
@@ -887,6 +888,7 @@ function _iterableToArrayLimit(arr, i) { if (typeof Symbol === "undefined" || !(
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
 //sprites e cenário
+
 
 
 
@@ -1888,9 +1890,28 @@ function loop(now) {
 
   if (steps === 5) acc = 0;
   render();
-}
-/* ---------- entrada: teclado e toque usam as mesmas ações ---------- */
+  syncMusic();
+} // batida só durante a fase; na conta e nos menus fica só o ambiente, na pausa mais baixo
 
+
+var musicMode = null;
+
+function syncMusic() {
+  var s = game.state;
+  var m = s === 'playing' || s === 'celebrate' ? 'play' : s === 'paused' ? 'pause' : 'menu';
+  if (m !== musicMode) Object(_music__WEBPACK_IMPORTED_MODULE_11__["setMusicMode"])(musicMode = m);
+} // o navegador só toca som depois de um gesto: a música começa no primeiro toque ou tecla
+
+
+var beginMusic = function beginMusic() {
+  Object(_music__WEBPACK_IMPORTED_MODULE_11__["startMusic"])();
+  removeEventListener('pointerdown', beginMusic, true);
+  removeEventListener('keydown', beginMusic, true);
+};
+
+addEventListener('pointerdown', beginMusic, true);
+addEventListener('keydown', beginMusic, true);
+/* ---------- entrada: teclado e toque usam as mesmas ações ---------- */
 
 function action(name, down) {
   switch (name) {
@@ -2250,15 +2271,321 @@ function hintFor(_ref2) {
 
 /***/ }),
 
-/***/ "./src/js/sfx.js":
-/*!***********************!*\
-  !*** ./src/js/sfx.js ***!
-  \***********************/
-/*! exports provided: isMuted, setMuted, sfx */
+/***/ "./src/js/music.js":
+/*!*************************!*\
+  !*** ./src/js/music.js ***!
+  \*************************/
+/*! exports provided: startMusic, setMusicMode */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "startMusic", function() { return startMusic; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setMusicMode", function() { return setMusicMode; });
+/* harmony import */ var _sfx__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./sfx */ "./src/js/sfx.js");
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
+
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+function _iterableToArrayLimit(arr, i) { if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return; var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
+// Música de fundo gerada na hora (Web Audio), no clima synthwave / Blade Runner:
+// pads largos com reverb, baixo pulsando, arpejo com eco e uma melodia de sinos esparsa.
+// Nos menus toca só o ambiente; durante a fase entram a batida e o chimbal.
+
+var BPM = 84;
+var EIGHTH = 60 / BPM / 2;
+var STEPS_PER_CHORD = 16; // 2 compassos de colcheias
+// progressão em ré menor: Dm9 – B♭maj7 – Gm7 – A(sus4)
+
+var CHORDS = [{
+  pad: [50, 53, 57, 60, 64],
+  bass: 38,
+  arp: [62, 65, 69, 72]
+}, {
+  pad: [46, 50, 53, 57],
+  bass: 34,
+  arp: [58, 62, 65, 69]
+}, {
+  pad: [43, 50, 53, 58],
+  bass: 31,
+  arp: [55, 58, 62, 65]
+}, {
+  pad: [45, 52, 57, 62, 64],
+  bass: 33,
+  arp: [57, 62, 64, 69]
+}]; // melodia: [passo dentro do acorde, nota] — poucas notas, bem espaçadas
+
+var MELODY = [[[0, 69], [6, 72], [10, 69]], [[0, 70], [8, 65]], [[0, 67], [6, 70], [10, 74]], [[0, 73], [8, 69]]];
+var ARP_ORDER = [0, 1, 2, 3, 2, 1, 0, 2];
+
+var hz = function hz(n) {
+  return 440 * Math.pow(2, (n - 69) / 12);
+};
+
+var bus = null; // { out, dry, wet, padFilter, delay }
+
+var step = 0;
+var nextTime = 0;
+var timer = null;
+var mode = 'menu'; // menu | play | pause
+
+function build(ctx, master) {
+  var out = ctx.createGain();
+  out.gain.value = 0;
+  out.connect(master); // reverb: resposta ao impulso feita de ruído que decai (≈3,5 s)
+
+  var len = ctx.sampleRate * 3.5;
+  var ir = ctx.createBuffer(2, len, ctx.sampleRate);
+
+  for (var ch = 0; ch < 2; ch++) {
+    var d = ir.getChannelData(ch);
+
+    for (var i = 0; i < len; i++) {
+      d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+    }
+  }
+
+  var reverb = ctx.createConvolver();
+  reverb.buffer = ir;
+  var wet = ctx.createGain();
+  wet.gain.value = 0.55;
+  reverb.connect(wet);
+  wet.connect(out);
+  var dry = ctx.createGain();
+  dry.gain.value = 0.7;
+  dry.connect(out); // filtro dos pads abrindo e fechando devagar
+
+  var padFilter = ctx.createBiquadFilter();
+  padFilter.type = 'lowpass';
+  padFilter.frequency.value = 1100;
+  padFilter.Q.value = 2;
+  var lfo = ctx.createOscillator();
+  var lfoGain = ctx.createGain();
+  lfo.frequency.value = 0.07;
+  lfoGain.gain.value = 600;
+  lfo.connect(lfoGain);
+  lfoGain.connect(padFilter.frequency);
+  lfo.start();
+  padFilter.connect(dry);
+  padFilter.connect(reverb); // eco em colcheia pontuada para o arpejo e os sinos
+
+  var delay = ctx.createDelay(2);
+  delay.delayTime.value = EIGHTH * 1.5;
+  var fb = ctx.createGain();
+  fb.gain.value = 0.38;
+  var delayTone = ctx.createBiquadFilter();
+  delayTone.type = 'lowpass';
+  delayTone.frequency.value = 2500;
+  delay.connect(delayTone);
+  delayTone.connect(fb);
+  fb.connect(delay);
+  delayTone.connect(reverb);
+  delayTone.connect(dry);
+  return {
+    out: out,
+    dry: dry,
+    reverb: reverb,
+    padFilter: padFilter,
+    delay: delay
+  };
+}
+
+function env(ctx, g, t, a, peak, hold, r) {
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(peak, t + a);
+  g.gain.setValueAtTime(peak, t + a + hold);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + a + hold + r);
+}
+
+function pad(ctx, notes, t, dur) {
+  notes.forEach(function (n) {
+    ;
+    [-7, 7].forEach(function (detune) {
+      var o = ctx.createOscillator();
+      var g = ctx.createGain();
+      o.type = 'sawtooth';
+      o.frequency.value = hz(n);
+      o.detune.value = detune;
+      env(ctx, g, t, 1.6, 0.035, dur - 1.6, 2.2);
+      o.connect(g);
+      g.connect(bus.padFilter);
+      o.start(t);
+      o.stop(t + dur + 2.4);
+    });
+  });
+}
+
+function bass(ctx, n, t) {
+  var o = ctx.createOscillator();
+  var f = ctx.createBiquadFilter();
+  var g = ctx.createGain();
+  o.type = 'sawtooth';
+  o.frequency.value = hz(n);
+  f.type = 'lowpass';
+  f.frequency.setValueAtTime(700, t);
+  f.frequency.exponentialRampToValueAtTime(160, t + EIGHTH * 0.9);
+  env(ctx, g, t, 0.01, 0.22, 0.05, EIGHTH * 0.8);
+  o.connect(f);
+  f.connect(g);
+  g.connect(bus.dry);
+  o.start(t);
+  o.stop(t + EIGHTH + 0.1);
+}
+
+function pluck(ctx, n, t, vol) {
+  var o = ctx.createOscillator();
+  var g = ctx.createGain();
+  o.type = 'triangle';
+  o.frequency.value = hz(n);
+  env(ctx, g, t, 0.005, vol, 0, 0.35);
+  o.connect(g);
+  g.connect(bus.dry);
+  g.connect(bus.delay);
+  o.start(t);
+  o.stop(t + 0.4);
+} // sino: seno com um parcial inarmônico, decaimento longo
+
+
+function bell(ctx, n, t) {
+  ;
+  [[1, 0.09], [2.76, 0.03]].forEach(function (_ref) {
+    var _ref2 = _slicedToArray(_ref, 2),
+        ratio = _ref2[0],
+        vol = _ref2[1];
+
+    var o = ctx.createOscillator();
+    var g = ctx.createGain();
+    o.type = 'sine';
+    o.frequency.value = hz(n) * ratio;
+    env(ctx, g, t, 0.01, vol, 0, ratio === 1 ? 2.6 : 1);
+    o.connect(g);
+    g.connect(bus.reverb);
+    g.connect(bus.delay);
+    o.start(t);
+    o.stop(t + 2.8);
+  });
+}
+
+function kick(ctx, t) {
+  var o = ctx.createOscillator();
+  var g = ctx.createGain();
+  o.frequency.setValueAtTime(110, t);
+  o.frequency.exponentialRampToValueAtTime(40, t + 0.18);
+  env(ctx, g, t, 0.003, 0.35, 0, 0.25);
+  o.connect(g);
+  g.connect(bus.dry);
+  o.start(t);
+  o.stop(t + 0.3);
+}
+
+function hat(ctx, t) {
+  var len = Math.ceil(ctx.sampleRate * 0.05);
+  var buf = ctx.createBuffer(1, len, ctx.sampleRate);
+  var d = buf.getChannelData(0);
+
+  for (var i = 0; i < len; i++) {
+    d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+  }
+
+  var s = ctx.createBufferSource();
+  var f = ctx.createBiquadFilter();
+  var g = ctx.createGain();
+  s.buffer = buf;
+  f.type = 'highpass';
+  f.frequency.value = 7000;
+  g.gain.value = 0.05;
+  s.connect(f);
+  f.connect(g);
+  g.connect(bus.dry);
+  s.start(t);
+}
+
+function scheduleStep(ctx, t) {
+  var ci = Math.floor(step / STEPS_PER_CHORD) % CHORDS.length;
+  var s = step % STEPS_PER_CHORD;
+  var chord = CHORDS[ci];
+  var drums = mode === 'play';
+  if (s === 0) pad(ctx, chord.pad, t, EIGHTH * STEPS_PER_CHORD);
+  bass(ctx, chord.bass + (s % 2 ? 12 : 0), t);
+  pluck(ctx, chord.arp[ARP_ORDER[s % ARP_ORDER.length]], t, s % 4 === 0 ? 0.07 : 0.045);
+  MELODY[ci].forEach(function (_ref3) {
+    var _ref4 = _slicedToArray(_ref3, 2),
+        at = _ref4[0],
+        n = _ref4[1];
+
+    if (at === s) bell(ctx, n, t);
+  });
+
+  if (drums) {
+    if (s % 4 === 0) kick(ctx, t);
+    if (s % 2 === 1) hat(ctx, t);
+  }
+
+  step++;
+}
+
+function tick() {
+  var a = Object(_sfx__WEBPACK_IMPORTED_MODULE_0__["getAudio"])();
+  if (!a) return;
+  var ctx = a.ctx;
+  if (ctx.state !== 'running') return;
+  if (nextTime < ctx.currentTime) nextTime = ctx.currentTime + 0.05;
+
+  while (nextTime < ctx.currentTime + 0.25) {
+    scheduleStep(ctx, nextTime);
+    nextTime += EIGHTH;
+  }
+}
+
+var LEVELS = {
+  menu: 1.1,
+  play: 0.9,
+  pause: 0.4
+}; // começa a música (chamar depois de um gesto da pessoa)
+
+function startMusic() {
+  var a = Object(_sfx__WEBPACK_IMPORTED_MODULE_0__["getAudio"])();
+  if (!a) return;
+  if (!bus) bus = build(a.ctx, a.master);
+
+  if (!timer) {
+    bus.out.gain.setTargetAtTime(LEVELS[mode], a.ctx.currentTime, 1.5);
+    timer = setInterval(tick, 60);
+    tick();
+  }
+} // menu: só ambiente; play: com batida; pause: mais baixo e sem batida
+
+function setMusicMode(next) {
+  mode = next;
+  var a = Object(_sfx__WEBPACK_IMPORTED_MODULE_0__["getAudio"])();
+  if (bus && a) bus.out.gain.setTargetAtTime(LEVELS[mode], a.ctx.currentTime, 0.4);
+} // aba escondida ou app em segundo plano: para tudo para não gastar bateria
+
+document.addEventListener('visibilitychange', function () {
+  var a = Object(_sfx__WEBPACK_IMPORTED_MODULE_0__["getAudio"])(false);
+  if (!a) return;
+  if (document.hidden) a.ctx.suspend();else a.ctx.resume();
+});
+
+/***/ }),
+
+/***/ "./src/js/sfx.js":
+/*!***********************!*\
+  !*** ./src/js/sfx.js ***!
+  \***********************/
+/*! exports provided: getAudio, isMuted, setMuted, sfx */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getAudio", function() { return getAudio; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isMuted", function() { return isMuted; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setMuted", function() { return setMuted; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "sfx", function() { return sfx; });
@@ -2295,7 +2622,17 @@ addEventListener('pointerdown', unlock, {
 });
 addEventListener('keydown', unlock, {
   capture: true
-});
+}); // contexto de áudio compartilhado com a música; create=false só devolve se já existir
+
+function getAudio() {
+  var create = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
+  if (!ctx && !create) return null;
+  if (create && !audio()) return null;
+  return {
+    ctx: ctx,
+    master: master
+  };
+}
 function isMuted() {
   return muted;
 }

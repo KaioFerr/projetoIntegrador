@@ -24,6 +24,13 @@ const unlock = () => audio()
 addEventListener('pointerdown', unlock, { capture: true, passive: true })
 addEventListener('keydown', unlock, { capture: true })
 
+// contexto de áudio compartilhado com a música; create=false só devolve se já existir
+export function getAudio(create = true) {
+    if (!ctx && !create) return null
+    if (create && !audio()) return null
+    return { ctx, master }
+}
+
 export function isMuted() { return muted }
 
 export function setMuted(value) {

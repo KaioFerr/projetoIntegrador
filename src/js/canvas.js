@@ -11,6 +11,7 @@ import { createQuestion } from './math'
 import { getProfile, saveProfile, getProgress, saveResult } from './storage'
 import * as ui from './ui'
 import { sfx, isMuted, setMuted } from './sfx'
+import { startMusic, setMusicMode } from './music'
 
 //Tela
 const canvas = document.querySelector('canvas')
@@ -799,7 +800,25 @@ function loop(now) {
     }
     if (steps === 5) acc = 0
     render()
+    syncMusic()
 }
+
+// batida só durante a fase; na conta e nos menus fica só o ambiente, na pausa mais baixo
+let musicMode = null
+function syncMusic() {
+    const s = game.state
+    const m = s === 'playing' || s === 'celebrate' ? 'play' : s === 'paused' ? 'pause' : 'menu'
+    if (m !== musicMode) setMusicMode((musicMode = m))
+}
+
+// o navegador só toca som depois de um gesto: a música começa no primeiro toque ou tecla
+const beginMusic = () => {
+    startMusic()
+    removeEventListener('pointerdown', beginMusic, true)
+    removeEventListener('keydown', beginMusic, true)
+}
+addEventListener('pointerdown', beginMusic, true)
+addEventListener('keydown', beginMusic, true)
 
 /* ---------- entrada: teclado e toque usam as mesmas ações ---------- */
 function action(name, down) {

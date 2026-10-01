@@ -8,9 +8,18 @@ O jogo foi desenvolvido utilizando as tecnologias web JavaScript, HTML e CSS. At
 
 ## Funcionalidades
 
-- use as teclas "A, W, S, D e E" para movimentar o player, subir em plataformas e alcançar os banners para fazer as contas.
-- Exercícios de adição, subtração que são geradas a partir de um algoritmo randomico.
-- Interface intuitiva e atrativa para crianças.
+- Controles: setas ou "A, D" para andar, seta para cima ou "W" para pular, "E" para fazer a conta e "P" para pausar.
+- As contas só abrem em frente aos banners [E]. Elas são de adição e subtração, geradas de forma aleatória e com dificuldade crescente.
+- 4 fases (Soma, Subtração, Mistas e Desafio), cada uma com 8 contas. A fase seguinte é liberada ao concluir a anterior.
+- Painel com fase, tempo, contas resolvidas e vidas.
+- Cair no vazio custa uma vida e volta ao último checkpoint (bandeira).
+- Tela de resultados no fim de cada fase: estrelas, tempo, acertos, erros, quedas e melhor tempo.
+- Escolha de personagem (Adam ou Olive). Nome do grupo e melhores resultados ficam salvos no navegador.
+
+## Desenvolvimento
+
+- `npm install` e depois `npm run build` gera a pasta `dist`. `npm start` abre o servidor local com recarga automática.
+- Em Node 17 ou mais novo, use `NODE_OPTIONS=--openssl-legacy-provider` antes do comando, por causa do webpack 4.
 
 ## Como Executar o Jogo
 1. acesse o site https://kaioferr.github.io/projetoIntegrador/

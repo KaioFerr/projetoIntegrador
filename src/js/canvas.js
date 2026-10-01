@@ -1,720 +1,739 @@
-//sprites
+//sprites e cenário
 import platform from '../img/platform.png'
 import miniPlatform from '../img/miniPlatform.png'
 import background from '../img/background.png'
-
-
-import spriteStandRight from '../img/spriteStandRight.png'
-import spriteStandLeft from '../img/spriteStandLeft.png'
-
-
-import spriteRunRight from '../img/spriteRunRight.png'
-import spriteRunLeft from '../img/spriteRunLeft.png'
-
-
-import spriteJumpRight from '../img/spriteJumpRight.png'
-import spriteJumpLeft from '../img/spriteJumpLeft.png'
-
-
 import banner from '../img/banner.png'
 
-
+import { LEVELS, GROUND_Y, GROUND_STEP, GROUND_TILE_W, MINI_STEP, MINI_W, MINI_H, BANNER_W, BANNER_H } from './levels'
+import { createQuestion } from './math'
+import { getProfile, saveProfile, getProgress, saveResult } from './storage'
+import * as ui from './ui'
 
 //Tela
-const canvas = document.querySelector('canvas');
+const canvas = document.querySelector('canvas')
 const c = canvas.getContext('2d')
-
-
-canvas.width = 1024
-canvas.height = 576
-
-
+const W = 1024
+const H = 576
+canvas.width = W
+canvas.height = H
 
 const gravity = 1.4
-
-//class de Objetos
-class Player {
-
-    constructor() {
-        this.points = 0
-        this.callCalculator
-        this.speedX = 8
-        this.speedY = -24
-        this.position = {
-            x: 100,
-            y: 324
-        }
-        this.velocity = {
-            x: 0,
-            y: 0
-        }
-        this.width = 80
-        this.height = 80
-        this.image = creatImage(spriteStandRight)
-        this.frame = 0
-        this.sprite = {
-            stand: {
-                right: creatImage(spriteStandRight),
-                left: creatImage(spriteStandLeft),
-                cropWidth: 80,
-                range: 99
-            },
-            run: {
-                right: creatImage(spriteRunRight),
-                left: creatImage(spriteRunLeft),
-                cropWidth: 80,
-                range: 79
-            },
-            jump: {
-                right: creatImage(spriteJumpRight),
-                left: creatImage(spriteJumpLeft),
-                cropWidth: 80,
-                range: 34
-            }
-        }
-
-        this.currentSprite = this.sprite.stand.right
-        this.currentCropWidth = 80
-        this.jump
-        this.doubleJump
-
-    }
-
-
-    draw() {
-        c.drawImage(
-            this.currentSprite,
-            this.currentCropWidth * this.frame,
-            0,
-            80,
-            80,
-            this.position.x,
-            this.position.y,
-            this.width,
-            this.height
-        )
-    }
-
-    update() {
-        this.frame++
-        if (this.frame > this.sprite.stand.range && (this.currentSprite === this.sprite.stand.right || this.currentSprite === this.sprite.stand.left)) {
-            this.frame = 0
-        }
-        else if (this.frame > this.sprite.run.range && (this.currentSprite === this.sprite.run.right || this.currentSprite === this.sprite.run.left)) {
-            this.frame = 0
-        }
-        else if (this.frame > this.sprite.jump.range && (this.currentSprite === this.sprite.jump.right || this.currentSprite === this.sprite.jump.left)) {
-            this.frame = 0
-        }
-        this.draw()
-        this.position.y += this.velocity.y
-        this.position.x += this.velocity.x
-
-        if (this.position.y + this.height + this.velocity.y <= canvas.height) {
-            this.velocity.y += gravity
-        }
-
-        if (this.callCalculator == true && keys.select.pressed == true) {
-            calculator()
-        }
-
-        if (player.points == 8) {
-            alert(`Pontos: 8\nVocê ganhou!!!\n` + showElapsedTime())
-            player.speedX = 0
-            player.points = 0
-        }
-        this.jump = false
-        
-        
-        
-    }
-}
-
-class Platform {
-    constructor({ x, y, image }) {
-        this.position = {
-            x,
-            y
-        }
-        this.image = image
-        this.width = image.width
-        this.height = image.height
-    }
-
-    draw() {
-        c.drawImage(this.image, this.position.x, this.position.y)
-    }
-}
-
-class GenericObject {
-    constructor({ x, y, image }) {
-        this.position = {
-            x,
-            y
-        }
-        this.image = image
-        this.width = image.width
-        this.height = image.height
-    }
-
-    draw() {
-        c.drawImage(this.image, this.position.x, this.position.y)
-    }
-}
-
+const STEP = 1000 / 60
+const MAX_LIVES = 5
+const FONT = '"Jockey One", "Arial Narrow", sans-serif'
 
 //função que cria imagens
-function creatImage(imageSrc) {
+function creatImage(src) {
     const image = new Image()
-    image.src = imageSrc
+    image.src = src
     return image
 }
-//criando imagens
-let platformImage = creatImage(platform)
-let miniPlatformImage = creatImage(miniPlatform)
-let backgroundImage = creatImage(background)
-let bannerImage = creatImage(banner)
 
-//criando player
-let player = new Player()
-
-
-//criando plataformas
-const numPlatforms = 3;
-const numMiniPlatforms = 4;
-const numBanner = 1
-let initialX = -1;
-let platforms = [];
-let miniPlatforms = []
-let bannerList = []
-
-
-function createPlatforms(listObject, x, numObject) {
-    for (let i = 0; i < numObject; i++) {
-        listObject.push(new Platform({
-            x: x + i * (platformImage.width - 3),
-            y: 452,
-            image: platformImage
-        }));
-    }
-}
-
-
-function createMiniPlatforms(listObject, x, y, numObject) {
-    for (let i = 0; i < numObject; i++) {
-        listObject.push(new GenericObject({
-            x: x + i * (miniPlatformImage.width - 16),
-            y: y,
-            image: miniPlatformImage
-        }));
-    }
-}
-
-function createBanners(listObject, x, y) {
-    for (let i = 0; i < 1; i++) {
-        listObject.push(new GenericObject({
-            x: x,
-            y: y,
-            image: bannerImage
-        }));
-    }
-}
-
-
-//plataformas
-createPlatforms(platforms, -1, 3)
-createPlatforms(platforms, 2000, 2)
-createPlatforms(platforms, 3800, 2)
-createPlatforms(platforms, 5600, 2)
-createPlatforms(platforms, 7700, 2)
-createPlatforms(platforms, 10230, 2)
-
-
-//mini plataformas
-createMiniPlatforms(miniPlatforms, 500, 300, 4)
-createMiniPlatforms(miniPlatforms, 800, 400, 4)
-createMiniPlatforms(miniPlatforms, 1000, 300, 4)
-createMiniPlatforms(miniPlatforms, 1300, 200, 4)
-createMiniPlatforms(miniPlatforms, 2000, 100, 4)
-createMiniPlatforms(miniPlatforms, 2300, 160, 4)
-createMiniPlatforms(miniPlatforms, 2300, 400, 4)
-createMiniPlatforms(miniPlatforms, 2600, 300, 4)
-createMiniPlatforms(miniPlatforms, 3300, 350, 2)
-createMiniPlatforms(miniPlatforms, 3500, 300, 4)
-createMiniPlatforms(miniPlatforms, 4200, 300, 4)
-createMiniPlatforms(miniPlatforms, 4200, 100, 4)
-createMiniPlatforms(miniPlatforms, 5050, 400, 2)
-createMiniPlatforms(miniPlatforms, 5200, 300, 2)
-createMiniPlatforms(miniPlatforms, 5350, 200, 2)
-createMiniPlatforms(miniPlatforms, 5800, 350, 4)
-createMiniPlatforms(miniPlatforms, 5550, 100, 3)
-createMiniPlatforms(miniPlatforms, 5800, 200, 1)
-createMiniPlatforms(miniPlatforms, 6000, 200, 1)
-createMiniPlatforms(miniPlatforms, 6200, 200, 3)
-createMiniPlatforms(miniPlatforms, 6400, 200, 4)
-createMiniPlatforms(miniPlatforms, 6800, 350, 4)
-createMiniPlatforms(miniPlatforms, 7100, 200, 2)
-createMiniPlatforms(miniPlatforms, 7300, 200, 2)
-createMiniPlatforms(miniPlatforms, 7500, 200, 2)
-createMiniPlatforms(miniPlatforms, 7800, 350, 4)
-createMiniPlatforms(miniPlatforms, 8600, 400, 2)
-createMiniPlatforms(miniPlatforms, 8800, 300, 2)
-createMiniPlatforms(miniPlatforms, 9000, 200, 2)
-createMiniPlatforms(miniPlatforms, 8800, 100, 2)
-createMiniPlatforms(miniPlatforms, 8600, 80, 3)
-createMiniPlatforms(miniPlatforms, 9300, 200, 2)
-createMiniPlatforms(miniPlatforms, 9600, 200, 2)
-createMiniPlatforms(miniPlatforms, 9900, 200, 2)
-createMiniPlatforms(miniPlatforms, 10150, 200, 4)
-
-
-//banners
-createBanners(bannerList, 580, 240)
-createBanners(bannerList, 1380, 144)
-createBanners(bannerList, 2024, 44)
-createBanners(bannerList, 4280, 42)
-createBanners(bannerList, 5580, 44)
-createBanners(bannerList, 6480, 146)
-createBanners(bannerList, 8640, 20)
-createBanners(bannerList, 10230, 144)
-
-//criando o objeto
-let genericObject = [
-    new GenericObject({
-        x: 0,
-        y: 0,
-        image: backgroundImage
+// carrega todas as imagens de uma pasta, em ordem alfabética
+function loadFrames(ctx) {
+    return ctx.keys().sort().map(key => {
+        const mod = ctx(key)
+        return creatImage(mod.default || mod)
     })
-]
+}
 
-let scrollOffSet = 0
-
-let lastKey
-const keys = {
-    right: {
-        pressed: false
+const SPRITES = {
+    boy: {
+        idle: loadFrames(require.context('../img/Idle-boy', false, /\.png$/)),
+        run: loadFrames(require.context('../img/Run-boy', false, /\.png$/)),
+        jump: loadFrames(require.context('../img/Jump-boy', false, /\.png$/))
     },
-    left: {
-        pressed: false
-    },
-    jump: {
-        pressed: false
-    },
-    select: {
-        pressed: false
+    girl: {
+        idle: loadFrames(require.context('../img/idle-girl', false, /\.png$/)),
+        run: loadFrames(require.context('../img/run-girl', false, /\.png$/)),
+        jump: loadFrames(require.context('../img/jump-girl', false, /\.png$/))
     }
 }
 
-let lifePoint = 5
+const platformImage = creatImage(platform)
+const miniPlatformImage = creatImage(miniPlatform)
+const backgroundImage = creatImage(background)
+const bannerImage = creatImage(banner)
 
-//função que recomeça o jogo
-function init() {
-    lifePoint -= 1
-    platformImage = creatImage(platform)
-    miniPlatformImage = creatImage(miniPlatform)
-    backgroundImage = creatImage(background)
-    bannerImage = creatImage(banner)
+//estado do jogo
+const keys = { left: false, right: false, jump: false }
+let jumpBuffer = 0
+let jumpReleased = false
 
-    //criando player
-    player = new Player()
+const game = {
+    state: 'title', // title | select | playing | math | paused | celebrate | results | gameover
+    levelIndex: 0,
+    level: LEVELS[0],
+    character: 'boy',
+    camera: 0,
+    time: 0,
+    lives: MAX_LIVES,
+    contas: 0,
+    errors: 0,
+    falls: 0,
+    byOp: {},
+    platforms: [],
+    flags: [],
+    banners: [],
+    near: null,
+    checkpoint: { x: 100 },
+    particles: [],
+    shake: 0,
+    celebrateTimer: 0,
+    tick: 0,
+    player: null
+}
 
+function newPlayer() {
+    return { x: 100, y: GROUND_Y - 80, vx: 0, vy: 0, w: 80, h: 80, grounded: true, facing: 'right', airTicks: 0, invuln: 0 }
+}
 
-    //criando plataformas
-    initialX = -1;
-    platforms = [];
-    miniPlatforms = []
-    bannerList = []
+//monta a fase: plataformas, bandeiras de checkpoint e banners
+function loadLevel(index) {
+    const level = LEVELS[index]
+    game.levelIndex = index
+    game.level = level
+    game.camera = 0
+    game.time = 0
+    game.lives = MAX_LIVES
+    game.contas = 0
+    game.errors = 0
+    game.falls = 0
+    game.byOp = {}
+    game.near = null
+    game.particles = []
+    game.shake = 0
+    game.checkpoint = { x: 100 }
+    game.player = newPlayer()
 
+    game.platforms = []
+    game.flags = []
+    level.chunks.forEach(([x, n], i) => {
+        const w = (n - 1) * GROUND_STEP + GROUND_TILE_W
+        game.platforms.push({ kind: 'ground', x, y: GROUND_Y, w, n })
+        if (i > 0) game.flags.push({ x: x + 60, active: false })
+    })
+    level.minis.forEach(([x, y, n]) => {
+        game.platforms.push({ kind: 'mini', x, y, w: MINI_W + (n - 1) * MINI_STEP, n })
+    })
+    game.banners = level.banners.map(([x, y]) => ({ x, y, solved: false }))
+}
 
-    function createPlatforms(listObject, x, numObject) {
-        for (let i = 0; i < numObject; i++) {
-            listObject.push(new Platform({
-                x: x + i * (platformImage.width - 3),
-                y: 452,
-                image: platformImage
-            }));
-        }
-    }
+const clamp = (v, min, max) => Math.max(min, Math.min(max, v))
 
+function updateCamera(snap) {
+    const p = game.player
+    let cam = snap ? p.x - 300 : clamp(game.camera, p.x - 600, p.x - 100)
+    game.camera = clamp(cam, 0, game.level.end - W)
+}
 
-    function createMiniPlatforms(listObject, x, y, numObject) {
-        for (let i = 0; i < numObject; i++) {
-            listObject.push(new GenericObject({
-                x: x + i * (miniPlatformImage.width - 16),
-                y: y,
-                image: miniPlatformImage
-            }));
-        }
-    }
-
-    function createBanners(listObject, x, y) {
-        for (let i = 0; i < 1; i++) {
-            listObject.push(new GenericObject({
-                x: x,
-                y: y,
-                image: bannerImage
-            }));
-        }
-    }
-
-
-//plataformas
-createPlatforms(platforms, -1, 3)
-createPlatforms(platforms, 2000, 2)
-createPlatforms(platforms, 3800, 2)
-createPlatforms(platforms, 5600, 2)
-createPlatforms(platforms, 7700, 2)
-createPlatforms(platforms, 10230, 2)
-
-
-//mini plataformas
-createMiniPlatforms(miniPlatforms, 500, 300, 4)
-createMiniPlatforms(miniPlatforms, 800, 400, 4)
-createMiniPlatforms(miniPlatforms, 1000, 300, 4)
-createMiniPlatforms(miniPlatforms, 1300, 200, 4)
-createMiniPlatforms(miniPlatforms, 2000, 100, 4)
-createMiniPlatforms(miniPlatforms, 2300, 160, 4)
-createMiniPlatforms(miniPlatforms, 2300, 400, 4)
-createMiniPlatforms(miniPlatforms, 2600, 300, 4)
-createMiniPlatforms(miniPlatforms, 3300, 350, 2)
-createMiniPlatforms(miniPlatforms, 3500, 300, 4)
-createMiniPlatforms(miniPlatforms, 4200, 300, 4)
-createMiniPlatforms(miniPlatforms, 4200, 100, 4)
-createMiniPlatforms(miniPlatforms, 5050, 400, 2)
-createMiniPlatforms(miniPlatforms, 5200, 300, 2)
-createMiniPlatforms(miniPlatforms, 5350, 200, 2)
-createMiniPlatforms(miniPlatforms, 5800, 350, 4)
-createMiniPlatforms(miniPlatforms, 5550, 100, 3)
-createMiniPlatforms(miniPlatforms, 5800, 200, 1)
-createMiniPlatforms(miniPlatforms, 6000, 200, 1)
-createMiniPlatforms(miniPlatforms, 6200, 200, 3)
-createMiniPlatforms(miniPlatforms, 6400, 200, 4)
-createMiniPlatforms(miniPlatforms, 6800, 350, 4)
-createMiniPlatforms(miniPlatforms, 7100, 200, 2)
-createMiniPlatforms(miniPlatforms, 7300, 200, 2)
-createMiniPlatforms(miniPlatforms, 7500, 200, 2)
-createMiniPlatforms(miniPlatforms, 7800, 350, 4)
-createMiniPlatforms(miniPlatforms, 8600, 400, 2)
-createMiniPlatforms(miniPlatforms, 8800, 300, 2)
-createMiniPlatforms(miniPlatforms, 9000, 200, 2)
-createMiniPlatforms(miniPlatforms, 8800, 100, 2)
-createMiniPlatforms(miniPlatforms, 8600, 80, 3)
-createMiniPlatforms(miniPlatforms, 9300, 200, 2)
-createMiniPlatforms(miniPlatforms, 9600, 200, 2)
-createMiniPlatforms(miniPlatforms, 9900, 200, 2)
-createMiniPlatforms(miniPlatforms, 10150, 200, 4)
-
-
-//banners
-createBanners(bannerList, 580, 240)
-createBanners(bannerList, 1380, 144)
-createBanners(bannerList, 2024, 44)
-createBanners(bannerList, 4280, 42)
-createBanners(bannerList, 5580, 44)
-createBanners(bannerList, 6480, 146)
-createBanners(bannerList, 8640, 20)
-createBanners(bannerList, 10230, 144)
-
-    //criando o objeto
-    genericObject = [
-        new GenericObject({
-            x: 0,
-            y: 0,
-            image: backgroundImage
+/* ---------- partículas e efeitos ---------- */
+function burst(x, y, n, colors, { spread = 4, up = 4, life = 40, size = 5 } = {}) {
+    for (let i = 0; i < n; i++) {
+        game.particles.push({
+            x, y,
+            vx: (Math.random() - 0.5) * spread * 2,
+            vy: -Math.random() * up,
+            life, max: life,
+            size: size * (0.6 + Math.random() * 0.8),
+            color: colors[i % colors.length],
+            grav: 0.25
         })
-    ]
-
-    scrollOffSet = 0
-
+    }
 }
-startTimer()
-//animação
-function animate() {
-    requestAnimationFrame(animate)
-    c.fillStyle = 'white'
-    c.fillRect(0, 0, canvas.width, canvas.height)
 
-    genericObject.forEach((genericObject) => {
-        genericObject.draw()
-    })
-
-    bannerList.forEach((bannerObject) => {
-        bannerObject.draw()
-    })
-
-    miniPlatforms.forEach((mPlatform) => {
-        mPlatform.draw()
-    })
-
-    platforms.forEach((platform) => {
-        platform.draw()
-    })
-    player.update()
-    
-    if (keys.right.pressed && player.position.x < 600) {
-        player.velocity.x = player.speedX;
-    }    
-
-    else if ((keys.left.pressed && player.position.x > 100) || keys.left.pressed && scrollOffSet == 0 && player.position.x > 0) {
-        player.velocity.x = -player.speedX
-
+function dust(x, y, n = 3) {
+    for (let i = 0; i < n; i++) {
+        game.particles.push({
+            x: x + (Math.random() - 0.5) * 20, y,
+            vx: (Math.random() - 0.5) * 2, vy: -Math.random() * 1.4,
+            life: 24, max: 24, size: 3 + Math.random() * 3,
+            color: '255,255,255', grav: 0, round: true, fade: 0.7
+        })
     }
+}
 
-    else if ((keys.right.pressed && player.position.x < 600) || keys.right.pressed && scrollOffSet == 10200 && player.position.x < 10200) {
-        player.velocity.x = 0
-
-    }
-
-
-    else {
-        player.velocity.x = 0
-
-
-        if (keys.right.pressed) {
-            scrollOffSet += player.speedX
-            platforms.forEach(platform => {
-                platform.position.x -= player.speedX
+function spawnSparks() {
+    const { chunks } = game.level
+    for (let i = 0; i < chunks.length - 1; i++) {
+        const [x, n] = chunks[i]
+        const gx0 = x + (n - 1) * GROUND_STEP + GROUND_TILE_W
+        const gx1 = chunks[i + 1][0]
+        if (gx1 < game.camera || gx0 > game.camera + W) continue
+        if (Math.random() < 0.25) {
+            game.particles.push({
+                x: gx0 + Math.random() * (gx1 - gx0), y: H - 4,
+                vx: 0, vy: -(1.5 + Math.random() * 2.5),
+                life: 50, max: 50, size: 4, color: 'ffff8a', grav: 0, spark: true
             })
-            genericObject.forEach((genericObject) => {
-                genericObject.position.x -= player.speedX * 0.40
-            })
-            miniPlatforms.forEach((mPlatform) => {
-                mPlatform.position.x -= player.speedX
-            })
-            bannerList.forEach((bannerObject) => {
-                bannerObject.position.x -= player.speedX
-            })
-        } else if (keys.left.pressed && scrollOffSet > 0) {
-            scrollOffSet -= player.speedX
-            platforms.forEach(platform => {
-                platform.position.x += player.speedX
-            })
-            genericObject.forEach((genericObject) => {
-                genericObject.position.x += player.speedX * 0.40
-            })
-            miniPlatforms.forEach((miniPlatform) => {
-                miniPlatform.position.x += player.speedX
-            })
-            bannerList.forEach((bannerObject) => {
-                bannerObject.position.x += player.speedX
-            })
-
-        }
-
-    }
-
-
-    //verificar colisão
-    platforms.forEach((platform) => {
-        const inFloor = player.position.y + player.height <= platform.position.y && player.position.y
-            + player.height + player.velocity.y >= platform.position.y &&
-            player.position.x + player.width >= platform.position.x &&
-            player.position.x <= platform.position.x + platform.width
-
-        if (inFloor) {
-            player.velocity.y = 0
-            player.callCalculator = false
-            player.jump = true
-        }
-    })
-    miniPlatforms.forEach((miniPlatform) => {
-        if (player.position.y + player.height <= miniPlatform.position.y && player.position.y
-            + player.height + player.velocity.y >= miniPlatform.position.y &&
-            player.position.x + player.width >= miniPlatform.position.x &&
-            player.position.x <= miniPlatform.position.x + miniPlatform.width) {
-            player.velocity.y = 0
-            player.callCalculator = true
-            player.jump = true
-        }
-
-    })
-
-    //movimentos das sprites
-
-    if (keys.right.pressed &&
-        lastKey === 'right' &&
-        player.currentSprite !== player.sprite.run.right) {
-        player.frame = 1
-        player.currentSprite = player.sprite.run.right
-        player.range = player.sprite.run.range
-        player.currentSprite = player.sprite.run.right
-    }
-
-    else if (keys.left.pressed &&
-        lastKey === 'left' &&
-        player.currentSprite !== player.sprite.run.left) {
-        player.currentSprite = player.sprite.run.left
-        player.currentCropWidth = player.sprite.run.cropWidth
-        player.range = player.sprite.run.range
-    }
-
-
-    else if (!keys.right.pressed &&
-        lastKey === 'right' &&
-        player.currentSprite !== player.sprite.stand.right) {
-        player.currentSprite = player.sprite.stand.right
-        player.currentCropWidth = player.sprite.stand.cropWidth
-
-    }
-    else if (!keys.left.pressed &&
-        lastKey === 'left' &&
-        player.currentSprite !== player.sprite.stand.left) {
-        player.currentSprite = player.sprite.stand.left
-        player.currentCropWidth = player.sprite.stand.cropWidth
-        player.range = player.sprite.stand.range
-    }
-
-    //condição perdeu
-    if (player.position.y > canvas.height) {
-        init()
-        keys.left.pressed = false
-        keys.right.pressed = false
-        alert(`Vidas: ${lifePoint}/5`)
-        console.log(lifePoint)
-        if (lifePoint == 0) {
-            alert("Vidas: 0/5.\nVocê perdeu :(")
-            player.speedX = 0
         }
     }
 }
 
+/* ---------- lógica ---------- */
+function resetInput() {
+    keys.left = keys.right = keys.jump = false
+    jumpBuffer = 0
+}
 
+function step() {
+    game.tick++
+    spawnSparks()
+    const p = game.player
+    const alive = game.state === 'playing' || game.state === 'celebrate'
 
-animate()
-//verificar tecla
-addEventListener('keydown', ({ keyCode }) => {
-    switch (keyCode) {
-        case 65:
-            keys.left.pressed = true
-            lastKey = 'left'
-            break
-            case 83:
-                break
-                case 68:
-                    keys.right.pressed = true
-                    lastKey = 'right'
-            break
-        case 87:
-            if (player.jump == true) {
-                player.velocity.y += player.speedY;
+    if (alive) {
+        if (game.state === 'playing') game.time += 1 / 60
+        const dir = game.state === 'playing' ? (keys.right ? 1 : 0) - (keys.left ? 1 : 0) : 0
+        p.vx = dir * 8
+        if (dir) p.facing = dir > 0 ? 'right' : 'left'
+        p.x = clamp(p.x + p.vx, 0, game.level.end - p.w)
+
+        if (jumpBuffer > 0) {
+            jumpBuffer--
+            if (p.grounded && game.state === 'playing') {
+                p.vy = -24
+                p.grounded = false
+                jumpBuffer = 0
+                dust(p.x + p.w / 2, p.y + p.h, 5)
             }
-            
+        }
+        if (jumpReleased) {
+            if (p.vy < 0) p.vy = 0
+            jumpReleased = false
+        }
+
+        const prevBottom = p.y + p.h
+        const wasGrounded = p.grounded
+        const impact = p.vy
+        p.y += p.vy
+        p.vy += gravity
+        p.grounded = false
+
+        //colisão: só pelo topo das plataformas
+        for (const pl of game.platforms) {
+            if (prevBottom <= pl.y && p.y + p.h >= pl.y && p.x + p.w >= pl.x && p.x <= pl.x + pl.w) {
+                p.y = pl.y - p.h
+                p.vy = 0
+                p.grounded = true
+                if (pl.kind === 'ground') activateFlag(pl)
+            }
+        }
+        if (p.grounded && !wasGrounded && impact > 8) dust(p.x + p.w / 2, p.y + p.h, 6)
+        if (p.grounded && p.vx !== 0 && game.tick % 6 === 0) dust(p.x + p.w / 2 - Math.sign(p.vx) * 14, p.y + p.h, 1)
+        p.airTicks = p.grounded ? 0 : p.airTicks + 1
+        if (p.invuln > 0) p.invuln--
+
+        if (p.y > 470) fall()
+        updateCamera(false)
+        findNear()
+    }
+
+    if (game.state === 'celebrate' && --game.celebrateTimer <= 0) complete()
+    if (game.shake > 0) game.shake--
+
+    game.particles.forEach(q => {
+        q.x += q.vx
+        q.y += q.vy
+        q.vy += q.grav
+        q.life--
+    })
+    game.particles = game.particles.filter(q => q.life > 0)
+}
+
+function activateFlag(ground) {
+    const flag = game.flags.find(f => f.x >= ground.x && f.x < ground.x + ground.w)
+    if (flag && !flag.active && game.player.x + game.player.w >= flag.x) {
+        flag.active = true
+        game.checkpoint = flag
+        burst(flag.x, GROUND_Y - 50, 10, ['255,255,138', '56,214,196'], { spread: 3, up: 5 })
+        ui.toast('Checkpoint!', 1200)
+    }
+}
+
+function fall() {
+    game.falls++
+    game.lives--
+    game.shake = 14
+    ui.flash()
+    ui.resetHudCache()
+    if (game.lives <= 0) {
+        game.state = 'gameover'
+        resetInput()
+        ui.showPause({
+            title: 'Fim de jogo',
+            text: 'Suas vidas acabaram. Tente de novo!',
+            mainLabel: 'Tentar de novo',
+            onMain: () => startLevel(game.levelIndex),
+            onMenu: goSelect
+        })
+        return
+    }
+    const p = game.player
+    p.x = game.checkpoint.x - (game.checkpoint.x === 100 ? 0 : 20)
+    p.y = GROUND_Y - p.h
+    p.vx = p.vy = 0
+    p.grounded = true
+    p.invuln = 90
+    updateCamera(true)
+    ui.toast('Ops! -1 vida. Voltou ao checkpoint.')
+}
+
+// banner [E] mais próximo que ainda não foi resolvido
+function findNear() {
+    const p = game.player
+    const cx = p.x + p.w / 2
+    game.near = null
+    for (const b of game.banners) {
+        if (b.solved) continue
+        const bottom = b.y + BANNER_H
+        if (Math.abs(cx - (b.x + BANNER_W / 2)) < 75 && Math.abs(p.y + p.h - bottom) < 40) {
+            game.near = b
+            return
+        }
+    }
+}
+
+function tryInteract() {
+    if (game.state !== 'playing' || !game.near || !game.player.grounded) return
+    const banner = game.near
+    const level = game.level
+    const question = createQuestion(level.math)
+    const stats = game.byOp[question.op] || (game.byOp[question.op] = { ok: 0, n: 0 })
+    resetInput()
+    game.state = 'math'
+    ui.openMath({
+        title: `Banner ${game.contas + 1} de ${game.banners.length}`,
+        question,
+        onSubmit: value => {
+            stats.n++
+            if (value === question.result) {
+                stats.ok++
+                return true
+            }
+            game.errors++
+            return false
+        },
+        onClose: correct => {
+            if (correct) {
+                banner.solved = true
+                game.contas++
+                burst(banner.x + BANNER_W / 2, banner.y + 20, 28, ['255,255,138', '255,93,115', '56,214,196', '255,122,42'], { spread: 6, up: 8, life: 60, size: 7 })
+                if (game.contas === game.banners.length) {
+                    game.state = 'celebrate'
+                    game.celebrateTimer = 70
+                    return
+                }
+            }
+            game.state = 'playing'
+        }
+    })
+}
+
+function complete() {
+    const level = game.level
+    const stars = game.errors === 0 && game.time <= level.goal ? 3 : game.errors <= 2 ? 2 : 1
+    const bestInfo = saveResult(level.id, { stars, time: Math.round(game.time) })
+    game.state = 'results'
+    ui.setHudVisible(false)
+    ui.renderResults({
+        level,
+        levels: LEVELS.length,
+        stars,
+        time: game.time,
+        goal: level.goal,
+        correct: game.contas,
+        total: game.banners.length,
+        errors: game.errors,
+        falls: game.falls,
+        bestInfo,
+        byOp: game.byOp,
+        onNext: () => startLevel(game.levelIndex + 1),
+        onRetry: () => startLevel(game.levelIndex),
+        onMenu: goSelect
+    })
+}
+
+/* ---------- fluxo de telas ---------- */
+function goTitle() {
+    const profile = getProfile()
+    game.character = profile.character
+    ui.setGroupName(profile.group)
+    loadLevel(0)
+    game.state = 'title'
+    ui.setHudVisible(false)
+    ui.showScreen('title')
+    ui.focusGroupName()
+}
+
+let selectedLevel = 1
+function goSelect() {
+    loadLevel(0)
+    game.state = 'select'
+    ui.setHudVisible(false)
+    const progress = getProgress()
+    const unlocked = LEVELS.filter(l => l.id === 1 || (progress[l.id - 1] && progress[l.id - 1].stars > 0))
+    if (!unlocked.some(l => l.id === selectedLevel)) selectedLevel = unlocked[unlocked.length - 1].id
+    drawSelect()
+}
+
+function drawSelect() {
+    ui.renderSelect({
+        levels: LEVELS,
+        progress: getProgress(),
+        selected: selectedLevel,
+        character: game.character,
+        group: getProfile().group,
+        onSelect: id => { selectedLevel = id; drawSelect() },
+        onCharacter: ch => {
+            game.character = ch
+            saveProfile({ ...getProfile(), character: ch })
+            drawSelect()
+        },
+        onPlay: () => startLevel(selectedLevel - 1)
+    })
+    ui.showScreen('select')
+}
+
+function startLevel(index) {
+    loadLevel(index)
+    selectedLevel = index + 1
+    resetInput()
+    game.state = 'playing'
+    ui.resetHudCache()
+    ui.setHudVisible(true)
+    ui.showScreen(null)
+}
+
+function togglePause() {
+    if (game.state === 'playing') {
+        game.state = 'paused'
+        resetInput()
+        ui.showPause({
+            title: 'Pausado',
+            text: 'O tempo está parado.',
+            mainLabel: 'Continuar',
+            onMain: togglePause,
+            onMenu: goSelect
+        })
+    } else if (game.state === 'paused') {
+        game.state = 'playing'
+        ui.showScreen(null)
+    }
+}
+
+/* ---------- desenho ---------- */
+function roundRect(x, y, w, h, r) {
+    c.beginPath()
+    c.moveTo(x + r, y)
+    c.arcTo(x + w, y, x + w, y + h, r)
+    c.arcTo(x + w, y + h, x, y + h, r)
+    c.arcTo(x, y + h, x, y, r)
+    c.arcTo(x, y, x + w, y, r)
+    c.closePath()
+}
+
+// trechos de vazio entre os chãos, em coordenadas da tela
+function voidGaps() {
+    const { chunks } = game.level
+    const gaps = []
+    for (let i = 0; i < chunks.length - 1; i++) {
+        const [x, n] = chunks[i]
+        const x0 = x + (n - 1) * GROUND_STEP + GROUND_TILE_W - game.camera
+        const x1 = chunks[i + 1][0] - game.camera
+        if (x1 > 0 && x0 < W) gaps.push([x0, x1])
+    }
+    return gaps
+}
+
+function drawNeon(gaps, alpha, topY) {
+    gaps.forEach(([x0, x1]) => {
+        c.save()
+        c.beginPath()
+        c.rect(x0, topY, x1 - x0, H - topY)
+        c.clip()
+        c.globalAlpha = alpha
+        const g = c.createLinearGradient(0, GROUND_Y, 0, H)
+        g.addColorStop(0, '#ff7a2a')
+        g.addColorStop(0.55, '#d11a7a')
+        g.addColorStop(1, '#5c0a45')
+        c.fillStyle = g
+        c.fillRect(x0, GROUND_Y, x1 - x0, H - GROUND_Y)
+        c.fillStyle = '#ffd58a'
+        const wave = (game.tick * 0.6) % 24
+        for (let x = x0 - 24 + wave; x < x1 + 24; x += 24) {
+            c.beginPath()
+            c.arc(x, GROUND_Y + 2 + Math.sin(x * 0.2 + game.tick * 0.1) * 2, 9, Math.PI, 0)
+            c.fill()
+        }
+        c.restore()
+    })
+}
+
+function drawGlow(gaps) {
+    gaps.forEach(([x0, x1]) => {
+        const g = c.createLinearGradient(0, GROUND_Y - 90, 0, GROUND_Y)
+        g.addColorStop(0, 'rgba(209,26,122,0)')
+        g.addColorStop(1, 'rgba(209,26,122,0.45)')
+        c.fillStyle = g
+        c.fillRect(x0, GROUND_Y - 90, x1 - x0, 90)
+    })
+}
+
+function drawFlag(f) {
+    const x = f.x - game.camera
+    if (x < -60 || x > W + 60) return
+    const top = GROUND_Y - 62
+    c.save()
+    if (f.active) {
+        c.shadowColor = '#38d6c4'
+        c.shadowBlur = 14
+    }
+    c.fillStyle = f.active ? '#ffff8a' : '#bdbdd0'
+    c.fillRect(x, top, 5, 62)
+    c.shadowBlur = 0
+    c.fillStyle = f.active ? '#970000' : '#6a6a80'
+    c.strokeStyle = f.active ? '#ffff8a' : '#bdbdd0'
+    c.lineWidth = 1.5
+    const wag = Math.sin(game.tick * 0.1) * 3
+    c.beginPath()
+    c.moveTo(x + 5, top)
+    c.lineTo(x + 35, top + 11 + wag)
+    c.lineTo(x + 5, top + 22)
+    c.closePath()
+    c.fill()
+    c.stroke()
+    c.restore()
+}
+
+function drawBanner(b) {
+    const x = b.x - game.camera
+    if (x < -BANNER_W || x > W) return
+    const near = game.near === b
+    c.save()
+    let y = b.y
+    if (near) {
+        y -= 2 + Math.sin(game.tick * 0.12) * 2
+        c.shadowColor = '#38d6c4'
+        c.shadowBlur = 18
+    }
+    if (b.solved) c.filter = 'hue-rotate(115deg) saturate(1.1)'
+    c.drawImage(bannerImage, x, y)
+    c.restore()
+    if (b.solved) {
+        c.fillStyle = '#fff'
+        c.strokeStyle = '#000'
+        c.lineWidth = 3
+        c.font = `42px ${FONT}`
+        c.textAlign = 'center'
+        c.strokeText('✓', x + BANNER_W / 2, b.y + 42)
+        c.fillText('✓', x + BANNER_W / 2, b.y + 42)
+    }
+    if (near && game.state === 'playing') {
+        const label = 'Fazer a conta'
+        c.font = `20px ${FONT}`
+        const tw = c.measureText(label).width + 44
+        const px = x + BANNER_W / 2 - tw / 2
+        const py = b.y - 40 + Math.sin(game.tick * 0.12) * 3
+        c.fillStyle = '#ffff8a'
+        c.strokeStyle = '#000'
+        c.lineWidth = 2
+        roundRect(px, py, tw, 28, 14)
+        c.fill()
+        c.stroke()
+        c.fillStyle = '#970000'
+        roundRect(px + 6, py + 4, 22, 20, 5)
+        c.fill()
+        c.fillStyle = '#ffff8a'
+        c.textAlign = 'center'
+        c.fillText('E', px + 17, py + 20)
+        c.fillStyle = '#000'
+        c.textAlign = 'left'
+        c.fillText(label, px + 34, py + 20)
+    }
+}
+
+function drawPlayer() {
+    const p = game.player
+    const set = SPRITES[game.character]
+    let frames, frame
+    if (!p.grounded) {
+        frames = set.jump
+        frame = Math.min(frames.length - 1, Math.floor(p.airTicks / 4))
+    } else if (p.vx !== 0) {
+        frames = set.run
+        frame = Math.floor(game.tick / 5) % frames.length
+    } else {
+        frames = set.idle
+        frame = Math.floor(game.tick / 12) % frames.length
+    }
+    const img = frames[frame]
+    if (!img.complete || !img.naturalWidth) return
+    if (p.invuln > 0 && Math.floor(p.invuln / 5) % 2 === 0) return
+    const x = p.x - game.camera + (p.w - img.naturalWidth) / 2
+    const y = p.y + p.h - img.naturalHeight
+    c.save()
+    if (p.facing === 'left') {
+        c.translate(p.x - game.camera + p.w / 2, 0)
+        c.scale(-1, 1)
+        c.translate(-(p.x - game.camera + p.w / 2), 0)
+    }
+    c.drawImage(img, x, y)
+    c.restore()
+}
+
+function drawParticles() {
+    game.particles.forEach(q => {
+        const a = Math.max(0, q.life / q.max) * (q.fade || 1)
+        const color = q.color.includes(',') ? `rgba(${q.color},${a})` : `#${q.color}`
+        c.globalAlpha = q.color.includes(',') ? 1 : a
+        c.fillStyle = color
+        const x = q.x - (q.spark ? game.camera : game.camera)
+        if (q.round) {
+            c.beginPath()
+            c.arc(x, q.y, q.size, 0, Math.PI * 2)
+            c.fill()
+        } else {
+            c.fillRect(x, q.y, q.size, q.size)
+        }
+        c.globalAlpha = 1
+    })
+}
+
+function render() {
+    c.fillStyle = '#0a0a3a'
+    c.fillRect(0, 0, W, H)
+
+    c.save()
+    if (game.shake > 0) c.translate((Math.random() - 0.5) * game.shake, (Math.random() - 0.5) * game.shake)
+
+    //fundo com parallax
+    const bgX = -game.camera * 0.4
+    if (backgroundImage.complete) {
+        c.drawImage(backgroundImage, bgX, 0)
+        if (bgX + backgroundImage.width < W) c.drawImage(backgroundImage, bgX + backgroundImage.width, 0)
+    }
+
+    const gaps = voidGaps()
+    drawGlow(gaps)
+    drawNeon(gaps, 1, GROUND_Y)
+
+    game.platforms.forEach(pl => {
+        const x0 = pl.x - game.camera
+        if (x0 > W || x0 + pl.w < 0) return
+        if (pl.kind === 'ground') {
+            for (let i = 0; i < pl.n; i++) c.drawImage(platformImage, x0 + i * GROUND_STEP, pl.y)
+        } else {
+            for (let i = 0; i < pl.n; i++) c.drawImage(miniPlatformImage, x0 + i * MINI_STEP, pl.y)
+        }
+    })
+    game.flags.forEach(drawFlag)
+    game.banners.forEach(drawBanner)
+    drawPlayer()
+    //o jogador afunda no néon ao cair
+    drawNeon(gaps, 0.6, GROUND_Y + 14)
+    drawParticles()
+    c.restore()
+
+    if (game.state === 'playing' || game.state === 'celebrate' || game.state === 'math' || game.state === 'paused') {
+        ui.setHud({
+            level: game.level.id,
+            levels: LEVELS.length,
+            time: game.time,
+            lives: game.lives,
+            maxLives: MAX_LIVES,
+            contas: game.contas,
+            totalContas: game.banners.length
+        })
+    }
+}
+
+/* ---------- laço principal (passo fixo de 60 quadros por segundo) ---------- */
+let last = performance.now()
+let acc = 0
+function loop(now) {
+    requestAnimationFrame(loop)
+    acc += Math.min(now - last, 250)
+    last = now
+    let steps = 0
+    while (acc >= STEP && steps < 5) {
+        step()
+        acc -= STEP
+        steps++
+    }
+    if (steps === 5) acc = 0
+    render()
+}
+
+/* ---------- teclado ---------- */
+addEventListener('keydown', e => {
+    if (ui.mathKeydown(e)) return
+    if (e.target && e.target.tagName === 'INPUT') return
+    switch (e.code) {
+        case 'KeyA':
+        case 'ArrowLeft':
+            keys.left = true
             break
-        case 69:
-            keys.select.pressed = true
+        case 'KeyD':
+        case 'ArrowRight':
+            keys.right = true
+            break
+        case 'KeyW':
+        case 'ArrowUp':
+            if (!e.repeat) {
+                keys.jump = true
+                jumpBuffer = 6
+            }
+            break
+        case 'KeyE':
+            if (!e.repeat) tryInteract()
+            break
+        case 'KeyP':
+        case 'Escape':
+            if (!e.repeat) togglePause()
+            break
+    }
+    if (e.code.startsWith('Arrow')) e.preventDefault()
+})
+
+addEventListener('keyup', e => {
+    switch (e.code) {
+        case 'KeyA':
+        case 'ArrowLeft':
+            keys.left = false
+            break
+        case 'KeyD':
+        case 'ArrowRight':
+            keys.right = false
+            break
+        case 'KeyW':
+        case 'ArrowUp':
+            keys.jump = false
+            jumpReleased = true
             break
     }
 })
 
-
-addEventListener('keyup', ({ keyCode }) => {
-    switch (keyCode) {
-        case 65:
-            keys.left.pressed = false
-            lastKey = 'left'
-            break
-        case 83:
-            break
-        case 68:
-            keys.right.pressed = false
-            lastKey = 'right'
-            break
-        case 87:
-            player.velocity.y = 0
-            break
-        case 69:
-            keys.select.pressed = false
-            break
-
-
-    }
+addEventListener('blur', () => {
+    resetInput()
+    if (game.state === 'playing') togglePause()
 })
 
+/* ---------- ajuste de tamanho e início ---------- */
+const gameEl = document.getElementById('game')
+function fit() {
+    gameEl.style.transform = `scale(${Math.min(innerWidth / W, innerHeight / H)})`
+}
+addEventListener('resize', fit)
+fit()
 
-
-var res = 0;
-var fator1 = []
-var fator2 = []
-var operador = []
-var operacao = []
-
-function createOperation() {
-
-    randomNumber()
-
-    if (operador == "+") {
-        res = parseInt(fator1) + parseInt(fator2)
-    } else {
-        const teste = fator1 - fator2
-        if (teste < 0) {
-            var apoio = fator1
-            fator1 = fator2
-            fator2 = apoio
-        }
-        res = parseInt(fator1) - parseInt(fator2)
+ui.buildPad()
+ui.setCharImages({ boy: SPRITES.boy.idle[0].src, girl: SPRITES.girl.idle[0].src })
+ui.bindTitle({
+    onStart: name => {
+        saveProfile({ group: name || 'Equipe', character: game.character })
+        goSelect()
     }
-    operacao = fator1 + operador + fator2
-}
-
-function randomNumber() {
-    const numbers1 = "0123"
-    const numbers2 = "123456789"
-    const operator = "+-"
-    var i = 0
-
-    var randomNumber1 = Math.floor(Math.random() * numbers1.length)
-    fator1 += numbers1.substring(randomNumber1, randomNumber1 + 1)
-    randomNumber1 = Math.floor(Math.random() * numbers2.length)
-    fator1 += numbers2.substring(randomNumber1, randomNumber1 + 1)
-
-    const randomNumberO = Math.floor(Math.random() * operator.length)
-    operador += operator.substring(randomNumberO, randomNumberO + 1)
-
-    var randomNumber2 = Math.floor(Math.random() * numbers1.length)
-    fator2 += numbers1.substring(randomNumber2, randomNumber2 + 1)
-    randomNumber2 = Math.floor(Math.random() * numbers2.length)
-    fator2 += numbers2.substring(randomNumber2, randomNumber2 + 1)
-
-    console.log(fator1, fator2, operador)
-}
-
-function alertFunction() {
-    var resposta = prompt(`Digite o resultado da operação: ${operacao}`);
-
-    if (resposta == res) {
-        fator1 = []
-        fator2 = []
-        operador = []
-        operacao = []
-        player.callCalculator = false
-        keys.select.pressed = false
-        player.points++
-        if(player.points <= 7){
-            alert(`Você tem: ${player.points} ponto`)
-        }
-        return 0;
-    } else {
-        alertFunction()
-    }
-}
-
-function calculator() {
-    createOperation()
-    alertFunction()
-}
-
-let startTime; // Variável para armazenar o tempo de início do jogo
-
-// Função para iniciar o tempo
-function startTimer() {
-    startTime = Date.now(); // Armazena o tempo atual
-}
-
-// Função para calcular e mostrar o tempo decorrido no console
-function showElapsedTime() {
-    const elapsedTime = Date.now() - startTime; // Calcula o tempo decorrido
-    const seconds = Math.floor(elapsedTime / 1000); // Converte milissegundos para segundos
-
-    return `Tempo decorrido: ${seconds} segundos`;
-}
-
+})
+goTitle()
+requestAnimationFrame(loop)

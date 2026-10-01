@@ -82,6 +82,7 @@ const game = {
     flags: [],
     banners: [],
     near: null,
+    nearFlag: null,
     checkpoint: { x: 100 },
     particles: [],
     shake: 0,
@@ -108,6 +109,7 @@ function loadLevel(index) {
     game.falls = 0
     game.byOp = {}
     game.near = null
+    game.nearFlag = null
     game.particles = []
     game.shake = 0
     game.checkpoint = { x: 100 }
@@ -230,7 +232,6 @@ function step() {
                 p.y = pl.y - p.h
                 p.vy = 0
                 p.grounded = true
-                if (pl.kind === 'ground') activateFlag(pl)
             }
         }
         if (p.grounded && !wasGrounded && impact > 8) dust(p.x + p.w / 2, p.y + p.h, 6)
@@ -255,14 +256,21 @@ function step() {
     game.particles = game.particles.filter(q => q.life > 0)
 }
 
-function activateFlag(ground) {
-    const flag = game.flags.find(f => f.x >= ground.x && f.x < ground.x + ground.w)
-    if (flag && !flag.active && game.player.x + game.player.w >= flag.x) {
-        flag.active = true
-        game.checkpoint = flag
-        burst(flag.x, GROUND_Y - 50, 10, ['255,255,138', '56,214,196'], { spread: 3, up: 5 })
-        ui.toast('Checkpoint!', 1200, 'flag')
+// contas antes da bandeira que ainda faltam resolver
+function pendingBefore(flag) {
+    return game.banners.filter(b => !b.solved && b.x < flag.x).length
+}
+
+function saveCheckpoint(flag) {
+    const pending = pendingBefore(flag)
+    if (pending > 0) {
+        ui.toast(`Resolva ${pending === 1 ? 'a conta que falta' : `as ${pending} contas que faltam`} antes de salvar!`, 2200, 'lock')
+        return
     }
+    flag.active = true
+    game.checkpoint = flag
+    burst(flag.x, GROUND_Y - 50, 10, ['255,255,138', '56,214,196'], { spread: 3, up: 5 })
+    ui.toast('Checkpoint salvo!', 1200, 'flag')
 }
 
 function fall() {
@@ -305,13 +313,21 @@ function findNear() {
         const bottom = b.y + BANNER_H
         if (Math.abs(cx - (b.x + BANNER_W / 2)) < 75 && Math.abs(p.y + p.h - bottom) < 40) {
             game.near = b
-            return
+            break
         }
     }
+    // bandeira ainda não salva, com o jogador de pé no chão ao lado dela
+    game.nearFlag = null
+    if (game.near || !p.grounded || p.y + p.h !== GROUND_Y) return
+    game.nearFlag = game.flags.find(f => !f.active && Math.abs(cx - f.x) < 60) || null
 }
 
 function tryInteract() {
-    if (game.state !== 'playing' || !game.near || !game.player.grounded) return
+    if (game.state !== 'playing' || !game.player.grounded) return
+    if (!game.near) {
+        if (game.nearFlag) saveCheckpoint(game.nearFlag)
+        return
+    }
     const banner = game.near
     const level = game.level
     const question = createQuestion(level.math)
@@ -419,6 +435,7 @@ function startLevel(index) {
     ui.resetHudCache()
     ui.setHudVisible(true)
     ui.showScreen(null)
+    if (document.activeElement) document.activeElement.blur()
 }
 
 function togglePause() {
@@ -520,6 +537,11 @@ function drawFlag(f) {
     c.fill()
     c.stroke()
     c.restore()
+    if (game.nearFlag === f && game.state === 'playing') {
+        const pending = pendingBefore(f)
+        if (pending > 0) drawPrompt(x + 3, top - 40, `Faltam ${pending} ${pending === 1 ? 'conta' : 'contas'}`, true)
+        else drawPrompt(x + 3, top - 40, 'Salvar checkpoint')
+    }
 }
 
 function drawBanner(b) {
@@ -545,28 +567,32 @@ function drawBanner(b) {
         c.strokeText('✓', x + BANNER_W / 2, b.y + 42)
         c.fillText('✓', x + BANNER_W / 2, b.y + 42)
     }
-    if (near && game.state === 'playing') {
-        const label = 'Fazer a conta'
-        c.font = `20px ${FONT}`
-        const tw = c.measureText(label).width + 44
-        const px = x + BANNER_W / 2 - tw / 2
-        const py = b.y - 40 + Math.sin(game.tick * 0.12) * 3
-        c.fillStyle = '#ffff8a'
-        c.strokeStyle = '#000'
-        c.lineWidth = 2
-        roundRect(px, py, tw, 28, 14)
-        c.fill()
-        c.stroke()
+    if (near && game.state === 'playing') drawPrompt(x + BANNER_W / 2, b.y - 40, 'Fazer a conta')
+}
+
+// balão "[E] texto" acima de um objeto; sem tecla quando a ação está bloqueada
+function drawPrompt(cx, top, label, locked = false) {
+    c.font = `20px ${FONT}`
+    const tw = c.measureText(label).width + (locked ? 20 : 44)
+    const px = cx - tw / 2
+    const py = top + Math.sin(game.tick * 0.12) * 3
+    c.fillStyle = locked ? '#bdbdd0' : '#ffff8a'
+    c.strokeStyle = '#000'
+    c.lineWidth = 2
+    roundRect(px, py, tw, 28, 14)
+    c.fill()
+    c.stroke()
+    if (!locked) {
         c.fillStyle = '#970000'
         roundRect(px + 6, py + 4, 22, 20, 5)
         c.fill()
         c.fillStyle = '#ffff8a'
         c.textAlign = 'center'
         c.fillText('E', px + 17, py + 20)
-        c.fillStyle = '#000'
-        c.textAlign = 'left'
-        c.fillText(label, px + 34, py + 20)
     }
+    c.fillStyle = '#000'
+    c.textAlign = 'left'
+    c.fillText(label, px + (locked ? 10 : 34), py + 20)
 }
 
 function drawPlayer() {
@@ -661,7 +687,7 @@ function render() {
     drawParticles()
     c.restore()
 
-    ui.setActionReady(game.state === 'playing' && !!game.near && game.player.grounded)
+    ui.setActionReady(game.state === 'playing' && game.player.grounded && (!!game.near || (!!game.nearFlag && pendingBefore(game.nearFlag) === 0)))
     if (game.state === 'playing' || game.state === 'celebrate' || game.state === 'math' || game.state === 'paused') {
         ui.setHud({
             level: game.level.id,
@@ -719,7 +745,7 @@ function action(name, down) {
 const KEY_ACTIONS = {
     KeyA: 'left', ArrowLeft: 'left',
     KeyD: 'right', ArrowRight: 'right',
-    KeyW: 'jump', ArrowUp: 'jump',
+    KeyW: 'jump', ArrowUp: 'jump', Space: 'jump',
     KeyE: 'act'
 }
 
@@ -731,10 +757,12 @@ addEventListener('keydown', e => {
     } else if (KEY_ACTIONS[e.code] && !e.repeat) {
         action(KEY_ACTIONS[e.code], true)
     }
-    if (e.code.startsWith('Arrow')) e.preventDefault()
+    if (e.code.startsWith('Arrow') || (e.code === 'Space' && game.state === 'playing')) e.preventDefault()
 })
 
 addEventListener('keyup', e => {
+    // sem isso o espaço também "clicaria" o último botão focado
+    if (e.code === 'Space' && game.state === 'playing') e.preventDefault()
     const name = KEY_ACTIONS[e.code]
     if (name && name !== 'act') action(name, false)
 })

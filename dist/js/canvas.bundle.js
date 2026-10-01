@@ -941,6 +941,7 @@ var game = {
   flags: [],
   banners: [],
   near: null,
+  nearFlag: null,
   checkpoint: {
     x: 100
   },
@@ -980,6 +981,7 @@ function loadLevel(index) {
   game.falls = 0;
   game.byOp = {};
   game.near = null;
+  game.nearFlag = null;
   game.particles = [];
   game.shake = 0;
   game.checkpoint = {
@@ -1180,7 +1182,6 @@ function step() {
           p.y = pl.y - p.h;
           p.vy = 0;
           p.grounded = true;
-          if (pl.kind === 'ground') activateFlag(pl);
         }
       }
     } catch (err) {
@@ -1209,22 +1210,30 @@ function step() {
   game.particles = game.particles.filter(function (q) {
     return q.life > 0;
   });
+} // contas antes da bandeira que ainda faltam resolver
+
+
+function pendingBefore(flag) {
+  return game.banners.filter(function (b) {
+    return !b.solved && b.x < flag.x;
+  }).length;
 }
 
-function activateFlag(ground) {
-  var flag = game.flags.find(function (f) {
-    return f.x >= ground.x && f.x < ground.x + ground.w;
-  });
+function saveCheckpoint(flag) {
+  var pending = pendingBefore(flag);
 
-  if (flag && !flag.active && game.player.x + game.player.w >= flag.x) {
-    flag.active = true;
-    game.checkpoint = flag;
-    burst(flag.x, _levels__WEBPACK_IMPORTED_MODULE_4__["GROUND_Y"] - 50, 10, ['255,255,138', '56,214,196'], {
-      spread: 3,
-      up: 5
-    });
-    _ui__WEBPACK_IMPORTED_MODULE_7__["toast"]('Checkpoint!', 1200, 'flag');
+  if (pending > 0) {
+    _ui__WEBPACK_IMPORTED_MODULE_7__["toast"]("Resolva ".concat(pending === 1 ? 'a conta que falta' : "as ".concat(pending, " contas que faltam"), " antes de salvar!"), 2200, 'lock');
+    return;
   }
+
+  flag.active = true;
+  game.checkpoint = flag;
+  burst(flag.x, _levels__WEBPACK_IMPORTED_MODULE_4__["GROUND_Y"] - 50, 10, ['255,255,138', '56,214,196'], {
+    spread: 3,
+    up: 5
+  });
+  _ui__WEBPACK_IMPORTED_MODULE_7__["toast"]('Checkpoint salvo!', 1200, 'flag');
 }
 
 function fall() {
@@ -1278,18 +1287,31 @@ function findNear() {
 
       if (Math.abs(cx - (b.x + _levels__WEBPACK_IMPORTED_MODULE_4__["BANNER_W"] / 2)) < 75 && Math.abs(p.y + p.h - bottom) < 40) {
         game.near = b;
-        return;
+        break;
       }
-    }
+    } // bandeira ainda não salva, com o jogador de pé no chão ao lado dela
+
   } catch (err) {
     _iterator2.e(err);
   } finally {
     _iterator2.f();
   }
+
+  game.nearFlag = null;
+  if (game.near || !p.grounded || p.y + p.h !== _levels__WEBPACK_IMPORTED_MODULE_4__["GROUND_Y"]) return;
+  game.nearFlag = game.flags.find(function (f) {
+    return !f.active && Math.abs(cx - f.x) < 60;
+  }) || null;
 }
 
 function tryInteract() {
-  if (game.state !== 'playing' || !game.near || !game.player.grounded) return;
+  if (game.state !== 'playing' || !game.player.grounded) return;
+
+  if (!game.near) {
+    if (game.nearFlag) saveCheckpoint(game.nearFlag);
+    return;
+  }
+
   var banner = game.near;
   var level = game.level;
   var question = Object(_math__WEBPACK_IMPORTED_MODULE_5__["createQuestion"])(level.math);
@@ -1429,6 +1451,7 @@ function startLevel(index) {
   _ui__WEBPACK_IMPORTED_MODULE_7__["resetHudCache"]();
   _ui__WEBPACK_IMPORTED_MODULE_7__["setHudVisible"](true);
   _ui__WEBPACK_IMPORTED_MODULE_7__["showScreen"](null);
+  if (document.activeElement) document.activeElement.blur();
 }
 
 function togglePause() {
@@ -1548,6 +1571,11 @@ function drawFlag(f) {
   c.fill();
   c.stroke();
   c.restore();
+
+  if (game.nearFlag === f && game.state === 'playing') {
+    var pending = pendingBefore(f);
+    if (pending > 0) drawPrompt(x + 3, top - 40, "Faltam ".concat(pending, " ").concat(pending === 1 ? 'conta' : 'contas'), true);else drawPrompt(x + 3, top - 40, 'Salvar checkpoint');
+  }
 }
 
 function drawBanner(b) {
@@ -1577,28 +1605,35 @@ function drawBanner(b) {
     c.fillText('✓', x + _levels__WEBPACK_IMPORTED_MODULE_4__["BANNER_W"] / 2, b.y + 42);
   }
 
-  if (near && game.state === 'playing') {
-    var label = 'Fazer a conta';
-    c.font = "20px ".concat(FONT);
-    var tw = c.measureText(label).width + 44;
-    var px = x + _levels__WEBPACK_IMPORTED_MODULE_4__["BANNER_W"] / 2 - tw / 2;
-    var py = b.y - 40 + Math.sin(game.tick * 0.12) * 3;
-    c.fillStyle = '#ffff8a';
-    c.strokeStyle = '#000';
-    c.lineWidth = 2;
-    roundRect(px, py, tw, 28, 14);
-    c.fill();
-    c.stroke();
+  if (near && game.state === 'playing') drawPrompt(x + _levels__WEBPACK_IMPORTED_MODULE_4__["BANNER_W"] / 2, b.y - 40, 'Fazer a conta');
+} // balão "[E] texto" acima de um objeto; sem tecla quando a ação está bloqueada
+
+
+function drawPrompt(cx, top, label) {
+  var locked = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
+  c.font = "20px ".concat(FONT);
+  var tw = c.measureText(label).width + (locked ? 20 : 44);
+  var px = cx - tw / 2;
+  var py = top + Math.sin(game.tick * 0.12) * 3;
+  c.fillStyle = locked ? '#bdbdd0' : '#ffff8a';
+  c.strokeStyle = '#000';
+  c.lineWidth = 2;
+  roundRect(px, py, tw, 28, 14);
+  c.fill();
+  c.stroke();
+
+  if (!locked) {
     c.fillStyle = '#970000';
     roundRect(px + 6, py + 4, 22, 20, 5);
     c.fill();
     c.fillStyle = '#ffff8a';
     c.textAlign = 'center';
     c.fillText('E', px + 17, py + 20);
-    c.fillStyle = '#000';
-    c.textAlign = 'left';
-    c.fillText(label, px + 34, py + 20);
   }
+
+  c.fillStyle = '#000';
+  c.textAlign = 'left';
+  c.fillText(label, px + (locked ? 10 : 34), py + 20);
 }
 
 function drawPlayer() {
@@ -1703,7 +1738,7 @@ function render() {
   drawNeon(gaps, 0.6, _levels__WEBPACK_IMPORTED_MODULE_4__["GROUND_Y"] + 14);
   drawParticles();
   c.restore();
-  _ui__WEBPACK_IMPORTED_MODULE_7__["setActionReady"](game.state === 'playing' && !!game.near && game.player.grounded);
+  _ui__WEBPACK_IMPORTED_MODULE_7__["setActionReady"](game.state === 'playing' && game.player.grounded && (!!game.near || !!game.nearFlag && pendingBefore(game.nearFlag) === 0));
 
   if (game.state === 'playing' || game.state === 'celebrate' || game.state === 'math' || game.state === 'paused') {
     _ui__WEBPACK_IMPORTED_MODULE_7__["setHud"]({
@@ -1775,6 +1810,7 @@ var KEY_ACTIONS = {
   ArrowRight: 'right',
   KeyW: 'jump',
   ArrowUp: 'jump',
+  Space: 'jump',
   KeyE: 'act'
 };
 addEventListener('keydown', function (e) {
@@ -1787,9 +1823,11 @@ addEventListener('keydown', function (e) {
     action(KEY_ACTIONS[e.code], true);
   }
 
-  if (e.code.startsWith('Arrow')) e.preventDefault();
+  if (e.code.startsWith('Arrow') || e.code === 'Space' && game.state === 'playing') e.preventDefault();
 });
 addEventListener('keyup', function (e) {
+  // sem isso o espaço também "clicaria" o último botão focado
+  if (e.code === 'Space' && game.state === 'playing') e.preventDefault();
   var name = KEY_ACTIONS[e.code];
   if (name && name !== 'act') action(name, false);
 });

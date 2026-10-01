@@ -256,9 +256,10 @@ function step() {
     game.particles = game.particles.filter(q => q.life > 0)
 }
 
-// contas antes da bandeira que ainda faltam resolver
+// contas da bandeira para trás que ainda faltam resolver
+// (banners em cima da bandeira ou depois dela ficam para o próximo checkpoint)
 function pendingBefore(flag) {
-    return game.banners.filter(b => !b.solved && b.x < flag.x).length
+    return game.banners.filter(b => !b.solved && b.x + BANNER_W <= flag.x).length
 }
 
 function saveCheckpoint(flag) {

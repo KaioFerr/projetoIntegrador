@@ -1210,12 +1210,13 @@ function step() {
   game.particles = game.particles.filter(function (q) {
     return q.life > 0;
   });
-} // contas antes da bandeira que ainda faltam resolver
+} // contas da bandeira para trás que ainda faltam resolver
+// (banners em cima da bandeira ou depois dela ficam para o próximo checkpoint)
 
 
 function pendingBefore(flag) {
   return game.banners.filter(function (b) {
-    return !b.solved && b.x < flag.x;
+    return !b.solved && b.x + _levels__WEBPACK_IMPORTED_MODULE_4__["BANNER_W"] <= flag.x;
   }).length;
 }
 

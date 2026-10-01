@@ -1493,6 +1493,7 @@ function togglePause() {
       title: 'Pausado',
       text: 'O tempo está parado.',
       mainLabel: 'Continuar',
+      controls: true,
       onMain: togglePause,
       onMenu: goSelect
     });
@@ -2705,8 +2706,11 @@ function showPause(_ref7) {
       mainIcon = _ref7$mainIcon === void 0 ? 'play' : _ref7$mainIcon,
       _ref7$titleIcon = _ref7.titleIcon,
       titleIcon = _ref7$titleIcon === void 0 ? 'pause' : _ref7$titleIcon,
+      _ref7$controls = _ref7.controls,
+      controls = _ref7$controls === void 0 ? false : _ref7$controls,
       onMain = _ref7.onMain,
       onMenu = _ref7.onMenu;
+  $('pause-ctrls').hidden = !controls;
   $('pause-icon').innerHTML = "<span class=\"icon-slot\" style=\"font-size:52px\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_1__["icon"])(titleIcon), "</span>");
   $('pause-title-text').textContent = title;
   $('pause-text').textContent = text;

@@ -261,7 +261,8 @@ function confetti() {
 }
 
 /* ---------- pausa e fim de jogo ---------- */
-export function showPause({ title, text, mainLabel, mainIcon = 'play', titleIcon = 'pause', onMain, onMenu }) {
+export function showPause({ title, text, mainLabel, mainIcon = 'play', titleIcon = 'pause', controls = false, onMain, onMenu }) {
+    $('pause-ctrls').hidden = !controls
     $('pause-icon').innerHTML = `<span class="icon-slot" style="font-size:52px">${icon(titleIcon)}</span>`
     $('pause-title-text').textContent = title
     $('pause-text').textContent = text

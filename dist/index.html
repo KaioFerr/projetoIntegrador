@@ -129,6 +129,12 @@
       .key.ok { grid-column: span 2; background: var(--yellow); color: var(--black); }
       .key.del { background: var(--red-d); }
       .hint { font-size: 21px; margin: 10px 0 0; min-height: 26px; }
+      /* comandos na pausa */
+      .pctrls { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; align-items: center; text-align: left; background: rgba(0,0,0,.35); border-radius: 12px; padding: 10px 16px; margin: 0 0 16px; font-size: 20px; }
+      .pctrls[hidden] { display: none; }
+      .pctrls .k { text-align: right; white-space: nowrap; }
+      .pctrls .k kbd { font-size: 18px; }
+      body.touch .pctrls .kb-only, body:not(.touch) .pctrls .touch-only { display: none; }
       .acts { display: flex; gap: 10px; justify-content: center; }
       .acts .key { padding: 7px 22px; font-size: 27px; white-space: nowrap; }
       .acts .key.ok { grid-column: auto; }
@@ -244,9 +250,19 @@
 
       <!-- pausa e fim de jogo -->
       <div class="overlay" id="screen-pause" hidden>
-        <div class="card">
+        <div class="card" style="width:620px">
           <h3 id="pause-title" style="font-weight:400;font-size:57px;margin:0 0 12px"><span id="pause-icon"></span><span id="pause-title-text">Pausado</span></h3>
           <p class="hint" id="pause-text" style="margin:0 0 14px"></p>
+          <div class="pctrls" id="pause-ctrls" hidden>
+            <span class="k kb-only"><kbd>←</kbd><kbd>→</kbd> ou <kbd>A</kbd><kbd>D</kbd></span><span class="kb-only">Andar</span>
+            <span class="k kb-only"><kbd>↑</kbd> <kbd>W</kbd> ou <kbd>Espaço</kbd></span><span class="kb-only">Pular</span>
+            <span class="k kb-only"><kbd>E</kbd></span><span class="kb-only">Hackear painel / salvar checkpoint</span>
+            <span class="k kb-only"><kbd>P</kbd> ou <kbd>Esc</kbd></span><span class="kb-only">Pausar / continuar</span>
+            <span class="k touch-only"><kbd>←</kbd><kbd>→</kbd></span><span class="touch-only">Andar</span>
+            <span class="k touch-only"><kbd>↑</kbd></span><span class="touch-only">Pular</span>
+            <span class="k touch-only"><kbd>E</kbd></span><span class="touch-only">Hackear painel / salvar checkpoint</span>
+            <span class="k touch-only"><kbd><span data-icon="pause"></span></kbd></span><span class="touch-only">Pausar</span>
+          </div>
           <div class="acts">
             <button class="key ok" id="pause-main"><span data-icon="play"></span><span id="pause-main-label">Continuar</span></button>
             <button class="key del" id="pause-menu"><span data-icon="home"></span>Menu</button>

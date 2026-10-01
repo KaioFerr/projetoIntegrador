@@ -462,6 +462,7 @@ function togglePause() {
             title: 'Pausado',
             text: 'O tempo está parado.',
             mainLabel: 'Continuar',
+            controls: true,
             onMain: togglePause,
             onMenu: goSelect
         })

@@ -22,6 +22,9 @@ const STEP = 1000 / 60
 const MAX_LIVES = 5
 const MIN_CAM_Y = -280 // quanto a câmera pode subir
 const FONT = '"Jockey One", "Arial Narrow", sans-serif'
+// animação do cadeado ao hackear um painel (em passos de 1/60 s)
+const UNLOCK_TICKS = 80
+const LOCK_OPEN_AT = 28
 // o sprite tem 80px, mas os pés ocupam só o centro; a colisão usa essa faixa
 const FEET_L = 28
 const FEET_R = 52
@@ -125,7 +128,7 @@ function loadLevel(index) {
     level.minis.forEach(([x, y, n]) => {
         game.platforms.push({ kind: 'mini', x, y, w: MINI_W + (n - 1) * MINI_STEP, n })
     })
-    game.banners = level.banners.map(([x, y]) => ({ x, y, solved: false }))
+    game.banners = level.banners.map(([x, y]) => ({ x, y, solved: false, unlockT: -1 }))
 }
 
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v))
@@ -193,6 +196,15 @@ function resetInput() {
 function step() {
     game.tick++
     spawnSparks()
+    if (game.state === 'playing' || game.state === 'celebrate') game.banners.forEach(b => {
+        if (b.unlockT < 0 || b.unlockT >= UNLOCK_TICKS) return
+        b.unlockT++
+        // momento em que o cadeado abre
+        if (b.unlockT === LOCK_OPEN_AT) {
+            burst(b.x + BANNER_W / 2, b.y + 26, 28, ['255,255,138', '56,214,196', '120,255,170'], { spread: 6, up: 8, life: 60, size: 6 })
+            game.shake = 6
+        }
+    })
     const p = game.player
     const alive = game.state === 'playing' || game.state === 'celebrate'
 
@@ -265,7 +277,7 @@ function pendingBefore(flag) {
 function saveCheckpoint(flag) {
     const pending = pendingBefore(flag)
     if (pending > 0) {
-        ui.toast(`Resolva ${pending === 1 ? 'a conta que falta' : `as ${pending} contas que faltam`} antes de salvar!`, 2200, 'lock')
+        ui.toast(`Hackeie ${pending === 1 ? 'o painel que falta' : `os ${pending} painéis que faltam`} antes de salvar!`, 2200, 'lock')
         return
     }
     flag.active = true
@@ -336,7 +348,7 @@ function tryInteract() {
     resetInput()
     game.state = 'math'
     ui.openMath({
-        title: `Banner ${game.contas + 1} de ${game.banners.length}`,
+        title: `Hackeando painel ${game.contas + 1} de ${game.banners.length}`,
         question,
         onSubmit: value => {
             stats.n++
@@ -350,11 +362,12 @@ function tryInteract() {
         onClose: correct => {
             if (correct) {
                 banner.solved = true
+                banner.unlockT = 0
                 game.contas++
-                burst(banner.x + BANNER_W / 2, banner.y + 20, 28, ['255,255,138', '255,93,115', '56,214,196', '255,122,42'], { spread: 6, up: 8, life: 60, size: 7 })
                 if (game.contas === game.banners.length) {
+                    // deixa o cadeado abrir antes da tela de resultados
                     game.state = 'celebrate'
-                    game.celebrateTimer = 70
+                    game.celebrateTimer = UNLOCK_TICKS + 20
                     return
                 }
             }
@@ -540,7 +553,7 @@ function drawFlag(f) {
     c.restore()
     if (game.nearFlag === f && game.state === 'playing') {
         const pending = pendingBefore(f)
-        if (pending > 0) drawPrompt(x + 3, top - 40, `Faltam ${pending} ${pending === 1 ? 'conta' : 'contas'}`, true)
+        if (pending > 0) drawPrompt(x + 3, top - 40, `Faltam ${pending} ${pending === 1 ? 'painel' : 'painéis'}`, true)
         else drawPrompt(x + 3, top - 40, 'Salvar checkpoint')
     }
 }
@@ -556,10 +569,17 @@ function drawBanner(b) {
         c.shadowColor = '#38d6c4'
         c.shadowBlur = 18
     }
-    if (b.solved) c.filter = 'hue-rotate(115deg) saturate(1.1)'
-    c.drawImage(bannerImage, x, y)
+    const t = b.solved ? (b.unlockT < 0 ? UNLOCK_TICKS : b.unlockT) : -1
+    const unlocking = t >= 0 && t < UNLOCK_TICKS
+    if (t >= LOCK_OPEN_AT) c.filter = 'hue-rotate(115deg) saturate(1.1)'
+    // falha de sinal enquanto está sendo hackeado
+    if (unlocking && t < LOCK_OPEN_AT && t % 4 < 2) c.globalAlpha = 0.75
+    c.drawImage(bannerImage, x + (unlocking && t < LOCK_OPEN_AT ? (Math.random() - 0.5) * 4 : 0), y)
     c.restore()
-    if (b.solved) {
+    if (!b.solved) {
+        drawLock(x + BANNER_W - 8, y + 6, 0.45, 0, 1)
+    }
+    if (b.solved && !unlocking) {
         c.fillStyle = '#fff'
         c.strokeStyle = '#000'
         c.lineWidth = 3
@@ -568,7 +588,85 @@ function drawBanner(b) {
         c.strokeText('✓', x + BANNER_W / 2, b.y + 42)
         c.fillText('✓', x + BANNER_W / 2, b.y + 42)
     }
-    if (near && game.state === 'playing') drawPrompt(x + BANNER_W / 2, b.y - 40, 'Fazer a conta')
+    if (near && game.state === 'playing') drawPrompt(x + BANNER_W / 2, b.y - 40, 'Hackear o painel')
+}
+
+// cadeado: (cx, cy) é o centro do corpo; open vai de 0 (fechado) a 1 (aberto)
+function drawLock(cx, cy, scale, open, alpha) {
+    const green = open >= 0.5
+    c.save()
+    c.globalAlpha = alpha
+    c.translate(cx, cy)
+    c.scale(scale, scale)
+    c.lineJoin = 'round'
+    // haste: sobe e gira em torno da perna direita
+    c.save()
+    c.translate(10, -12 - open * 10)
+    c.rotate(-open * 0.7)
+    c.translate(-10, 0)
+    c.beginPath()
+    c.moveTo(-10, 4)
+    c.lineTo(-10, -8)
+    c.arc(0, -8, 10, Math.PI, 0)
+    c.lineTo(10, 4)
+    c.strokeStyle = '#000'
+    c.lineWidth = 10
+    c.stroke()
+    c.strokeStyle = green ? '#ffff8a' : '#bdbdd0'
+    c.lineWidth = 5
+    c.stroke()
+    c.restore()
+    // corpo
+    c.shadowColor = green ? '#38d6c4' : '#ff5d73'
+    c.shadowBlur = 16
+    roundRect(-17, -13, 34, 28, 6)
+    c.fillStyle = green ? '#1fb89a' : '#c8102e'
+    c.fill()
+    c.shadowBlur = 0
+    c.strokeStyle = '#000'
+    c.lineWidth = 3
+    c.stroke()
+    // fechadura
+    c.fillStyle = '#000'
+    c.beginPath()
+    c.arc(0, -2, 4, 0, Math.PI * 2)
+    c.fill()
+    c.fillRect(-2, -1, 4, 9)
+    c.restore()
+}
+
+// sequência: cadeado aparece e treme, a haste abre, fica verde e sobe sumindo
+function drawUnlock(b, x, t) {
+    const cx = x + BANNER_W / 2
+    const pop = Math.min(1, t / 10)
+    const scale = 1.3 * (pop < 1 ? 0.4 + pop * 0.75 : 1)
+    const shakeX = t > 10 && t < LOCK_OPEN_AT ? Math.sin(t * 2.2) * 3 : 0
+    const open = clamp((t - LOCK_OPEN_AT + 6) / 8, 0, 1)
+    const out = clamp((t - 55) / (UNLOCK_TICKS - 55), 0, 1)
+    const cy = b.y + 28 - out * 30
+    drawLock(cx + shakeX, cy, scale, open, 1 - out)
+    if (t >= LOCK_OPEN_AT) {
+        // anel de luz quando abre
+        const r = (t - LOCK_OPEN_AT) * 3
+        c.save()
+        c.globalAlpha = Math.max(0, 1 - r / 70)
+        c.strokeStyle = '#38d6c4'
+        c.lineWidth = 4
+        c.beginPath()
+        c.arc(cx, b.y + 28, r, 0, Math.PI * 2)
+        c.stroke()
+        // texto de acesso liberado
+        c.globalAlpha = 1 - out
+        c.font = `22px ${FONT}`
+        c.textAlign = 'center'
+        c.lineWidth = 4
+        c.strokeStyle = '#000'
+        c.fillStyle = '#38d6c4'
+        const ty = b.y - 14 - Math.min(10, (t - LOCK_OPEN_AT) * 0.6)
+        c.strokeText('ACESSO LIBERADO', cx, ty)
+        c.fillText('ACESSO LIBERADO', cx, ty)
+        c.restore()
+    }
 }
 
 // balão "[E] texto" acima de um objeto; sem tecla quando a ação está bloqueada
@@ -683,6 +781,11 @@ function render() {
     game.flags.forEach(drawFlag)
     game.banners.forEach(drawBanner)
     drawPlayer()
+    //cadeados abrindo ficam na frente do jogador
+    game.banners.forEach(b => {
+        const x = b.x - game.camera
+        if (b.unlockT >= 0 && b.unlockT < UNLOCK_TICKS && x > -BANNER_W * 2 && x < W + BANNER_W) drawUnlock(b, x, b.unlockT)
+    })
     //o jogador afunda no néon ao cair
     drawNeon(gaps, 0.6, GROUND_Y + 14)
     drawParticles()

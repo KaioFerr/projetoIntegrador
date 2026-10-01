@@ -177,7 +177,7 @@ export function openMath({ title, question, onSubmit, onClose }) {
     Object.assign(mathState, { open: true, answer: '', tries: 0, question, submit: onSubmit, close: onClose, locked: false })
     $('math-title').textContent = title
     $('math-q').textContent = `${question.text} = ?`
-    $('math-hint').textContent = 'Digite o resultado e aperte OK.'
+    $('math-hint').textContent = 'Resolva a conta para quebrar a senha.'
     renderAnswer()
     showScreen('math')
 }
@@ -195,12 +195,12 @@ function check() {
     if (ok) {
         mathState.locked = true
         renderAnswer('good')
-        $('math-hint').textContent = 'Muito bem! Banner liberado.'
+        $('math-hint').textContent = 'Senha certa! Abrindo o painel...'
         setTimeout(() => closeMath(true), 900)
     } else {
         mathState.tries++
         renderAnswer('bad')
-        $('math-hint').textContent = mathState.tries >= 2 ? hintFor(mathState.question) : 'Quase! Tente de novo.'
+        $('math-hint').textContent = mathState.tries >= 2 ? hintFor(mathState.question) : 'Senha errada! Tente de novo.'
         mathState.answer = ''
         setTimeout(() => { if (!mathState.answer && !mathState.locked) renderAnswer() }, 600)
     }

@@ -30,6 +30,8 @@ const PATHS = {
     fullscreen: [S, '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>'],
     rotate: [S, '<rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 18h2"/>'],
     runner: [S, '<circle cx="14" cy="4.5" r="2"/><path d="M8 21l3.5-6 3 .5L16 21"/><path d="M11.5 15l-1-5 4.5-1 2 3.5 3 .5"/><path d="M10.5 10L7 11.5"/>'],
+    sound: [S, '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18 6.5a7.5 7.5 0 0 1 0 11"/>'],
+    mute: [S, '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/>'],
     sparkle: [F, '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.8 2.2 2.2.8-2.2.8L19 21l-.8-2.2-2.2-.8 2.2-.8z"/>']
 }
 

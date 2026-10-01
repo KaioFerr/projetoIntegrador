@@ -10,6 +10,7 @@ import { LEVELS, GROUND_Y, GROUND_STEP, GROUND_TILE_W, MINI_STEP, MINI_W, MINI_H
 import { createQuestion } from './math'
 import { getProfile, saveProfile, getProgress, saveResult } from './storage'
 import * as ui from './ui'
+import { sfx, isMuted, setMuted } from './sfx'
 
 //Tela
 const canvas = document.querySelector('canvas')
@@ -207,6 +208,7 @@ function step() {
         b.unlockT++
         // momento em que o cadeado abre
         if (b.unlockT === LOCK_OPEN_AT) {
+            sfx.unlock()
             burst(b.x + BANNER_W / 2, b.y + 26, 28, ['255,255,138', '56,214,196', '120,255,170'], { spread: 6, up: 8, life: 60, size: 6 })
             game.shake = 6
         }
@@ -225,6 +227,7 @@ function step() {
             jumpBuffer--
             if (p.grounded && game.state === 'playing') {
                 p.vy = -24
+                sfx.jump()
                 p.grounded = false
                 jumpBuffer = 0
                 dust(p.x + p.w / 2, p.y + p.h, 5)
@@ -252,7 +255,10 @@ function step() {
                 p.grounded = true
             }
         }
-        if (p.grounded && !wasGrounded && impact > 8) dust(p.x + p.w / 2, p.y + p.h, 6)
+        if (p.grounded && !wasGrounded && impact > 8) {
+            dust(p.x + p.w / 2, p.y + p.h, 6)
+            sfx.land()
+        }
         if (p.grounded && p.vx !== 0 && game.tick % 6 === 0) dust(p.x + p.w / 2 - Math.sign(p.vx) * 14, p.y + p.h, 1)
         p.airTicks = p.grounded ? 0 : p.airTicks + 1
         if (p.invuln > 0) p.invuln--
@@ -284,12 +290,14 @@ function saveCheckpoint(flag) {
     const pending = pendingBefore(flag)
     if (pending > 0) {
         ui.toast(`Hackeie ${pending === 1 ? 'o painel que falta' : `os ${pending} painéis que faltam`} antes de salvar!`, 2200, 'lock')
+        sfx.denied()
         return
     }
     flag.active = true
     game.checkpoint = flag
     burst(flag.x, GROUND_Y - 50, 10, ['255,255,138', '56,214,196'], { spread: 3, up: 5 })
     ui.toast('Checkpoint salvo!', 1200, 'flag')
+    sfx.checkpoint()
 }
 
 function fall() {
@@ -300,6 +308,7 @@ function fall() {
     ui.resetHudCache()
     if (game.lives <= 0) {
         game.state = 'gameover'
+        sfx.gameOver()
         resetInput()
         ui.showPause({
             title: 'Fim de jogo',
@@ -320,6 +329,7 @@ function fall() {
     p.invuln = 90
     updateCamera(true)
     ui.toast('Ops! -1 vida. Voltou ao checkpoint.', 2200, 'fall')
+    sfx.fall()
 }
 
 // banner [E] mais próximo que ainda não foi resolvido
@@ -353,6 +363,7 @@ function tryInteract() {
     const stats = game.byOp[question.op] || (game.byOp[question.op] = { ok: 0, n: 0 })
     resetInput()
     game.state = 'math'
+    sfx.hackStart()
     ui.openMath({
         title: `Hackeando painel ${game.contas + 1} de ${game.banners.length}`,
         question,
@@ -369,6 +380,7 @@ function tryInteract() {
             if (correct) {
                 banner.solved = true
                 banner.unlockT = 0
+                sfx.hacking()
                 game.contas++
                 if (game.contas === game.banners.length) {
                     // deixa o cadeado abrir antes da tela de resultados
@@ -387,6 +399,7 @@ function complete() {
     const stars = game.errors === 0 && game.time <= level.goal ? 3 : game.errors <= 2 ? 2 : 1
     const bestInfo = saveResult(level.id, { stars, time: Math.round(game.time) })
     game.state = 'results'
+    sfx.levelComplete()
     ui.setHudVisible(false)
     ui.renderResults({
         level,
@@ -456,6 +469,13 @@ function startLevel(index) {
     ui.setHudVisible(true)
     ui.showScreen(null)
     if (document.activeElement) document.activeElement.blur()
+}
+
+function toggleSound() {
+    setMuted(!isMuted())
+    ui.setSoundIcon(isMuted())
+    if (!isMuted()) sfx.click()
+    return isMuted()
 }
 
 function togglePause() {
@@ -815,7 +835,9 @@ const KEY_ACTIONS = {
 addEventListener('keydown', e => {
     if (ui.mathKeydown(e)) return
     if (e.target && e.target.tagName === 'INPUT') return
-    if (e.code === 'KeyP' || e.code === 'Escape') {
+    if (e.code === 'KeyM' && !e.repeat) {
+        toggleSound()
+    } else if (e.code === 'KeyP' || e.code === 'Escape') {
         if (!e.repeat) togglePause()
     } else if (KEY_ACTIONS[e.code] && !e.repeat) {
         action(KEY_ACTIONS[e.code], true)
@@ -856,6 +878,12 @@ ui.init()
 ui.buildPad()
 ui.bindTouch(action)
 ui.bindPauseButton(togglePause)
+ui.bindSoundButton(toggleSound)
+ui.setSoundIcon(isMuted())
+// clique de interface em qualquer botão (menus, resultados, pausa)
+document.addEventListener('click', e => {
+    if (e.target.closest('button') && !e.target.closest('#math-pad, #touch, #btn-sound')) sfx.click()
+})
 ui.bindFullscreen()
 ui.setCharImages({ boy: SPRITES.boy.idle[0].src, girl: SPRITES.girl.idle[0].src })
 ui.bindTitle({

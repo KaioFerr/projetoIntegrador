@@ -865,6 +865,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./math */ "./src/js/math.js");
 /* harmony import */ var _storage__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./storage */ "./src/js/storage.js");
 /* harmony import */ var _ui__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./ui */ "./src/js/ui.js");
+/* harmony import */ var _sfx__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./sfx */ "./src/js/sfx.js");
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
 
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
@@ -886,6 +887,7 @@ function _iterableToArrayLimit(arr, i) { if (typeof Symbol === "undefined" || !(
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
 //sprites e cenário
+
 
 
 
@@ -1180,6 +1182,7 @@ function step() {
     b.unlockT++; // momento em que o cadeado abre
 
     if (b.unlockT === LOCK_OPEN_AT) {
+      _sfx__WEBPACK_IMPORTED_MODULE_10__["sfx"].unlock();
       burst(b.x + _levels__WEBPACK_IMPORTED_MODULE_6__["BANNER_W"] / 2, b.y + 26, 28, ['255,255,138', '56,214,196', '120,255,170'], {
         spread: 6,
         up: 8,
@@ -1204,6 +1207,7 @@ function step() {
 
       if (p.grounded && game.state === 'playing') {
         p.vy = -24;
+        _sfx__WEBPACK_IMPORTED_MODULE_10__["sfx"].jump();
         p.grounded = false;
         jumpBuffer = 0;
         dust(p.x + p.w / 2, p.y + p.h, 5);
@@ -1243,7 +1247,11 @@ function step() {
       _iterator.f();
     }
 
-    if (p.grounded && !wasGrounded && impact > 8) dust(p.x + p.w / 2, p.y + p.h, 6);
+    if (p.grounded && !wasGrounded && impact > 8) {
+      dust(p.x + p.w / 2, p.y + p.h, 6);
+      _sfx__WEBPACK_IMPORTED_MODULE_10__["sfx"].land();
+    }
+
     if (p.grounded && p.vx !== 0 && game.tick % 6 === 0) dust(p.x + p.w / 2 - Math.sign(p.vx) * 14, p.y + p.h, 1);
     p.airTicks = p.grounded ? 0 : p.airTicks + 1;
     if (p.invuln > 0) p.invuln--;
@@ -1278,6 +1286,7 @@ function saveCheckpoint(flag) {
 
   if (pending > 0) {
     _ui__WEBPACK_IMPORTED_MODULE_9__["toast"]("Hackeie ".concat(pending === 1 ? 'o painel que falta' : "os ".concat(pending, " pain\xE9is que faltam"), " antes de salvar!"), 2200, 'lock');
+    _sfx__WEBPACK_IMPORTED_MODULE_10__["sfx"].denied();
     return;
   }
 
@@ -1288,6 +1297,7 @@ function saveCheckpoint(flag) {
     up: 5
   });
   _ui__WEBPACK_IMPORTED_MODULE_9__["toast"]('Checkpoint salvo!', 1200, 'flag');
+  _sfx__WEBPACK_IMPORTED_MODULE_10__["sfx"].checkpoint();
 }
 
 function fall() {
@@ -1299,6 +1309,7 @@ function fall() {
 
   if (game.lives <= 0) {
     game.state = 'gameover';
+    _sfx__WEBPACK_IMPORTED_MODULE_10__["sfx"].gameOver();
     resetInput();
     _ui__WEBPACK_IMPORTED_MODULE_9__["showPause"]({
       title: 'Fim de jogo',
@@ -1322,6 +1333,7 @@ function fall() {
   p.invuln = 90;
   updateCamera(true);
   _ui__WEBPACK_IMPORTED_MODULE_9__["toast"]('Ops! -1 vida. Voltou ao checkpoint.', 2200, 'fall');
+  _sfx__WEBPACK_IMPORTED_MODULE_10__["sfx"].fall();
 } // banner [E] mais próximo que ainda não foi resolvido
 
 
@@ -1375,6 +1387,7 @@ function tryInteract() {
   });
   resetInput();
   game.state = 'math';
+  _sfx__WEBPACK_IMPORTED_MODULE_10__["sfx"].hackStart();
   _ui__WEBPACK_IMPORTED_MODULE_9__["openMath"]({
     title: "Hackeando painel ".concat(game.contas + 1, " de ").concat(game.banners.length),
     question: question,
@@ -1393,6 +1406,7 @@ function tryInteract() {
       if (correct) {
         banner.solved = true;
         banner.unlockT = 0;
+        _sfx__WEBPACK_IMPORTED_MODULE_10__["sfx"].hacking();
         game.contas++;
 
         if (game.contas === game.banners.length) {
@@ -1416,6 +1430,7 @@ function complete() {
     time: Math.round(game.time)
   });
   game.state = 'results';
+  _sfx__WEBPACK_IMPORTED_MODULE_10__["sfx"].levelComplete();
   _ui__WEBPACK_IMPORTED_MODULE_9__["setHudVisible"](false);
   _ui__WEBPACK_IMPORTED_MODULE_9__["renderResults"]({
     level: level,
@@ -1502,6 +1517,13 @@ function startLevel(index) {
   _ui__WEBPACK_IMPORTED_MODULE_9__["setHudVisible"](true);
   _ui__WEBPACK_IMPORTED_MODULE_9__["showScreen"](null);
   if (document.activeElement) document.activeElement.blur();
+}
+
+function toggleSound() {
+  Object(_sfx__WEBPACK_IMPORTED_MODULE_10__["setMuted"])(!Object(_sfx__WEBPACK_IMPORTED_MODULE_10__["isMuted"])());
+  _ui__WEBPACK_IMPORTED_MODULE_9__["setSoundIcon"](Object(_sfx__WEBPACK_IMPORTED_MODULE_10__["isMuted"])());
+  if (!Object(_sfx__WEBPACK_IMPORTED_MODULE_10__["isMuted"])()) _sfx__WEBPACK_IMPORTED_MODULE_10__["sfx"].click();
+  return Object(_sfx__WEBPACK_IMPORTED_MODULE_10__["isMuted"])();
 }
 
 function togglePause() {
@@ -1911,7 +1933,9 @@ addEventListener('keydown', function (e) {
   if (_ui__WEBPACK_IMPORTED_MODULE_9__["mathKeydown"](e)) return;
   if (e.target && e.target.tagName === 'INPUT') return;
 
-  if (e.code === 'KeyP' || e.code === 'Escape') {
+  if (e.code === 'KeyM' && !e.repeat) {
+    toggleSound();
+  } else if (e.code === 'KeyP' || e.code === 'Escape') {
     if (!e.repeat) togglePause();
   } else if (KEY_ACTIONS[e.code] && !e.repeat) {
     action(KEY_ACTIONS[e.code], true);
@@ -1951,6 +1975,12 @@ _ui__WEBPACK_IMPORTED_MODULE_9__["init"]();
 _ui__WEBPACK_IMPORTED_MODULE_9__["buildPad"]();
 _ui__WEBPACK_IMPORTED_MODULE_9__["bindTouch"](action);
 _ui__WEBPACK_IMPORTED_MODULE_9__["bindPauseButton"](togglePause);
+_ui__WEBPACK_IMPORTED_MODULE_9__["bindSoundButton"](toggleSound);
+_ui__WEBPACK_IMPORTED_MODULE_9__["setSoundIcon"](Object(_sfx__WEBPACK_IMPORTED_MODULE_10__["isMuted"])()); // clique de interface em qualquer botão (menus, resultados, pausa)
+
+document.addEventListener('click', function (e) {
+  if (e.target.closest('button') && !e.target.closest('#math-pad, #touch, #btn-sound')) _sfx__WEBPACK_IMPORTED_MODULE_10__["sfx"].click();
+});
 _ui__WEBPACK_IMPORTED_MODULE_9__["bindFullscreen"]();
 _ui__WEBPACK_IMPORTED_MODULE_9__["setCharImages"]({
   boy: SPRITES.boy.idle[0].src,
@@ -2012,6 +2042,8 @@ var PATHS = {
   fullscreen: [S, '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>'],
   rotate: [S, '<rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 18h2"/>'],
   runner: [S, '<circle cx="14" cy="4.5" r="2"/><path d="M8 21l3.5-6 3 .5L16 21"/><path d="M11.5 15l-1-5 4.5-1 2 3.5 3 .5"/><path d="M10.5 10L7 11.5"/>'],
+  sound: [S, '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18 6.5a7.5 7.5 0 0 1 0 11"/>'],
+  mute: [S, '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/>'],
   sparkle: [F, '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.8 2.2 2.2.8-2.2.8L19 21l-.8-2.2-2.2-.8 2.2-.8z"/>']
 };
 function icon(name, size) {
@@ -2218,17 +2250,307 @@ function hintFor(_ref2) {
 
 /***/ }),
 
+/***/ "./src/js/sfx.js":
+/*!***********************!*\
+  !*** ./src/js/sfx.js ***!
+  \***********************/
+/*! exports provided: isMuted, setMuted, sfx */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isMuted", function() { return isMuted; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setMuted", function() { return setMuted; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "sfx", function() { return sfx; });
+/* harmony import */ var _storage__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./storage */ "./src/js/storage.js");
+// Efeitos sonoros sintetizados na hora (Web Audio), no estilo dos videogames 8-bit.
+// Não usa arquivos de áudio. O navegador só libera o som depois do primeiro toque ou tecla.
+
+var ctx = null;
+var master = null;
+var muted = !Object(_storage__WEBPACK_IMPORTED_MODULE_0__["getSound"])();
+
+function audio() {
+  if (!ctx) {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    ctx = new AC();
+    master = ctx.createGain();
+    master.gain.value = muted ? 0 : 0.35;
+    master.connect(ctx.destination);
+  }
+
+  if (ctx.state === 'suspended') ctx.resume();
+  return ctx;
+} // libera o áudio no primeiro gesto da pessoa
+
+
+var unlock = function unlock() {
+  return audio();
+};
+
+addEventListener('pointerdown', unlock, {
+  capture: true,
+  passive: true
+});
+addEventListener('keydown', unlock, {
+  capture: true
+});
+function isMuted() {
+  return muted;
+}
+function setMuted(value) {
+  muted = value;
+  Object(_storage__WEBPACK_IMPORTED_MODULE_0__["saveSound"])(!muted);
+  if (master) master.gain.setTargetAtTime(muted ? 0 : 0.35, ctx.currentTime, 0.02);
+} // nota simples: frequência inicial, final (deslize), duração, forma de onda, volume e atraso
+
+function tone(freq) {
+  var _ref = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+      _ref$to = _ref.to,
+      to = _ref$to === void 0 ? freq : _ref$to,
+      _ref$dur = _ref.dur,
+      dur = _ref$dur === void 0 ? 0.1 : _ref$dur,
+      _ref$type = _ref.type,
+      type = _ref$type === void 0 ? 'square' : _ref$type,
+      _ref$vol = _ref.vol,
+      vol = _ref$vol === void 0 ? 0.5 : _ref$vol,
+      _ref$delay = _ref.delay,
+      delay = _ref$delay === void 0 ? 0 : _ref$delay;
+
+  var ac = audio();
+  if (!ac || muted) return;
+  var t = ac.currentTime + delay;
+  var osc = ac.createOscillator();
+  var g = ac.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, t);
+  if (to !== freq) osc.frequency.exponentialRampToValueAtTime(to, t + dur);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.005);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  osc.connect(g);
+  g.connect(master);
+  osc.start(t);
+  osc.stop(t + dur + 0.02);
+} // ruído curto (estalo, batida, chiado)
+
+
+function noise() {
+  var _ref2 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+      _ref2$dur = _ref2.dur,
+      dur = _ref2$dur === void 0 ? 0.08 : _ref2$dur,
+      _ref2$vol = _ref2.vol,
+      vol = _ref2$vol === void 0 ? 0.4 : _ref2$vol,
+      _ref2$freq = _ref2.freq,
+      freq = _ref2$freq === void 0 ? 1000 : _ref2$freq,
+      _ref2$type = _ref2.type,
+      type = _ref2$type === void 0 ? 'bandpass' : _ref2$type,
+      _ref2$delay = _ref2.delay,
+      delay = _ref2$delay === void 0 ? 0 : _ref2$delay;
+
+  var ac = audio();
+  if (!ac || muted) return;
+  var t = ac.currentTime + delay;
+  var len = Math.ceil(ac.sampleRate * dur);
+  var buf = ac.createBuffer(1, len, ac.sampleRate);
+  var data = buf.getChannelData(0);
+
+  for (var i = 0; i < len; i++) {
+    data[i] = (Math.random() * 2 - 1) * (1 - i / len);
+  }
+
+  var src = ac.createBufferSource();
+  src.buffer = buf;
+  var f = ac.createBiquadFilter();
+  f.type = type;
+  f.frequency.value = freq;
+  var g = ac.createGain();
+  g.gain.value = vol;
+  src.connect(f);
+  f.connect(g);
+  g.connect(master);
+  src.start(t);
+}
+
+var arp = function arp(notes) {
+  var _ref3 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+      _ref3$step = _ref3.step,
+      step = _ref3$step === void 0 ? 0.07 : _ref3$step,
+      _ref3$dur = _ref3.dur,
+      dur = _ref3$dur === void 0 ? 0.12 : _ref3$dur,
+      _ref3$type = _ref3.type,
+      type = _ref3$type === void 0 ? 'square' : _ref3$type,
+      _ref3$vol = _ref3.vol,
+      vol = _ref3$vol === void 0 ? 0.35 : _ref3$vol,
+      _ref3$delay = _ref3.delay,
+      delay = _ref3$delay === void 0 ? 0 : _ref3$delay;
+
+  return notes.forEach(function (n, i) {
+    return tone(n, {
+      dur: dur,
+      type: type,
+      vol: vol,
+      delay: delay + i * step
+    });
+  });
+};
+
+var sfx = {
+  jump: function jump() {
+    return tone(280, {
+      to: 620,
+      dur: 0.14,
+      vol: 0.25
+    });
+  },
+  land: function land() {
+    return noise({
+      dur: 0.06,
+      vol: 0.35,
+      freq: 220,
+      type: 'lowpass'
+    });
+  },
+  click: function click() {
+    return tone(660, {
+      dur: 0.04,
+      vol: 0.18
+    });
+  },
+  key: function key() {
+    return tone(990, {
+      dur: 0.035,
+      vol: 0.18,
+      type: 'triangle'
+    });
+  },
+  // abrir a conta: o computador do painel "conectando"
+  hackStart: function hackStart() {
+    return arp([440, 660, 880], {
+      step: 0.05,
+      dur: 0.06,
+      vol: 0.22
+    });
+  },
+  correct: function correct() {
+    return arp([880, 1320], {
+      step: 0.08,
+      dur: 0.1,
+      type: 'triangle',
+      vol: 0.4
+    });
+  },
+  wrong: function wrong() {
+    tone(220, {
+      to: 140,
+      dur: 0.18,
+      type: 'sawtooth',
+      vol: 0.3
+    });
+    tone(220, {
+      to: 120,
+      dur: 0.22,
+      type: 'sawtooth',
+      vol: 0.3,
+      delay: 0.2
+    });
+  },
+  // cadeado tremendo: bipes rápidos de "processando"
+  hacking: function hacking() {
+    for (var i = 0; i < 7; i++) {
+      tone(700 + Math.random() * 900, {
+        dur: 0.04,
+        vol: 0.15,
+        delay: i * 0.06
+      });
+    }
+  },
+  // cadeado abre: estalo metálico + acorde subindo
+  unlock: function unlock() {
+    noise({
+      dur: 0.05,
+      vol: 0.5,
+      freq: 3200,
+      type: 'highpass'
+    });
+    tone(1400, {
+      to: 900,
+      dur: 0.06,
+      type: 'square',
+      vol: 0.2
+    });
+    arp([523, 659, 784, 1047], {
+      step: 0.07,
+      delay: 0.06,
+      vol: 0.3
+    });
+  },
+  checkpoint: function checkpoint() {
+    return arp([392, 523, 659, 784], {
+      step: 0.08,
+      dur: 0.16,
+      type: 'triangle',
+      vol: 0.45
+    });
+  },
+  denied: function denied() {
+    tone(180, {
+      dur: 0.1,
+      vol: 0.28
+    });
+    tone(150, {
+      dur: 0.16,
+      vol: 0.28,
+      delay: 0.12
+    });
+  },
+  fall: function fall() {
+    return tone(700, {
+      to: 90,
+      dur: 0.55,
+      type: 'triangle',
+      vol: 0.5
+    });
+  },
+  gameOver: function gameOver() {
+    return arp([392, 330, 262, 196], {
+      step: 0.22,
+      dur: 0.3,
+      type: 'triangle',
+      vol: 0.5
+    });
+  },
+  levelComplete: function levelComplete() {
+    arp([523, 659, 784, 1047], {
+      step: 0.1,
+      dur: 0.14,
+      vol: 0.3
+    });
+    arp([784, 1047], {
+      step: 0.16,
+      dur: 0.4,
+      vol: 0.3,
+      delay: 0.45
+    });
+  }
+};
+
+/***/ }),
+
 /***/ "./src/js/storage.js":
 /*!***************************!*\
   !*** ./src/js/storage.js ***!
   \***************************/
-/*! exports provided: getProfile, saveProfile, getProgress, saveResult */
+/*! exports provided: getProfile, saveProfile, getSound, saveSound, getProgress, saveResult */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getProfile", function() { return getProfile; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "saveProfile", function() { return saveProfile; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getSound", function() { return getSound; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "saveSound", function() { return saveSound; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getProgress", function() { return getProgress; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "saveResult", function() { return saveResult; });
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
@@ -2270,6 +2592,15 @@ function saveProfile(_ref) {
     group: group,
     character: character
   }));
+} // som ligado (padrão) ou desligado
+
+function getSound() {
+  return read().sound !== false;
+}
+function saveSound(on) {
+  write(_objectSpread({}, read(), {
+    sound: on
+  }));
 } // { [fase]: { stars, best } }
 
 function getProgress() {
@@ -2308,7 +2639,7 @@ function saveResult(level, _ref2) {
 /*!**********************!*\
   !*** ./src/js/ui.js ***!
   \**********************/
-/*! exports provided: fmt, init, showScreen, setHudVisible, setHud, resetHudCache, setActionReady, toast, flash, bindTouch, bindPauseButton, bindFullscreen, bindTitle, setGroupName, focusGroupName, setCharImages, renderSelect, buildPad, isMathOpen, openMath, closeMath, mathKeydown, renderResults, showPause */
+/*! exports provided: fmt, init, showScreen, setHudVisible, setHud, resetHudCache, setActionReady, toast, flash, bindTouch, bindSoundButton, setSoundIcon, bindPauseButton, bindFullscreen, bindTitle, setGroupName, focusGroupName, setCharImages, renderSelect, buildPad, isMathOpen, openMath, closeMath, mathKeydown, renderResults, showPause */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2323,6 +2654,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "toast", function() { return toast; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "flash", function() { return flash; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindTouch", function() { return bindTouch; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindSoundButton", function() { return bindSoundButton; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setSoundIcon", function() { return setSoundIcon; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindPauseButton", function() { return bindPauseButton; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindFullscreen", function() { return bindFullscreen; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindTitle", function() { return bindTitle; });
@@ -2338,8 +2671,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "renderResults", function() { return renderResults; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "showPause", function() { return showPause; });
 /* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./math */ "./src/js/math.js");
-/* harmony import */ var _icons__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./icons */ "./src/js/icons.js");
+/* harmony import */ var _sfx__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./sfx */ "./src/js/sfx.js");
+/* harmony import */ var _icons__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./icons */ "./src/js/icons.js");
 // Camadas HTML por cima do canvas: painel, conta, resultados, menus
+
 
 
 
@@ -2356,7 +2691,7 @@ var fmt = function fmt(s) {
   return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(Math.floor(s % 60)).padStart(2, '0');
 };
 function init() {
-  Object(_icons__WEBPACK_IMPORTED_MODULE_1__["hydrateIcons"])();
+  Object(_icons__WEBPACK_IMPORTED_MODULE_2__["hydrateIcons"])();
 }
 function showScreen(name) {
   SCREENS.forEach(function (s) {
@@ -2409,7 +2744,7 @@ function setHud(_ref) {
   $('hud-hearts').innerHTML = Array.from({
     length: maxLives
   }, function (_, i) {
-    return "<span class=\"icon-slot ".concat(i < lives ? '' : 'off', "\">").concat(Object(_icons__WEBPACK_IMPORTED_MODULE_1__["icon"])('heart'), "</span>");
+    return "<span class=\"icon-slot ".concat(i < lives ? '' : 'off', "\">").concat(Object(_icons__WEBPACK_IMPORTED_MODULE_2__["icon"])('heart'), "</span>");
   }).join('');
 }
 function resetHudCache() {
@@ -2426,7 +2761,7 @@ function toast(text) {
   var ms = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 2200;
   var iconName = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'flag';
   var t = $('toast');
-  t.innerHTML = "<span class=\"icon-slot\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_1__["icon"])(iconName), "</span><span></span>");
+  t.innerHTML = "<span class=\"icon-slot\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_2__["icon"])(iconName), "</span><span></span>");
   t.lastChild.textContent = text;
   t.classList.add('show');
   clearTimeout(toastTimer);
@@ -2471,6 +2806,17 @@ function bindTouch(handler) {
       return e.preventDefault();
     });
   });
+} // botão de som no painel; onToggle() troca e devolve se ficou mudo
+
+function bindSoundButton(onToggle) {
+  $('btn-sound').addEventListener('click', function () {
+    return setSoundIcon(onToggle());
+  });
+}
+function setSoundIcon(muted) {
+  var b = $('btn-sound');
+  b.innerHTML = "<span class=\"icon-slot\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_2__["icon"])(muted ? 'mute' : 'sound'), "</span>");
+  b.setAttribute('aria-label', muted ? 'Ligar o som' : 'Desligar o som');
 }
 function bindPauseButton(onPause) {
   $('btn-pause').addEventListener('click', onPause);
@@ -2576,10 +2922,10 @@ function renderSelect(_ref4) {
     var p = progress[l.id];
     var lock = !unlocked(l.id);
     var stars = lock ? '' : [0, 1, 2].map(function (i) {
-      return "<span class=\"icon-slot ".concat(p && i < p.stars ? '' : 'off', "\">").concat(Object(_icons__WEBPACK_IMPORTED_MODULE_1__["icon"])('star'), "</span>");
+      return "<span class=\"icon-slot ".concat(p && i < p.stars ? '' : 'off', "\">").concat(Object(_icons__WEBPACK_IMPORTED_MODULE_2__["icon"])('star'), "</span>");
     }).join('');
-    var best = lock ? 'Bloqueada' : p && p.best !== null ? "<span class=\"icon-slot\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_1__["icon"])('clock'), "</span>").concat(fmt(p.best)) : 'Nova';
-    return "<button class=\"lvl ".concat(lock ? 'lock' : '', " ").concat(l.id === selected ? 'sel' : '', "\" data-level=\"").concat(l.id, "\" ").concat(lock ? 'disabled' : '', ">\n            <span class=\"n\">").concat(lock ? "<span class=\"icon-slot\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_1__["icon"])('lock'), "</span>") : l.id, "</span>\n            <span class=\"op\"><span class=\"icon-slot\">").concat(Object(_icons__WEBPACK_IMPORTED_MODULE_1__["icon"])(kindIcon(l)), "</span>").concat(l.name, "</span>\n            <span class=\"mini\">").concat(stars, "</span><span class=\"best\">").concat(best, "</span></button>");
+    var best = lock ? 'Bloqueada' : p && p.best !== null ? "<span class=\"icon-slot\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_2__["icon"])('clock'), "</span>").concat(fmt(p.best)) : 'Nova';
+    return "<button class=\"lvl ".concat(lock ? 'lock' : '', " ").concat(l.id === selected ? 'sel' : '', "\" data-level=\"").concat(l.id, "\" ").concat(lock ? 'disabled' : '', ">\n            <span class=\"n\">").concat(lock ? "<span class=\"icon-slot\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_2__["icon"])('lock'), "</span>") : l.id, "</span>\n            <span class=\"op\"><span class=\"icon-slot\">").concat(Object(_icons__WEBPACK_IMPORTED_MODULE_2__["icon"])(kindIcon(l)), "</span>").concat(l.name, "</span>\n            <span class=\"mini\">").concat(stars, "</span><span class=\"best\">").concat(best, "</span></button>");
   }).join('');
   $('lvls').querySelectorAll('.lvl:not(.lock)').forEach(function (b) {
     b.onclick = function () {
@@ -2616,7 +2962,7 @@ function buildPad() {
   var keys = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map(function (n) {
     return "<button class=\"key\" data-k=\"".concat(n, "\">").concat(n, "</button>");
   });
-  keys.push("<button class=\"key del\" data-k=\"del\" aria-label=\"Apagar\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_1__["icon"])('backspace'), "</button>"), "<button class=\"key ok\" data-k=\"ok\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_1__["icon"])('check'), "OK</button>"));
+  keys.push("<button class=\"key del\" data-k=\"del\" aria-label=\"Apagar\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_2__["icon"])('backspace'), "</button>"), "<button class=\"key ok\" data-k=\"ok\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_2__["icon"])('check'), "OK</button>"));
   pad.innerHTML = keys.join('');
 
   pad.onclick = function (e) {
@@ -2669,6 +3015,7 @@ function check() {
 
   if (ok) {
     mathState.locked = true;
+    _sfx__WEBPACK_IMPORTED_MODULE_1__["sfx"].correct();
     renderAnswer('good');
     $('math-hint').textContent = 'Senha certa! Abrindo o painel...';
     setTimeout(function () {
@@ -2676,6 +3023,7 @@ function check() {
     }, 900);
   } else {
     mathState.tries++;
+    _sfx__WEBPACK_IMPORTED_MODULE_1__["sfx"].wrong();
     renderAnswer('bad');
     $('math-hint').textContent = mathState.tries >= 2 ? Object(_math__WEBPACK_IMPORTED_MODULE_0__["hintFor"])(mathState.question) : 'Senha errada! Tente de novo.';
     mathState.answer = '';
@@ -2687,6 +3035,7 @@ function check() {
 
 function pressKey(k) {
   if (!mathState.open || mathState.locked) return;
+  if (k !== 'ok') _sfx__WEBPACK_IMPORTED_MODULE_1__["sfx"].key();
   if (k === 'del') mathState.answer = mathState.answer.slice(0, -1);else if (k === 'ok') return check();else if (mathState.answer.length < 3) mathState.answer += k;
   renderAnswer();
 } // teclado físico enquanto a conta está aberta; devolve true se tratou a tecla
@@ -2718,12 +3067,12 @@ function renderResults(_ref6) {
 
   var row = function row(ic, label, value) {
     var cls = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : '';
-    return "<div class=\"".concat(cls, "\"><span class=\"icon-slot\">").concat(Object(_icons__WEBPACK_IMPORTED_MODULE_1__["icon"])(ic), "</span><span>").concat(label, "</span><b>").concat(value, "</b></div>");
+    return "<div class=\"".concat(cls, "\"><span class=\"icon-slot\">").concat(Object(_icons__WEBPACK_IMPORTED_MODULE_2__["icon"])(ic), "</span><span>").concat(label, "</span><b>").concat(value, "</b></div>");
   };
 
   $('res-title').textContent = "Fase ".concat(level.id, " completa!");
   $('res-stars').innerHTML = [0, 1, 2].map(function (i) {
-    return "<span class=\"icon-slot ".concat(i < stars ? '' : 'off', "\">").concat(Object(_icons__WEBPACK_IMPORTED_MODULE_1__["icon"])('star'), "</span>");
+    return "<span class=\"icon-slot ".concat(i < stars ? '' : 'off', "\">").concat(Object(_icons__WEBPACK_IMPORTED_MODULE_2__["icon"])('star'), "</span>");
   }).join('');
   var best = bestInfo.isBest ? row('trophy', 'Melhor tempo', 'novo!', 'new') : row('trophy', 'Melhor tempo', fmt(bestInfo.previousBest));
   $('res-rows').innerHTML = row('clock', 'Tempo', fmt(time)) + row('target', 'Meta', fmt(goal)) + row('check', 'Acertos', "".concat(correct, " de ").concat(total)) + row('cross', 'Erros', errors) + row('fall', 'Quedas', falls) + best;
@@ -2735,7 +3084,7 @@ function renderResults(_ref6) {
     var _byOp$op = byOp[op],
         ok = _byOp$op.ok,
         n = _byOp$op.n;
-    return "<span><span class=\"icon-slot\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_1__["icon"])(OP_ICON[op]), "</span>").concat(names[op], "</span><div class=\"bar\"><i style=\"width:").concat(n ? Math.round(ok / n * 100) : 0, "%\"></i></div><span>").concat(ok, " de ").concat(n, "</span>");
+    return "<span><span class=\"icon-slot\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_2__["icon"])(OP_ICON[op]), "</span>").concat(names[op], "</span><div class=\"bar\"><i style=\"width:").concat(n ? Math.round(ok / n * 100) : 0, "%\"></i></div><span>").concat(ok, " de ").concat(n, "</span>");
   }).join('');
   var hasNext = level.id < levels;
   $('res-next').hidden = !hasNext;
@@ -2775,11 +3124,11 @@ function showPause(_ref7) {
       onMain = _ref7.onMain,
       onMenu = _ref7.onMenu;
   $('pause-ctrls').hidden = !controls;
-  $('pause-icon').innerHTML = "<span class=\"icon-slot\" style=\"font-size:52px\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_1__["icon"])(titleIcon), "</span>");
+  $('pause-icon').innerHTML = "<span class=\"icon-slot\" style=\"font-size:52px\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_2__["icon"])(titleIcon), "</span>");
   $('pause-title-text').textContent = title;
   $('pause-text').textContent = text;
   $('pause-main-label').textContent = mainLabel;
-  $('pause-main').firstElementChild.innerHTML = Object(_icons__WEBPACK_IMPORTED_MODULE_1__["icon"])(mainIcon);
+  $('pause-main').firstElementChild.innerHTML = Object(_icons__WEBPACK_IMPORTED_MODULE_2__["icon"])(mainIcon);
   $('pause-main').onclick = onMain;
   $('pause-menu').onclick = onMenu;
   showScreen('pause');

@@ -1,5 +1,6 @@
 // Camadas HTML por cima do canvas: painel, conta, resultados, menus
 import { hintFor } from './math'
+import { sfx } from './sfx'
 import { icon, hydrateIcons } from './icons'
 
 const $ = id => document.getElementById(id)
@@ -91,6 +92,17 @@ export function bindTouch(handler) {
         b.addEventListener('lostpointercapture', release)
         b.addEventListener('contextmenu', e => e.preventDefault())
     })
+}
+
+// botão de som no painel; onToggle() troca e devolve se ficou mudo
+export function bindSoundButton(onToggle) {
+    $('btn-sound').addEventListener('click', () => setSoundIcon(onToggle()))
+}
+
+export function setSoundIcon(muted) {
+    const b = $('btn-sound')
+    b.innerHTML = `<span class="icon-slot">${icon(muted ? 'mute' : 'sound')}</span>`
+    b.setAttribute('aria-label', muted ? 'Ligar o som' : 'Desligar o som')
 }
 
 export function bindPauseButton(onPause) {
@@ -220,11 +232,13 @@ function check() {
     const ok = mathState.submit(Number(mathState.answer))
     if (ok) {
         mathState.locked = true
+        sfx.correct()
         renderAnswer('good')
         $('math-hint').textContent = 'Senha certa! Abrindo o painel...'
         setTimeout(() => closeMath(true), 900)
     } else {
         mathState.tries++
+        sfx.wrong()
         renderAnswer('bad')
         $('math-hint').textContent = mathState.tries >= 2 ? hintFor(mathState.question) : 'Senha errada! Tente de novo.'
         mathState.answer = ''
@@ -234,6 +248,7 @@ function check() {
 
 function pressKey(k) {
     if (!mathState.open || mathState.locked) return
+    if (k !== 'ok') sfx.key()
     if (k === 'del') mathState.answer = mathState.answer.slice(0, -1)
     else if (k === 'ok') return check()
     else if (mathState.answer.length < 3) mathState.answer += k

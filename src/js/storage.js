@@ -24,6 +24,15 @@ export function saveProfile({ group, character }) {
     write({ ...read(), group, character })
 }
 
+// som ligado (padrão) ou desligado
+export function getSound() {
+    return read().sound !== false
+}
+
+export function saveSound(on) {
+    write({ ...read(), sound: on })
+}
+
 // { [fase]: { stars, best } }
 export function getProgress() {
     const data = read()

@@ -1322,7 +1322,8 @@ function fall() {
       onMain: function onMain() {
         return startLevel(game.levelIndex);
       },
-      onMenu: goSelect
+      onMenu: goSelect,
+      onExit: quitGame
     });
     return;
   }
@@ -1531,6 +1532,16 @@ function toggleSound() {
   _ui__WEBPACK_IMPORTED_MODULE_9__["setSoundIcon"](Object(_sfx__WEBPACK_IMPORTED_MODULE_10__["isMuted"])());
   if (!Object(_sfx__WEBPACK_IMPORTED_MODULE_10__["isMuted"])()) _sfx__WEBPACK_IMPORTED_MODULE_10__["sfx"].click();
   return Object(_sfx__WEBPACK_IMPORTED_MODULE_10__["isMuted"])();
+} // Sair: deixa a tela cheia e volta para a tela inicial (para outro grupo jogar).
+// Instalado como app, também tenta fechar o app.
+
+
+function quitGame() {
+  resetInput();
+  _ui__WEBPACK_IMPORTED_MODULE_9__["leaveFullscreen"]();
+  var installed = matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches || navigator.standalone;
+  if (installed) window.close();
+  goTitle();
 }
 
 function togglePause() {
@@ -1543,7 +1554,8 @@ function togglePause() {
       mainLabel: 'Continuar',
       controls: true,
       onMain: togglePause,
-      onMenu: goSelect
+      onMenu: goSelect,
+      onExit: quitGame
     });
   } else if (game.state === 'paused') {
     game.state = 'playing';
@@ -2010,6 +2022,7 @@ _ui__WEBPACK_IMPORTED_MODULE_9__["buildPad"]();
 _ui__WEBPACK_IMPORTED_MODULE_9__["buildNamePad"]();
 _ui__WEBPACK_IMPORTED_MODULE_9__["bindTouch"](action);
 _ui__WEBPACK_IMPORTED_MODULE_9__["bindPauseButton"](togglePause);
+_ui__WEBPACK_IMPORTED_MODULE_9__["bindExitButtons"](quitGame);
 _ui__WEBPACK_IMPORTED_MODULE_9__["bindSoundButton"](toggleSound);
 _ui__WEBPACK_IMPORTED_MODULE_9__["setSoundIcon"](Object(_sfx__WEBPACK_IMPORTED_MODULE_10__["isMuted"])());
 _ui__WEBPACK_IMPORTED_MODULE_9__["bindMusicButtons"](toggleMusic);
@@ -2064,6 +2077,7 @@ var PATHS = {
   star: [F, '<path d="M12 2.5l2.9 6.2 6.6.7-4.9 4.6 1.4 6.6L12 17.2 6 20.6l1.4-6.6L2.5 9.4l6.6-.7z"/>'],
   play: [F, '<path d="M8 4.8l11.5 7.2L8 19.2z"/>'],
   retry: [S, '<path d="M20 11.5a8 8 0 1 0-2.4 5.9"/><path d="M20.5 4v7.5H13"/>'],
+  exit: [S, '<path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M10 8l-4 4 4 4"/><path d="M6 12h10"/>'],
   home: [S, '<path d="M4 11.5L12 4l8 7.5"/><path d="M6 10v10h12V10"/><path d="M10 20v-5h4v5"/>'],
   next: [S, '<path d="M5 12h13"/><path d="M13 6l6 6-6 6"/>'],
   pause: [F, '<rect x="6" y="4.5" width="4.2" height="15" rx="1.2"/><rect x="13.8" y="4.5" width="4.2" height="15" rx="1.2"/>'],
@@ -3103,7 +3117,7 @@ function saveResult(level, _ref2) {
 /*!**********************!*\
   !*** ./src/js/ui.js ***!
   \**********************/
-/*! exports provided: fmt, init, showScreen, setHudVisible, setHud, resetHudCache, setActionReady, toast, flash, bindTouch, bindSoundButton, setSoundIcon, bindMusicButtons, setMusicIcons, bindPauseButton, bindFullscreen, bindTitle, setGroupName, buildNamePad, focusGroupName, setCharImages, renderSelect, buildPad, isMathOpen, openMath, closeMath, mathKeydown, renderResults, showPause */
+/*! exports provided: fmt, init, showScreen, setHudVisible, setHud, resetHudCache, setActionReady, toast, flash, bindTouch, bindSoundButton, setSoundIcon, bindMusicButtons, setMusicIcons, bindExitButtons, bindPauseButton, leaveFullscreen, bindFullscreen, bindTitle, setGroupName, buildNamePad, focusGroupName, setCharImages, renderSelect, buildPad, isMathOpen, openMath, closeMath, mathKeydown, renderResults, showPause */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3122,7 +3136,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setSoundIcon", function() { return setSoundIcon; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindMusicButtons", function() { return bindMusicButtons; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setMusicIcons", function() { return setMusicIcons; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindExitButtons", function() { return bindExitButtons; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindPauseButton", function() { return bindPauseButton; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "leaveFullscreen", function() { return leaveFullscreen; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindFullscreen", function() { return bindFullscreen; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindTitle", function() { return bindTitle; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setGroupName", function() { return setGroupName; });
@@ -3300,37 +3316,47 @@ function setMusicIcons(on) {
     b.setAttribute('aria-label', on ? 'Desligar a música' : 'Ligar a música');
   });
 }
+function bindExitButtons(onExit) {
+  document.querySelectorAll('[data-exit]:not(#pause-exit)').forEach(function (b) {
+    return b.addEventListener('click', onExit);
+  });
+}
 function bindPauseButton(onPause) {
   $('btn-pause').addEventListener('click', onPause);
 }
+var fsRoot = document.documentElement;
+var fsUserExited = false; // se a pessoa saiu da tela cheia (botão ou Sair), não insiste
+
+var fsCan = function fsCan() {
+  return !!(fsRoot.requestFullscreen && document.fullscreenEnabled) && document.body.classList.contains('touch');
+};
+
+function fsEnter() {
+  if (!fsCan() || document.fullscreenElement || fsUserExited || !matchMedia('(orientation: landscape)').matches) return;
+  fsRoot.requestFullscreen({
+    navigationUI: 'hide'
+  }).then(function () {
+    return screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape')["catch"](function () {});
+  })["catch"](function () {});
+} // botão Sair: sai da tela cheia e não volta sozinho até a pessoa começar de novo
+
+
+function leaveFullscreen() {
+  fsUserExited = true;
+  if (document.fullscreenElement) document.exitFullscreen()["catch"](function () {});
+}
 function bindFullscreen() {
-  var el = document.documentElement;
-  var can = !!(el.requestFullscreen && document.fullscreenEnabled) && document.body.classList.contains('touch');
-  var userExited = false; // se a pessoa saiu da tela cheia pelo botão, não insiste
-
-  var landscape = function landscape() {
-    return matchMedia('(orientation: landscape)').matches;
-  };
-
-  var enter = function enter() {
-    if (!can || document.fullscreenElement || userExited || !landscape()) return;
-    el.requestFullscreen({
-      navigationUI: 'hide'
-    }).then(function () {
-      return screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape')["catch"](function () {});
-    })["catch"](function () {});
-  };
-
+  var can = fsCan();
   document.querySelectorAll('[data-fs]').forEach(function (b) {
     b.hidden = !can;
 
     b.onclick = function () {
       if (document.fullscreenElement) {
-        userExited = true;
+        fsUserExited = true;
         document.exitFullscreen();
       } else {
-        userExited = false;
-        el.requestFullscreen()["catch"](function () {});
+        fsUserExited = false;
+        fsRoot.requestFullscreen()["catch"](function () {});
       }
     };
   });
@@ -3338,16 +3364,16 @@ function bindFullscreen() {
   // então o primeiro toque na tela (em qualquer lugar) também entra
 
   matchMedia('(orientation: landscape)').addEventListener('change', function (e) {
-    if (e.matches) enter();else userExited = false;
+    if (e.matches) fsEnter();else fsUserExited = false;
   });
   document.addEventListener('touchend', function (e) {
-    if (!e.target.closest('[data-fs]')) enter();
+    if (!e.target.closest('[data-fs], [data-exit]')) fsEnter();
   }, {
     capture: true,
     passive: true
   });
   document.addEventListener('pointerup', function (e) {
-    if (e.pointerType !== 'mouse' && !e.target.closest('[data-fs]')) enter();
+    if (e.pointerType !== 'mouse' && !e.target.closest('[data-fs], [data-exit]')) fsEnter();
   }, {
     capture: true,
     passive: true
@@ -3359,7 +3385,10 @@ function bindTitle(_ref2) {
   var onStart = _ref2.onStart;
 
   var start = function start() {
-    return onStart($('group-name').value.trim());
+    // começar de novo depois de Sair volta para a tela cheia
+    fsUserExited = false;
+    fsEnter();
+    onStart($('group-name').value.trim());
   };
 
   $('btn-start').onclick = start;
@@ -3662,7 +3691,8 @@ function showPause(_ref7) {
       _ref7$controls = _ref7.controls,
       controls = _ref7$controls === void 0 ? false : _ref7$controls,
       onMain = _ref7.onMain,
-      onMenu = _ref7.onMenu;
+      onMenu = _ref7.onMenu,
+      onExit = _ref7.onExit;
   $('pause-ctrls').hidden = !controls;
   $('pause-icon').innerHTML = "<span class=\"icon-slot\" style=\"font-size:52px\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_2__["icon"])(titleIcon), "</span>");
   $('pause-title-text').textContent = title;
@@ -3671,6 +3701,7 @@ function showPause(_ref7) {
   $('pause-main').firstElementChild.innerHTML = Object(_icons__WEBPACK_IMPORTED_MODULE_2__["icon"])(mainIcon);
   $('pause-main').onclick = onMain;
   $('pause-menu').onclick = onMenu;
+  $('pause-exit').onclick = onExit;
   showScreen('pause');
 }
 

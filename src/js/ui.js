@@ -118,30 +118,42 @@ export function setMusicIcons(on) {
     })
 }
 
+export function bindExitButtons(onExit) {
+    document.querySelectorAll('[data-exit]:not(#pause-exit)').forEach(b => b.addEventListener('click', onExit))
+}
+
 export function bindPauseButton(onPause) {
     $('btn-pause').addEventListener('click', onPause)
 }
 
+const fsRoot = document.documentElement
+let fsUserExited = false // se a pessoa saiu da tela cheia (botão ou Sair), não insiste
+const fsCan = () => !!(fsRoot.requestFullscreen && document.fullscreenEnabled) && document.body.classList.contains('touch')
+
+function fsEnter() {
+    if (!fsCan() || document.fullscreenElement || fsUserExited || !matchMedia('(orientation: landscape)').matches) return
+    fsRoot.requestFullscreen({ navigationUI: 'hide' })
+        .then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(() => {}))
+        .catch(() => {})
+}
+
+// botão Sair: sai da tela cheia e não volta sozinho até a pessoa começar de novo
+export function leaveFullscreen() {
+    fsUserExited = true
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {})
+}
+
 export function bindFullscreen() {
-    const el = document.documentElement
-    const can = !!(el.requestFullscreen && document.fullscreenEnabled) && document.body.classList.contains('touch')
-    let userExited = false // se a pessoa saiu da tela cheia pelo botão, não insiste
-    const landscape = () => matchMedia('(orientation: landscape)').matches
-    const enter = () => {
-        if (!can || document.fullscreenElement || userExited || !landscape()) return
-        el.requestFullscreen({ navigationUI: 'hide' })
-            .then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(() => {}))
-            .catch(() => {})
-    }
+    const can = fsCan()
     document.querySelectorAll('[data-fs]').forEach(b => {
         b.hidden = !can
         b.onclick = () => {
             if (document.fullscreenElement) {
-                userExited = true
+                fsUserExited = true
                 document.exitFullscreen()
             } else {
-                userExited = false
-                el.requestFullscreen().catch(() => {})
+                fsUserExited = false
+                fsRoot.requestFullscreen().catch(() => {})
             }
         }
     })
@@ -149,20 +161,25 @@ export function bindFullscreen() {
     // ao girar para a horizontal tenta entrar em tela cheia; o navegador pode exigir um toque,
     // então o primeiro toque na tela (em qualquer lugar) também entra
     matchMedia('(orientation: landscape)').addEventListener('change', e => {
-        if (e.matches) enter()
-        else userExited = false
+        if (e.matches) fsEnter()
+        else fsUserExited = false
     })
     document.addEventListener('touchend', e => {
-        if (!e.target.closest('[data-fs]')) enter()
+        if (!e.target.closest('[data-fs], [data-exit]')) fsEnter()
     }, { capture: true, passive: true })
     document.addEventListener('pointerup', e => {
-        if (e.pointerType !== 'mouse' && !e.target.closest('[data-fs]')) enter()
+        if (e.pointerType !== 'mouse' && !e.target.closest('[data-fs], [data-exit]')) fsEnter()
     }, { capture: true, passive: true })
 }
 
 /* ---------- tela inicial e seleção ---------- */
 export function bindTitle({ onStart }) {
-    const start = () => onStart($('group-name').value.trim())
+    const start = () => {
+        // começar de novo depois de Sair volta para a tela cheia
+        fsUserExited = false
+        fsEnter()
+        onStart($('group-name').value.trim())
+    }
     $('btn-start').onclick = start
     $('group-name').onkeydown = e => { if (e.key === 'Enter') start() }
 }
@@ -363,7 +380,7 @@ function confetti() {
 }
 
 /* ---------- pausa e fim de jogo ---------- */
-export function showPause({ title, text, mainLabel, mainIcon = 'play', titleIcon = 'pause', controls = false, onMain, onMenu }) {
+export function showPause({ title, text, mainLabel, mainIcon = 'play', titleIcon = 'pause', controls = false, onMain, onMenu, onExit }) {
     $('pause-ctrls').hidden = !controls
     $('pause-icon').innerHTML = `<span class="icon-slot" style="font-size:52px">${icon(titleIcon)}</span>`
     $('pause-title-text').textContent = title
@@ -372,5 +389,6 @@ export function showPause({ title, text, mainLabel, mainIcon = 'play', titleIcon
     $('pause-main').firstElementChild.innerHTML = icon(mainIcon)
     $('pause-main').onclick = onMain
     $('pause-menu').onclick = onMenu
+    $('pause-exit').onclick = onExit
     showScreen('pause')
 }

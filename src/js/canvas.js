@@ -318,7 +318,8 @@ function fall() {
             mainIcon: 'retry',
             titleIcon: 'heart',
             onMain: () => startLevel(game.levelIndex),
-            onMenu: goSelect
+            onMenu: goSelect,
+            onExit: quitGame
         })
         return
     }
@@ -484,6 +485,16 @@ function toggleSound() {
     return isMuted()
 }
 
+// Sair: deixa a tela cheia e volta para a tela inicial (para outro grupo jogar).
+// Instalado como app, também tenta fechar o app.
+function quitGame() {
+    resetInput()
+    ui.leaveFullscreen()
+    const installed = matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches || navigator.standalone
+    if (installed) window.close()
+    goTitle()
+}
+
 function togglePause() {
     if (game.state === 'playing') {
         game.state = 'paused'
@@ -494,7 +505,8 @@ function togglePause() {
             mainLabel: 'Continuar',
             controls: true,
             onMain: togglePause,
-            onMenu: goSelect
+            onMenu: goSelect,
+            onExit: quitGame
         })
     } else if (game.state === 'paused') {
         game.state = 'playing'
@@ -912,6 +924,7 @@ ui.buildPad()
 ui.buildNamePad()
 ui.bindTouch(action)
 ui.bindPauseButton(togglePause)
+ui.bindExitButtons(quitGame)
 ui.bindSoundButton(toggleSound)
 ui.setSoundIcon(isMuted())
 ui.bindMusicButtons(toggleMusic)

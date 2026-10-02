@@ -102,6 +102,9 @@
       body.touch #screen-title h2 { font-size: 26px; padding: 4px 16px; }
       body.touch #screen-title h2 .icon-slot { font-size: 26px; }
       body.touch #group-name { height: 48px; caret-color: transparent; }
+      .exitbtn { position: absolute; top: 12px; left: 12px; height: 40px; padding: 0 14px; border-radius: 12px; border: 2px solid var(--black); background: rgba(151,0,0,.86); color: var(--yellow); font: 400 22px var(--font); display: flex; align-items: center; gap: 6px; cursor: pointer; }
+      .exitbtn:hover { background: #b00000; }
+      #screen-pause .acts .key { padding: 7px 16px; font-size: 25px; }
       .overlay .corner { position: absolute; top: 12px; right: 12px; display: flex; gap: 8px; }
       h1 { font-weight: 400; font-size: 96px; margin: 0; line-height: 1; text-shadow: 4px 4px 0 #000; }
       h2 { font-weight: 400; background: var(--red); border-radius: 8px; padding: 8px 20px; font-size: 40px; margin: 0; display: flex; align-items: center; gap: 12px; }
@@ -234,6 +237,7 @@
 
       <!-- escolha de fase e personagem -->
       <div class="overlay shade" id="screen-select" hidden>
+        <button class="exitbtn" data-exit aria-label="Sair"><span data-icon="exit"></span>Sair</button>
         <div class="corner"><button class="iconbtn" data-music aria-label="Música"><span data-icon="music"></span></button><button class="iconbtn" data-fs hidden aria-label="Tela cheia"><span data-icon="fullscreen"></span></button></div>
         <h2 id="select-title">Escolha a fase</h2>
         <div class="lvls" id="lvls"></div>
@@ -274,7 +278,7 @@
 
       <!-- pausa e fim de jogo -->
       <div class="overlay" id="screen-pause" hidden>
-        <div class="card" style="width:620px">
+        <div class="card" style="width:680px">
           <h3 id="pause-title" style="font-weight:400;font-size:57px;margin:0 0 12px"><span id="pause-icon"></span><span id="pause-title-text">Pausado</span></h3>
           <p class="hint" id="pause-text" style="margin:0 0 14px"></p>
           <div class="pctrls" id="pause-ctrls" hidden>
@@ -295,6 +299,7 @@
             <button class="key ok" id="pause-main"><span data-icon="play"></span><span id="pause-main-label">Continuar</span></button>
             <button class="key del" id="pause-menu"><span data-icon="home"></span>Menu</button>
             <button class="key del" data-music data-label aria-label="Música"><span data-icon="music"></span>Música</button>
+            <button class="key del" id="pause-exit" data-exit><span data-icon="exit"></span>Sair</button>
           </div>
         </div>
       </div>

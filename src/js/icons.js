@@ -15,6 +15,7 @@ const PATHS = {
     star: [F, '<path d="M12 2.5l2.9 6.2 6.6.7-4.9 4.6 1.4 6.6L12 17.2 6 20.6l1.4-6.6L2.5 9.4l6.6-.7z"/>'],
     play: [F, '<path d="M8 4.8l11.5 7.2L8 19.2z"/>'],
     retry: [S, '<path d="M20 11.5a8 8 0 1 0-2.4 5.9"/><path d="M20.5 4v7.5H13"/>'],
+    exit: [S, '<path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M10 8l-4 4 4 4"/><path d="M6 12h10"/>'],
     home: [S, '<path d="M4 11.5L12 4l8 7.5"/><path d="M6 10v10h12V10"/><path d="M10 20v-5h4v5"/>'],
     next: [S, '<path d="M5 12h13"/><path d="M13 6l6 6-6 6"/>'],
     pause: [F, '<rect x="6" y="4.5" width="4.2" height="15" rx="1.2"/><rect x="13.8" y="4.5" width="4.2" height="15" rx="1.2"/>'],

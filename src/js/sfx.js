@@ -132,6 +132,11 @@ export const sfx = {
         tone(1400, { to: 900, dur: 0.06, type: 'square', vol: 0.2 })
         arp([523, 659, 784, 1047], { step: 0.07, delay: 0.06, vol: 0.3 })
     },
+    // laser desligando: zumbido que cai
+    laserOff: () => {
+        tone(900, { to: 60, dur: 0.45, type: 'sawtooth', vol: 0.22 })
+        noise({ dur: 0.2, vol: 0.25, freq: 2000, type: 'bandpass', delay: 0.05 })
+    },
     checkpoint: () => arp([392, 523, 659, 784], { step: 0.08, dur: 0.16, type: 'triangle', vol: 0.45 }),
     denied: () => {
         tone(180, { dur: 0.1, vol: 0.28 })

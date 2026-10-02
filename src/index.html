@@ -116,15 +116,15 @@
       button:focus-visible, input:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
 
       /* seleção de fase */
-      .lvls { display: flex; gap: 14px; margin-top: 6px; }
-      .lvl { cursor: pointer; width: 174px; background: var(--red); border: 2.5px solid var(--black); color: var(--yellow); border-radius: 16px; padding: 10px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 20px; }
+      .lvls { display: grid; grid-template-columns: repeat(4, 174px); gap: 10px 14px; margin-top: 2px; }
+      .lvl { cursor: pointer; width: 174px; background: var(--red); border: 2.5px solid var(--black); color: var(--yellow); border-radius: 16px; padding: 6px 10px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 20px; }
       .lvl.sel { box-shadow: 0 0 0 4px var(--yellow); }
-      .lvl .n { font-size: 50px; line-height: 1; display: flex; align-items: center; gap: 6px; }
-      .lvl .n .icon-slot { font-size: 30px; }
+      .lvl .n { font-size: 34px; line-height: 1; display: flex; align-items: center; gap: 6px; }
+      .lvl .n .icon-slot { font-size: 26px; }
       .lvl .op { display: flex; align-items: center; gap: 6px; }
       .lvl .op .icon-slot { font-size: 20px; }
-      .lvl .mini { display: flex; gap: 3px; height: 25px; margin: 3px 0; }
-      .lvl .mini .icon-slot { font-size: 25px; color: var(--yellow); }
+      .lvl .mini { display: flex; gap: 3px; height: 20px; margin: 1px 0; }
+      .lvl .mini .icon-slot { font-size: 20px; color: var(--yellow); }
       .lvl .mini .off { color: var(--red-d); }
       .lvl .best { font-size: 18px; opacity: .85; display: flex; align-items: center; gap: 5px; }
       .lvl.lock { background: #3a1010; color: #8a6a6a; cursor: not-allowed; }
@@ -169,6 +169,8 @@
       body.touch .mathcard .key { font-size: 44px; padding: 14px 0; }
       body.touch .mathcard .key.ok { grid-column: span 1; }
       body.touch .mathcard .q { font-size: 84px; }
+      .q.long { font-size: 60px; } body.touch .mathcard .q.long { font-size: 66px; }
+      .q.xlong { font-size: 50px; } body.touch .mathcard .q.xlong { font-size: 56px; }
 
       /* resultados */
       .res { width: 573px; padding: 18px 30px 22px; }

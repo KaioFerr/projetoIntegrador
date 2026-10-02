@@ -867,13 +867,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _ui__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./ui */ "./src/js/ui.js");
 /* harmony import */ var _sfx__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./sfx */ "./src/js/sfx.js");
 /* harmony import */ var _music__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./music */ "./src/js/music.js");
+function _createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = _unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e2) { throw _e2; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e3) { didErr = true; err = _e3; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
 
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
-function _createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = _unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e2) { throw _e2; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e3) { didErr = true; err = _e3; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
 
@@ -980,6 +980,7 @@ var game = {
   falls: 0,
   byOp: {},
   platforms: [],
+  lasers: [],
   flags: [],
   banners: [],
   near: null,
@@ -1063,6 +1064,22 @@ function loadLevel(index) {
       w: _levels__WEBPACK_IMPORTED_MODULE_6__["MINI_W"] + (n - 1) * _levels__WEBPACK_IMPORTED_MODULE_6__["MINI_STEP"],
       n: n
     });
+  }); // plataformas móveis: vão e voltam entre a posição inicial e (x + dx, y + dy)
+
+  level.movers.forEach(function (m) {
+    game.platforms.push({
+      kind: 'mini',
+      x: m.x,
+      y: m.y,
+      w: _levels__WEBPACK_IMPORTED_MODULE_6__["MINI_W"] + (m.n - 1) * _levels__WEBPACK_IMPORTED_MODULE_6__["MINI_STEP"],
+      n: m.n,
+      mover: _objectSpread({}, m, {
+        dx: m.dx || 0,
+        dy: m.dy || 0
+      }),
+      mdx: 0,
+      mdy: 0
+    });
   });
   game.banners = level.banners.map(function (_ref5) {
     var _ref6 = _slicedToArray(_ref5, 2),
@@ -1076,6 +1093,15 @@ function loadLevel(index) {
       unlockT: -1
     };
   });
+  game.lasers = level.lasers.map(function (l) {
+    return {
+      x: l.x,
+      panel: l.panel,
+      open: false,
+      off: 0
+    };
+  });
+  game.laserToast = 0;
 }
 
 var clamp = function clamp(v, min, max) {
@@ -1184,6 +1210,7 @@ function step() {
     b.unlockT++; // momento em que o cadeado abre
 
     if (b.unlockT === LOCK_OPEN_AT) {
+      openLasers(b);
       _sfx__WEBPACK_IMPORTED_MODULE_10__["sfx"].unlock();
       burst(b.x + _levels__WEBPACK_IMPORTED_MODULE_6__["BANNER_W"] / 2, b.y + 26, 28, ['255,255,138', '56,214,196', '120,255,170'], {
         spread: 6,
@@ -1199,10 +1226,17 @@ function step() {
 
   if (alive) {
     if (game.state === 'playing') game.time += 1 / 60;
+    moveMovers(); // em cima de uma plataforma móvel, o jogador vai junto
+
+    if (p.grounded && p.on && p.on.mover) {
+      p.x = blockLasers(p.x, p.x + p.on.mdx);
+      p.y += p.on.mdy;
+    }
+
     var dir = game.state === 'playing' ? (keys.right ? 1 : 0) - (keys.left ? 1 : 0) : 0;
     p.vx = dir * 8;
     if (dir) p.facing = dir > 0 ? 'right' : 'left';
-    p.x = clamp(p.x + p.vx, 0, game.level.end - p.w);
+    p.x = blockLasers(p.x, clamp(p.x + p.vx, 0, game.level.end - p.w));
 
     if (jumpBuffer > 0) {
       jumpBuffer--;
@@ -1226,7 +1260,8 @@ function step() {
     var impact = p.vy;
     p.y += p.vy;
     p.vy += gravity;
-    p.grounded = false; //colisão: só pelo topo das plataformas, e só se os pés estiverem sobre a parte visível
+    p.grounded = false;
+    p.on = null; //colisão: só pelo topo das plataformas, e só se os pés estiverem sobre a parte visível
 
     var _iterator = _createForOfIteratorHelper(game.platforms),
         _step;
@@ -1235,12 +1270,13 @@ function step() {
       for (_iterator.s(); !(_step = _iterator.n()).done;) {
         var pl = _step.value;
         var edge = pl.kind === 'mini' ? MINI_EDGE : 0;
-        var onTop = p.x + FEET_R > pl.x + edge && p.x + FEET_L < pl.x + pl.w - edge;
+        var onTop = p.x + FEET_R > pl.x + edge && p.x + FEET_L < pl.x + pl.w - edge; // plataforma que sobe: compara com a altura dela no quadro anterior
 
-        if (prevBottom <= pl.y && p.y + p.h >= pl.y && onTop) {
+        if (prevBottom <= pl.y - Math.min(0, pl.mdy || 0) + 0.01 && p.y + p.h >= pl.y && onTop) {
           p.y = pl.y - p.h;
           p.vy = 0;
           p.grounded = true;
+          p.on = pl;
         }
       }
     } catch (err) {
@@ -1262,6 +1298,10 @@ function step() {
     findNear();
   }
 
+  game.lasers.forEach(function (l) {
+    if (l.open && l.off < 1) l.off = Math.min(1, l.off + 0.05);
+  });
+  if (game.laserToast > 0) game.laserToast--;
   if (game.state === 'celebrate' && --game.celebrateTimer <= 0) complete();
   if (game.shake > 0) game.shake--;
   game.particles.forEach(function (q) {
@@ -1272,6 +1312,76 @@ function step() {
   });
   game.particles = game.particles.filter(function (q) {
     return q.life > 0;
+  });
+} // plataformas móveis: posição suave de ida e volta; guarda o deslocamento do quadro
+
+
+function moveMovers() {
+  var t = game.tick;
+  game.platforms.forEach(function (pl) {
+    var m = pl.mover;
+    if (!m) return;
+    var f = 0.5 - 0.5 * Math.cos(t / m.period * Math.PI * 2);
+    var nx = m.x + m.dx * f;
+    var ny = m.y + m.dy * f;
+    pl.mdx = nx - pl.x;
+    pl.mdy = ny - pl.y;
+    pl.x = nx;
+    pl.y = ny;
+  });
+} // laser ligado funciona como parede: o jogador não passa (nem pulando)
+
+
+function blockLasers(oldX, newX) {
+  var _iterator2 = _createForOfIteratorHelper(game.lasers),
+      _step2;
+
+  try {
+    for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+      var l = _step2.value;
+      if (l.open) continue;
+      var c0 = oldX + 40;
+      var hit = false;
+
+      if (c0 < l.x && newX + FEET_R > l.x - 2) {
+        newX = l.x - 2 - FEET_R;
+        hit = true;
+      }
+
+      if (c0 > l.x && newX + FEET_L < l.x + 2) {
+        newX = l.x + 2 - FEET_L;
+        hit = true;
+      }
+
+      if (hit && game.laserToast === 0 && game.state === 'playing') {
+        game.laserToast = 150;
+        _ui__WEBPACK_IMPORTED_MODULE_9__["toast"]('Laser ligado! Hackeie o painel antes dele.', 2200, 'lock');
+        _sfx__WEBPACK_IMPORTED_MODULE_10__["sfx"].denied();
+      }
+    }
+  } catch (err) {
+    _iterator2.e(err);
+  } finally {
+    _iterator2.f();
+  }
+
+  return newX;
+} // painel hackeado desliga o(s) laser(s) ligado(s) a ele
+
+
+function openLasers(banner) {
+  var bi = game.banners.indexOf(banner);
+  game.lasers.forEach(function (l) {
+    if (l.open || l.panel !== bi) return;
+    l.open = true;
+    _sfx__WEBPACK_IMPORTED_MODULE_10__["sfx"].laserOff();
+    burst(l.x, _levels__WEBPACK_IMPORTED_MODULE_6__["GROUND_Y"] - 120, 24, ['255,93,115', '255,255,138', '56,214,196'], {
+      spread: 4,
+      up: 6,
+      life: 50,
+      size: 5
+    });
+    _ui__WEBPACK_IMPORTED_MODULE_9__["toast"]('Laser desligado! Caminho livre.', 1800, 'check');
   });
 } // contas da bandeira para trás que ainda faltam resolver
 // (banners em cima da bandeira ou depois dela ficam para o próximo checkpoint)
@@ -1333,6 +1443,7 @@ function fall() {
   p.y = _levels__WEBPACK_IMPORTED_MODULE_6__["GROUND_Y"] - p.h;
   p.vx = p.vy = 0;
   p.grounded = true;
+  p.on = null;
   p.invuln = 90;
   updateCamera(true);
   _ui__WEBPACK_IMPORTED_MODULE_9__["toast"]('Ops! -1 vida. Voltou ao checkpoint.', 2200, 'fall');
@@ -1345,12 +1456,12 @@ function findNear() {
   var cx = p.x + p.w / 2;
   game.near = null;
 
-  var _iterator2 = _createForOfIteratorHelper(game.banners),
-      _step2;
+  var _iterator3 = _createForOfIteratorHelper(game.banners),
+      _step3;
 
   try {
-    for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-      var b = _step2.value;
+    for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+      var b = _step3.value;
       if (b.solved) continue;
       var bottom = b.y + _levels__WEBPACK_IMPORTED_MODULE_6__["BANNER_H"];
 
@@ -1361,9 +1472,9 @@ function findNear() {
     } // bandeira ainda não salva, com o jogador de pé no chão ao lado dela
 
   } catch (err) {
-    _iterator2.e(err);
+    _iterator3.e(err);
   } finally {
-    _iterator2.f();
+    _iterator3.f();
   }
 
   game.nearFlag = null;
@@ -1382,9 +1493,10 @@ function tryInteract() {
   }
 
   var banner = game.near;
-  var level = game.level;
-  var question = Object(_math__WEBPACK_IMPORTED_MODULE_7__["createQuestion"])(level.math);
-  var stats = game.byOp[question.op] || (game.byOp[question.op] = {
+  var level = game.level; // a conta fica mais difícil ao longo da fase
+
+  var question = Object(_math__WEBPACK_IMPORTED_MODULE_7__["createQuestion"])(level.math, game.contas / Math.max(1, game.banners.length - 1));
+  var stats = game.byOp[question.kind] || (game.byOp[question.kind] = {
     ok: 0,
     n: 0
   });
@@ -1392,7 +1504,7 @@ function tryInteract() {
   game.state = 'math';
   _sfx__WEBPACK_IMPORTED_MODULE_10__["sfx"].hackStart();
   _ui__WEBPACK_IMPORTED_MODULE_9__["openMath"]({
-    title: "Hackeando painel ".concat(game.contas + 1, " de ").concat(game.banners.length),
+    title: "Hackeando painel ".concat(game.contas + 1, "/").concat(game.banners.length),
     question: question,
     onSubmit: function onSubmit(value) {
       stats.n++;
@@ -1668,6 +1780,68 @@ function drawFlag(f) {
     var pending = pendingBefore(f);
     if (pending > 0) drawPrompt(x + 3, top - 40, "Faltam ".concat(pending, " ").concat(pending === 1 ? 'painel' : 'painéis'), true);else drawPrompt(x + 3, top - 40, 'Salvar checkpoint');
   }
+} // trilho pontilhado mostrando por onde a plataforma móvel anda
+
+
+function drawTrack(pl) {
+  var m = pl.mover;
+  var cx = m.x + pl.w / 2 - game.camera;
+  var y0 = m.y + 8;
+  c.save();
+  c.strokeStyle = 'rgba(56,214,196,0.45)';
+  c.lineWidth = 3;
+  c.setLineDash([6, 8]);
+  c.beginPath();
+  c.moveTo(cx, y0);
+  c.lineTo(cx + m.dx, y0 + m.dy);
+  c.stroke();
+  c.setLineDash([]);
+  c.fillStyle = 'rgba(56,214,196,0.7)';
+  [[cx, y0], [cx + m.dx, y0 + m.dy]].forEach(function (_ref12) {
+    var _ref13 = _slicedToArray(_ref12, 2),
+        x = _ref13[0],
+        y = _ref13[1];
+
+    c.beginPath();
+    c.arc(x, y, 5, 0, Math.PI * 2);
+    c.fill();
+  });
+  c.restore();
+} // barreira de laser: emissores no chão e lá em cima, feixe piscando enquanto ligado
+
+
+function drawLaser(l) {
+  var x = l.x - game.camera;
+  if (x < -40 || x > W + 40) return;
+  var top = MIN_CAM_Y - 20;
+  c.save();
+  var a = 1 - l.off;
+
+  if (a > 0) {
+    var flick = 0.75 + Math.sin(game.tick * 0.9) * 0.15 + Math.random() * 0.1;
+    c.globalAlpha = a * flick;
+    c.shadowColor = '#ff2e63';
+    c.shadowBlur = 18;
+    c.fillStyle = 'rgba(255,46,99,0.35)';
+    c.fillRect(x - 7, top, 14, _levels__WEBPACK_IMPORTED_MODULE_6__["GROUND_Y"] - 14 - top);
+    c.fillStyle = '#ff5d73';
+    c.fillRect(x - 3, top, 6, _levels__WEBPACK_IMPORTED_MODULE_6__["GROUND_Y"] - 14 - top);
+    c.fillStyle = '#fff0f3';
+    c.fillRect(x - 1, top, 2, _levels__WEBPACK_IMPORTED_MODULE_6__["GROUND_Y"] - 14 - top);
+    c.shadowBlur = 0;
+    c.globalAlpha = 1;
+  } // emissor do chão
+
+
+  c.fillStyle = '#1a0521';
+  c.strokeStyle = '#000';
+  c.lineWidth = 2;
+  roundRect(x - 14, _levels__WEBPACK_IMPORTED_MODULE_6__["GROUND_Y"] - 18, 28, 18, 4);
+  c.fill();
+  c.stroke();
+  c.fillStyle = l.open ? '#38d6c4' : '#ff2e63';
+  c.fillRect(x - 6, _levels__WEBPACK_IMPORTED_MODULE_6__["GROUND_Y"] - 14, 12, 5);
+  c.restore();
 }
 
 function drawBanner(b) {
@@ -1848,6 +2022,9 @@ function render() {
   drawGlow(gaps);
   drawNeon(gaps, 1, _levels__WEBPACK_IMPORTED_MODULE_6__["GROUND_Y"]);
   game.platforms.forEach(function (pl) {
+    if (pl.mover) drawTrack(pl);
+  });
+  game.platforms.forEach(function (pl) {
     var x0 = pl.x - game.camera;
     if (x0 > W || x0 + pl.w < 0) return;
 
@@ -1863,7 +2040,8 @@ function render() {
   });
   game.flags.forEach(drawFlag);
   game.banners.forEach(drawBanner);
-  drawPlayer(); //efeitos de desbloqueio ficam na frente do jogador
+  drawPlayer();
+  game.lasers.forEach(drawLaser); //efeitos de desbloqueio ficam na frente do jogador
 
   game.banners.forEach(function (b) {
     var x = b.x - game.camera;
@@ -2121,7 +2299,7 @@ function hydrateIcons() {
 /*!**************************!*\
   !*** ./src/js/levels.js ***!
   \**************************/
-/*! exports provided: GROUND_Y, GROUND_STEP, GROUND_TILE_W, MINI_STEP, MINI_W, MINI_H, BANNER_W, BANNER_H, LEVELS */
+/*! exports provided: GROUND_Y, GROUND_STEP, GROUND_TILE_W, MINI_STEP, MINI_W, MINI_H, BANNER_W, BANNER_H, miniWidth, groundEnd, LEVELS */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2134,13 +2312,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MINI_H", function() { return MINI_H; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "BANNER_W", function() { return BANNER_W; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "BANNER_H", function() { return BANNER_H; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "miniWidth", function() { return miniWidth; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "groundEnd", function() { return groundEnd; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "LEVELS", function() { return LEVELS; });
-function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
-
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
 
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
@@ -2153,7 +2327,13 @@ function _iterableToArrayLimit(arr, i) { if (typeof Symbol === "undefined" || !(
 
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
-// Definição das 4 fases. Todas reaproveitam o mapa original, cortado em tamanhos diferentes.
+// Definição das 8 fases. Cada fase tem seu próprio mapa:
+//   ground:  trechos de chão [x inicial, blocos]; entre eles fica o vazio de néon
+//   minis:   plataformas pequenas [x, y, blocos]
+//   movers:  plataformas que se movem { x, y, n, dx, dy, period } (vai e volta; period em quadros)
+//   panels:  painéis [E] { m: índice da mini onde ficam } ou { g: x no chão }
+//   lasers:  barreiras { x, panel: índice do painel que desliga o laser }
+//   math:    tipos de conta (ver math.js)
 var GROUND_Y = 452;
 var GROUND_STEP = 589; // largura da textura do chão (592) menos a sobreposição
 
@@ -2162,96 +2342,406 @@ var MINI_STEP = 48;
 var MINI_W = 64;
 var MINI_H = 16;
 var BANNER_W = 90;
-var BANNER_H = 60; // [x inicial, quantidade de blocos]
-
-var GROUND = [[-1, 3], [2000, 2], [3800, 2], [5600, 2], [7700, 2], [10230, 2]]; // [x, y, quantidade de blocos]
-
-var MINIS = [[500, 300, 4], [800, 400, 4], [1000, 300, 4], [1300, 200, 4], [2000, 100, 4], [2300, 160, 4], [2300, 400, 4], [2600, 300, 4], [3300, 350, 2], [3500, 300, 4], [4200, 300, 4], [4200, 100, 4], [5050, 400, 2], [5200, 300, 2], [5350, 200, 2], [5800, 350, 4], [5550, 100, 3], [5800, 200, 1], [6000, 200, 1], [6200, 200, 3], [6400, 200, 4], [6800, 350, 4], [7100, 200, 2], [7300, 200, 2], [7500, 200, 2], [7800, 350, 4], [8600, 400, 2], [8800, 300, 2], [9000, 200, 2], [8800, 100, 2], [8600, 80, 3], [9300, 200, 2], [9600, 200, 2], [9900, 200, 2], [10150, 200, 4]]; // [x, y] dos banners [E], sempre em cima de uma miniplataforma
-
-var BANNERS = [[580, 240], [1060, 242], [1380, 144], [2024, 44], [2380, 102], [2680, 242], [3560, 242], [4280, 42], [5210, 242], [5580, 44], [5860, 292], [6480, 146], [6860, 292], [7120, 142], [7860, 292], [8640, 20], [8840, 242], [9020, 142], [10230, 144]];
-var CONTAS_POR_FASE = 8;
-
+var BANNER_H = 60;
+var miniWidth = function miniWidth(n) {
+  return MINI_W + (n - 1) * MINI_STEP;
+};
 var groundEnd = function groundEnd(_ref) {
   var _ref2 = _slicedToArray(_ref, 2),
       x = _ref2[0],
       n = _ref2[1];
 
   return x + (n - 1) * GROUND_STEP + GROUND_TILE_W;
-}; // escolhe n itens bem espalhados de uma lista ordenada
-
-
-function spread(list, n) {
-  if (list.length <= n) return list;
-  var out = [];
-
-  for (var i = 0; i < n; i++) {
-    out.push(list[Math.round(i * (list.length - 1) / (n - 1))]);
-  }
-
-  return out;
-} // Tipos de conta: { ops, min, max } e regras específicas em math.js
-
-
-var LEVELS = [{
-  id: 1,
-  name: 'Soma',
-  chunks: 3,
+};
+var DEFS = [{
+  name: 'Soma até 10',
+  icon: 'plus',
+  goal: 100,
+  math: [{
+    k: 'add',
+    max: 10
+  }],
+  ground: [[0, 2], [1400, 2], [2800, 2]],
+  minis: [[850, 320, 4], [1150, 200, 3], [1950, 330, 3], [2200, 220, 3], [3050, 330, 4], [3350, 220, 3], [3650, 120, 3]],
+  panels: [{
+    g: 500
+  }, {
+    m: 0
+  }, {
+    m: 1
+  }, {
+    g: 1700
+  }, {
+    m: 3
+  }, {
+    m: 6
+  }]
+}, {
+  name: 'Subtração até 10',
+  icon: 'minus',
   goal: 120,
-  math: {
-    ops: ['+'],
-    max: 9
-  }
+  math: [{
+    k: 'sub',
+    max: 10
+  }],
+  ground: [[0, 2], [1450, 2], [2900, 2]],
+  minis: [[700, 320, 4], [1150, 330, 3], [1650, 300, 4], [1950, 190, 3], [2700, 340, 2], [3300, 350, 3], [3500, 260, 3]],
+  panels: [{
+    g: 450
+  }, {
+    m: 0
+  }, {
+    m: 2
+  }, {
+    m: 3
+  }, {
+    g: 3150
+  }, {
+    m: 6
+  }],
+  lasers: [{
+    x: 1000,
+    panel: 1
+  }, {
+    x: 2400,
+    panel: 3
+  }]
 }, {
-  id: 2,
-  name: 'Subtração',
-  chunks: 4,
-  goal: 150,
-  math: {
-    ops: ['-'],
-    max: 18
-  }
-}, {
-  id: 3,
-  name: 'Mistas',
-  chunks: 5,
-  goal: 180,
-  math: {
-    ops: ['+', '-'],
+  name: 'Soma até 20',
+  icon: 'plus',
+  goal: 160,
+  math: [{
+    k: 'add',
     max: 20
-  }
+  }],
+  ground: [[0, 2], [1700, 2], [3300, 2], [4800, 1]],
+  minis: [[400, 320, 4], [750, 210, 3], [1950, 320, 3], [2250, 210, 3], [2550, 100, 3], [3950, 300, 3], [4560, 340, 3], [5000, 300, 4]],
+  movers: [{
+    x: 1220,
+    y: 400,
+    n: 3,
+    dx: 300,
+    period: 240
+  }, {
+    x: 2920,
+    y: 380,
+    n: 3,
+    dx: 220,
+    period: 220
+  }],
+  panels: [{
+    m: 0
+  }, {
+    m: 1
+  }, {
+    g: 1000
+  }, {
+    m: 2
+  }, {
+    m: 3
+  }, {
+    m: 4
+  }, {
+    g: 3700
+  }, {
+    m: 7
+  }]
 }, {
-  id: 4,
-  name: 'Desafio',
-  chunks: 6,
-  goal: 240,
-  math: {
-    ops: ['+', '-'],
+  name: 'Subtração até 20',
+  icon: 'minus',
+  goal: 170,
+  math: [{
+    k: 'sub',
+    max: 20
+  }],
+  ground: [[0, 3], [2000, 2], [3400, 3]],
+  minis: [[800, 320, 3], [1300, 60, 4], [1600, 150, 3], [2200, 300, 4], [2550, 190, 3], [3950, 80, 3], [4300, 200, 3]],
+  movers: [{
+    x: 1100,
+    y: 380,
+    n: 3,
+    dy: -320,
+    period: 300
+  }, {
+    x: 3700,
+    y: 380,
+    n: 3,
+    dy: -300,
+    period: 280
+  }],
+  panels: [{
+    g: 500
+  }, {
+    m: 0
+  }, {
+    m: 1
+  }, {
+    m: 2
+  }, {
+    m: 3
+  }, {
+    m: 4
+  }, {
+    m: 5
+  }, {
+    g: 4700
+  }],
+  lasers: [{
+    x: 2900,
+    panel: 5
+  }]
+}, {
+  name: 'Mistas',
+  icon: 'plusminus',
+  goal: 190,
+  math: [{
+    k: 'add',
+    max: 20
+  }, {
+    k: 'sub',
+    max: 20
+  }],
+  ground: [[0, 2], [1600, 2], [3100, 2], [4700, 2]],
+  minis: [[350, 320, 3], [650, 210, 3], [2100, 300, 3], [2400, 190, 3], [2860, 330, 3], [3350, 320, 4], [3900, 100, 3], [5000, 300, 3]],
+  movers: [{
+    x: 1220,
+    y: 360,
+    n: 3,
+    dx: 220,
+    period: 200
+  }, {
+    x: 3700,
+    y: 380,
+    n: 3,
+    dy: -280,
+    period: 260
+  }, {
+    x: 4320,
+    y: 380,
+    n: 3,
+    dx: 220,
+    period: 200
+  }],
+  panels: [{
+    m: 0
+  }, {
+    m: 1
+  }, {
+    g: 1800
+  }, {
+    m: 2
+  }, {
+    m: 3
+  }, {
+    m: 5
+  }, {
+    m: 6
+  }, {
+    m: 7
+  }],
+  lasers: [{
+    x: 1000,
+    panel: 1
+  }, {
+    x: 2700,
+    panel: 4
+  }]
+}, {
+  name: 'Número que falta',
+  icon: 'target',
+  goal: 190,
+  math: [{
+    k: 'missing',
+    max: 20
+  }],
+  ground: [[0, 3], [2050, 3], [4100, 2]],
+  minis: [[300, 350, 2], [470, 260, 2], [640, 170, 3], [900, 250, 3], [1850, 350, 2], [2300, 300, 3], [2600, 190, 3], [2900, 90, 3], [3250, 250, 3], [3900, 340, 2], [4350, 320, 3], [4650, 210, 3]],
+  panels: [{
+    m: 2
+  }, {
+    m: 3
+  }, {
+    g: 1300
+  }, {
+    m: 5
+  }, {
+    m: 6
+  }, {
+    m: 7
+  }, {
+    m: 10
+  }, {
+    m: 11
+  }],
+  lasers: [{
+    x: 1600,
+    panel: 2
+  }, {
+    x: 3600,
+    panel: 5
+  }]
+}, {
+  name: 'Dezenas e trios',
+  icon: 'calc',
+  goal: 200,
+  math: [{
+    k: 'tens'
+  }, {
+    k: 'three'
+  }],
+  ground: [[0, 2], [1700, 2], [3400, 3]],
+  minis: [[750, 300, 3], [1950, 320, 3], [2450, 60, 3], [2700, 180, 3], [4200, 300, 3], [4550, 190, 3]],
+  movers: [{
+    x: 1220,
+    y: 380,
+    n: 3,
+    dx: 320,
+    period: 260
+  }, {
+    x: 2250,
+    y: 380,
+    n: 3,
+    dy: -320,
+    period: 260
+  }, {
+    x: 2920,
+    y: 380,
+    n: 3,
+    dx: 320,
+    period: 260
+  }],
+  panels: [{
+    g: 450
+  }, {
+    m: 0
+  }, {
+    m: 1
+  }, {
+    m: 2
+  }, {
+    m: 3
+  }, {
+    g: 3700
+  }, {
+    m: 4
+  }, {
+    m: 5
+  }],
+  lasers: [{
+    x: 3950,
+    panel: 5
+  }]
+}, {
+  name: 'Desafio final',
+  icon: 'trophy',
+  goal: 280,
+  math: [{
+    k: 'add',
     max: 50
-  }
-}].map(buildLevel);
+  }, {
+    k: 'sub',
+    max: 50
+  }, {
+    k: 'missing',
+    max: 30
+  }, {
+    k: 'tens'
+  }],
+  ground: [[0, 2], [1650, 2], [3250, 2], [4900, 2], [6500, 2]],
+  minis: [[350, 320, 3], [650, 200, 3], [2300, 70, 3], [2600, 190, 3], [2900, 330, 2], [3100, 280, 2], [3500, 300, 3], [3800, 190, 3], [5600, 60, 3], [6900, 280, 3]],
+  movers: [{
+    x: 1220,
+    y: 370,
+    n: 3,
+    dx: 270,
+    period: 220
+  }, {
+    x: 2100,
+    y: 380,
+    n: 3,
+    dy: -310,
+    period: 260
+  }, {
+    x: 4470,
+    y: 360,
+    n: 3,
+    dx: 270,
+    period: 200
+  }, {
+    x: 5400,
+    y: 380,
+    n: 3,
+    dy: -320,
+    period: 260
+  }, {
+    x: 6120,
+    y: 380,
+    n: 3,
+    dx: 220,
+    period: 200
+  }],
+  panels: [{
+    m: 0
+  }, {
+    m: 1
+  }, {
+    g: 1850
+  }, {
+    m: 2
+  }, {
+    m: 3
+  }, {
+    m: 6
+  }, {
+    m: 7
+  }, {
+    g: 5100
+  }, {
+    m: 8
+  }, {
+    m: 9
+  }],
+  lasers: [{
+    x: 1050,
+    panel: 1
+  }, {
+    x: 2750,
+    panel: 4
+  }, {
+    x: 5950,
+    panel: 8
+  }]
+}];
 
-function buildLevel(def) {
-  var chunks = GROUND.slice(0, def.chunks);
-  var end = groundEnd(chunks[chunks.length - 1]);
-  var minis = MINIS.filter(function (_ref3) {
-    var _ref4 = _slicedToArray(_ref3, 1),
-        x = _ref4[0];
+function buildLevel(def, i) {
+  var minis = def.minis; // painel em cima da mini (centralizado) ou no chão
 
-    return x + MINI_W < end;
+  var banners = def.panels.map(function (p) {
+    if (p.g !== undefined) return [p.g, GROUND_Y - BANNER_H + 2];
+
+    var _minis$p$m = _slicedToArray(minis[p.m], 3),
+        x = _minis$p$m[0],
+        y = _minis$p$m[1],
+        n = _minis$p$m[2];
+
+    return [Math.round(x + (miniWidth(n) - BANNER_W) / 2), y - BANNER_H + 2];
   });
-  var banners = spread(BANNERS.filter(function (_ref5) {
-    var _ref6 = _slicedToArray(_ref5, 1),
-        x = _ref6[0];
-
-    return x + BANNER_W < end;
-  }), CONTAS_POR_FASE);
-  return _objectSpread({}, def, {
-    end: end,
-    chunks: chunks,
+  return {
+    id: i + 1,
+    name: def.name,
+    icon: def.icon,
+    goal: def.goal,
+    math: def.math,
+    chunks: def.ground,
     minis: minis,
-    banners: banners
-  });
+    movers: def.movers || [],
+    lasers: def.lasers || [],
+    banners: banners,
+    end: groundEnd(def.ground[def.ground.length - 1])
+  };
 }
+
+var LEVELS = DEFS.map(buildLevel);
 
 /***/ }),
 
@@ -2259,47 +2749,181 @@ function buildLevel(def) {
 /*!************************!*\
   !*** ./src/js/math.js ***!
   \************************/
-/*! exports provided: createQuestion, hintFor */
+/*! exports provided: createQuestion, hintFor, KIND_INFO */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createQuestion", function() { return createQuestion; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "hintFor", function() { return hintFor; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "KIND_INFO", function() { return KIND_INFO; });
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 var rand = function rand(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
-}; // Gera uma conta de acordo com a fase: { text, result, op }
+}; // Tipos de conta usados nas fases:
+//   add (soma), sub (subtração), missing (número que falta), tens (dezenas), three (três números)
+// t vai de 0 (primeira conta da fase) a 1 (última): os números crescem ao longo da fase.
+// lo evita contas fáceis demais nas fases com números grandes (até 10 continua começando do 1).
 
 
-function createQuestion(_ref) {
-  var ops = _ref.ops,
-      max = _ref.max;
-  var op = ops[rand(0, ops.length - 1)];
-  var a, b;
+var lo = function lo(cap) {
+  return Math.max(1, Math.floor(cap / 4));
+};
 
-  if (op === '+') {
-    a = rand(1, max);
-    b = rand(1, max);
-  } else {
-    a = rand(2, max);
-    b = rand(1, Math.min(a, max));
+var GEN = {
+  add: function add(_ref, t) {
+    var max = _ref.max;
+    var cap = Math.max(4, Math.round(max * (0.5 + 0.5 * t)));
+    var a = rand(lo(cap), cap - 1);
+    var b = rand(Math.min(lo(cap), cap - a), cap - a);
+    return {
+      a: a,
+      b: b,
+      result: a + b,
+      display: "".concat(a, " + ").concat(b, " = ?")
+    };
+  },
+  sub: function sub(_ref2, t) {
+    var max = _ref2.max;
+    var cap = Math.max(4, Math.round(max * (0.5 + 0.5 * t)));
+    var a = rand(Math.max(2, lo(cap) * 2), cap);
+    var b = rand(Math.min(lo(cap), a), a);
+    return {
+      a: a,
+      b: b,
+      result: a - b,
+      display: "".concat(a, " \u2212 ").concat(b, " = ?")
+    };
+  },
+  // 7 + ? = 12  ou  15 − ? = 9
+  missing: function missing(_ref3, t) {
+    var max = _ref3.max;
+    var cap = Math.max(5, Math.round(max * (0.5 + 0.5 * t)));
+
+    if (Math.random() < 0.5) {
+      var c = rand(Math.max(3, lo(cap) * 2), cap);
+
+      var _a = rand(1, c - 1);
+
+      return {
+        a: _a,
+        b: c,
+        sign: '+',
+        result: c - _a,
+        display: "".concat(_a, " + ? = ").concat(c)
+      };
+    }
+
+    var a = rand(Math.max(3, lo(cap) * 2), cap);
+    var x = rand(1, a - 1);
+    return {
+      a: a,
+      b: a - x,
+      sign: '-',
+      result: x,
+      display: "".concat(a, " \u2212 ? = ").concat(a - x)
+    };
+  },
+  // dezenas inteiras: 30 + 40, 80 − 50
+  tens: function tens(_, t) {
+    var top = 5 + Math.round(4 * t);
+
+    if (Math.random() < 0.5) {
+      var _a2 = rand(1, top - 1) * 10;
+
+      var _b = rand(1, top - _a2 / 10) * 10;
+
+      return {
+        a: _a2,
+        b: _b,
+        sign: '+',
+        result: _a2 + _b,
+        display: "".concat(_a2, " + ").concat(_b, " = ?")
+      };
+    }
+
+    var a = rand(2, top) * 10;
+    var b = rand(1, a / 10 - 1) * 10;
+    return {
+      a: a,
+      b: b,
+      sign: '-',
+      result: a - b,
+      display: "".concat(a, " \u2212 ").concat(b, " = ?")
+    };
+  },
+  // 3 + 4 + 2
+  three: function three(_, t) {
+    var top = 3 + Math.round(6 * t);
+    var _ref4 = [rand(1, top), rand(1, top), rand(1, top)],
+        a = _ref4[0],
+        b = _ref4[1],
+        c = _ref4[2];
+    return {
+      a: a,
+      b: b,
+      c: c,
+      result: a + b + c,
+      display: "".concat(a, " + ").concat(b, " + ").concat(c, " = ?")
+    };
+  }
+}; // Gera uma conta para a fase: { kind, display, result, ... }
+
+function createQuestion(kinds) {
+  var t = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+  var spec = kinds[rand(0, kinds.length - 1)];
+  return _objectSpread({
+    kind: spec.k
+  }, GEN[spec.k](spec, t));
+}
+function hintFor(q) {
+  switch (q.kind) {
+    case 'add':
+      return "Dica: comece no ".concat(q.a, " e conte mais ").concat(q.b, ".");
+
+    case 'sub':
+      return "Dica: comece no ".concat(q.a, " e volte ").concat(q.b, ".");
+
+    case 'missing':
+      return q.sign === '+' ? "Dica: quanto falta do ".concat(q.a, " at\xE9 chegar no ").concat(q.b, "?") : "Dica: do ".concat(q.a, ", quanto tirar para sobrar ").concat(q.b, "?");
+
+    case 'tens':
+      return "Dica: conte as dezenas: ".concat(q.a / 10, " ").concat(q.sign === '+' ? '+' : '−', " ").concat(q.b / 10, " e ponha um zero no fim.");
+
+    case 'three':
+      return "Dica: some ".concat(q.a, " + ").concat(q.b, " primeiro e depois mais ").concat(q.c, ".");
   }
 
-  var result = op === '+' ? a + b : a - b;
-  return {
-    a: a,
-    b: b,
-    op: op,
-    result: result,
-    text: "".concat(a, " ").concat(op === '-' ? '−' : '+', " ").concat(b)
-  };
-}
-function hintFor(_ref2) {
-  var a = _ref2.a,
-      b = _ref2.b,
-      op = _ref2.op;
-  return "Dica: comece por ".concat(a, " e ").concat(op === '+' ? 'some' : 'tire', " ").concat(b, " aos poucos.");
-}
+  return '';
+} // nomes e ícones de cada tipo, para a tela de resultados e a escolha de fase
+
+var KIND_INFO = {
+  add: {
+    name: 'Soma',
+    icon: 'plus'
+  },
+  sub: {
+    name: 'Subtração',
+    icon: 'minus'
+  },
+  missing: {
+    name: 'Número que falta',
+    icon: 'target'
+  },
+  tens: {
+    name: 'Dezenas',
+    icon: 'calc'
+  },
+  three: {
+    name: 'Três números',
+    icon: 'sparkle'
+  }
+};
 
 /***/ }),
 
@@ -2953,6 +3577,22 @@ var sfx = {
       vol: 0.3
     });
   },
+  // laser desligando: zumbido que cai
+  laserOff: function laserOff() {
+    tone(900, {
+      to: 60,
+      dur: 0.45,
+      type: 'sawtooth',
+      vol: 0.22
+    });
+    noise({
+      dur: 0.2,
+      vol: 0.25,
+      freq: 2000,
+      type: 'bandpass',
+      delay: 0.05
+    });
+  },
   checkpoint: function checkpoint() {
     return arp([392, 523, 659, 784], {
       step: 0.08,
@@ -3166,10 +3806,6 @@ var $ = function $(id) {
 };
 
 var SCREENS = ['title', 'select', 'math', 'results', 'pause'];
-var OP_ICON = {
-  '+': 'plus',
-  '-': 'minus'
-};
 var fmt = function fmt(s) {
   return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(Math.floor(s % 60)).padStart(2, '0');
 };
@@ -3483,10 +4119,6 @@ function renderSelect(_ref4) {
     return n === 1 || progress[n - 1] && progress[n - 1].stars > 0;
   };
 
-  var kindIcon = function kindIcon(l) {
-    return l.math.ops.length > 1 ? l.id === levels.length ? 'trophy' : 'plusminus' : OP_ICON[l.math.ops[0]];
-  };
-
   $('lvls').innerHTML = levels.map(function (l) {
     var p = progress[l.id];
     var lock = !unlocked(l.id);
@@ -3494,7 +4126,7 @@ function renderSelect(_ref4) {
       return "<span class=\"icon-slot ".concat(p && i < p.stars ? '' : 'off', "\">").concat(Object(_icons__WEBPACK_IMPORTED_MODULE_2__["icon"])('star'), "</span>");
     }).join('');
     var best = lock ? 'Bloqueada' : p && p.best !== null ? "<span class=\"icon-slot\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_2__["icon"])('clock'), "</span>").concat(fmt(p.best)) : 'Nova';
-    return "<button class=\"lvl ".concat(lock ? 'lock' : '', " ").concat(l.id === selected ? 'sel' : '', "\" data-level=\"").concat(l.id, "\" ").concat(lock ? 'disabled' : '', ">\n            <span class=\"n\">").concat(lock ? "<span class=\"icon-slot\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_2__["icon"])('lock'), "</span>") : l.id, "</span>\n            <span class=\"op\"><span class=\"icon-slot\">").concat(Object(_icons__WEBPACK_IMPORTED_MODULE_2__["icon"])(kindIcon(l)), "</span>").concat(l.name, "</span>\n            <span class=\"mini\">").concat(stars, "</span><span class=\"best\">").concat(best, "</span></button>");
+    return "<button class=\"lvl ".concat(lock ? 'lock' : '', " ").concat(l.id === selected ? 'sel' : '', "\" data-level=\"").concat(l.id, "\" ").concat(lock ? 'disabled' : '', ">\n            <span class=\"n\">").concat(lock ? "<span class=\"icon-slot\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_2__["icon"])('lock'), "</span>") : l.id, "</span>\n            <span class=\"op\"><span class=\"icon-slot\">").concat(Object(_icons__WEBPACK_IMPORTED_MODULE_2__["icon"])(l.icon), "</span>").concat(l.name, "</span>\n            <span class=\"mini\">").concat(stars, "</span><span class=\"best\">").concat(best, "</span></button>");
   }).join('');
   $('lvls').querySelectorAll('.lvl:not(.lock)').forEach(function (b) {
     b.onclick = function () {
@@ -3566,7 +4198,9 @@ function openMath(_ref5) {
     locked: false
   });
   $('math-title').textContent = title;
-  $('math-q').textContent = "".concat(question.text, " = ?");
+  $('math-q').textContent = question.display; // contas compridas (três números, dezenas) usam letra menor para caber no cartão
+
+  $('math-q').className = 'q' + (question.display.length > 12 ? ' xlong' : question.display.length > 9 ? ' long' : '');
   $('math-hint').textContent = 'Resolva a conta para quebrar a senha.';
   renderAnswer();
   showScreen('math');
@@ -3645,15 +4279,11 @@ function renderResults(_ref6) {
   }).join('');
   var best = bestInfo.isBest ? row('trophy', 'Melhor tempo', 'novo!', 'new') : row('trophy', 'Melhor tempo', fmt(bestInfo.previousBest));
   $('res-rows').innerHTML = row('clock', 'Tempo', fmt(time)) + row('target', 'Meta', fmt(goal)) + row('check', 'Acertos', "".concat(correct, " de ").concat(total)) + row('cross', 'Erros', errors) + row('fall', 'Quedas', falls) + best;
-  var names = {
-    '+': 'Soma',
-    '-': 'Subtração'
-  };
-  $('res-ops').innerHTML = Object.keys(byOp).map(function (op) {
-    var _byOp$op = byOp[op],
-        ok = _byOp$op.ok,
-        n = _byOp$op.n;
-    return "<span><span class=\"icon-slot\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_2__["icon"])(OP_ICON[op]), "</span>").concat(names[op], "</span><div class=\"bar\"><i style=\"width:").concat(n ? Math.round(ok / n * 100) : 0, "%\"></i></div><span>").concat(ok, " de ").concat(n, "</span>");
+  $('res-ops').innerHTML = Object.keys(byOp).map(function (kind) {
+    var _byOp$kind = byOp[kind],
+        ok = _byOp$kind.ok,
+        n = _byOp$kind.n;
+    return "<span><span class=\"icon-slot\">".concat(Object(_icons__WEBPACK_IMPORTED_MODULE_2__["icon"])(_math__WEBPACK_IMPORTED_MODULE_0__["KIND_INFO"][kind].icon), "</span>").concat(_math__WEBPACK_IMPORTED_MODULE_0__["KIND_INFO"][kind].name, "</span><div class=\"bar\"><i style=\"width:").concat(n ? Math.round(ok / n * 100) : 0, "%\"></i></div><span>").concat(ok, " de ").concat(n, "</span>");
   }).join('');
   var hasNext = level.id < levels;
   $('res-next').hidden = !hasNext;

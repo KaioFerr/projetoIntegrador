@@ -1,11 +1,10 @@
 // Camadas HTML por cima do canvas: painel, conta, resultados, menus
-import { hintFor } from './math'
+import { hintFor, KIND_INFO } from './math'
 import { sfx } from './sfx'
 import { icon, hydrateIcons } from './icons'
 
 const $ = id => document.getElementById(id)
 const SCREENS = ['title', 'select', 'math', 'results', 'pause']
-const OP_ICON = { '+': 'plus', '-': 'minus' }
 
 export const fmt = s => String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(Math.floor(s % 60)).padStart(2, '0')
 
@@ -246,7 +245,6 @@ export function setCharImages({ boy, girl }) {
 export function renderSelect({ levels, progress, selected, character, group, onSelect, onCharacter, onPlay }) {
     $('select-title').textContent = group ? `${group}: escolha a fase` : 'Escolha a fase'
     const unlocked = n => n === 1 || (progress[n - 1] && progress[n - 1].stars > 0)
-    const kindIcon = l => (l.math.ops.length > 1 ? (l.id === levels.length ? 'trophy' : 'plusminus') : OP_ICON[l.math.ops[0]])
     $('lvls').innerHTML = levels.map(l => {
         const p = progress[l.id]
         const lock = !unlocked(l.id)
@@ -254,7 +252,7 @@ export function renderSelect({ levels, progress, selected, character, group, onS
         const best = lock ? 'Bloqueada' : p && p.best !== null ? `<span class="icon-slot">${icon('clock')}</span>${fmt(p.best)}` : 'Nova'
         return `<button class="lvl ${lock ? 'lock' : ''} ${l.id === selected ? 'sel' : ''}" data-level="${l.id}" ${lock ? 'disabled' : ''}>
             <span class="n">${lock ? `<span class="icon-slot">${icon('lock')}</span>` : l.id}</span>
-            <span class="op"><span class="icon-slot">${icon(kindIcon(l))}</span>${l.name}</span>
+            <span class="op"><span class="icon-slot">${icon(l.icon)}</span>${l.name}</span>
             <span class="mini">${stars}</span><span class="best">${best}</span></button>`
     }).join('')
     $('lvls').querySelectorAll('.lvl:not(.lock)').forEach(b => { b.onclick = () => onSelect(Number(b.dataset.level)) })
@@ -292,7 +290,9 @@ export function isMathOpen() { return mathState.open }
 export function openMath({ title, question, onSubmit, onClose }) {
     Object.assign(mathState, { open: true, answer: '', tries: 0, question, submit: onSubmit, close: onClose, locked: false })
     $('math-title').textContent = title
-    $('math-q').textContent = `${question.text} = ?`
+    $('math-q').textContent = question.display
+    // contas compridas (três números, dezenas) usam letra menor para caber no cartão
+    $('math-q').className = 'q' + (question.display.length > 12 ? ' xlong' : question.display.length > 9 ? ' long' : '')
     $('math-hint').textContent = 'Resolva a conta para quebrar a senha.'
     renderAnswer()
     showScreen('math')
@@ -353,10 +353,9 @@ export function renderResults({ level, levels, stars, time, goal, correct, total
     const best = bestInfo.isBest ? row('trophy', 'Melhor tempo', 'novo!', 'new') : row('trophy', 'Melhor tempo', fmt(bestInfo.previousBest))
     $('res-rows').innerHTML = row('clock', 'Tempo', fmt(time)) + row('target', 'Meta', fmt(goal)) +
         row('check', 'Acertos', `${correct} de ${total}`) + row('cross', 'Erros', errors) + row('fall', 'Quedas', falls) + best
-    const names = { '+': 'Soma', '-': 'Subtração' }
-    $('res-ops').innerHTML = Object.keys(byOp).map(op => {
-        const { ok, n } = byOp[op]
-        return `<span><span class="icon-slot">${icon(OP_ICON[op])}</span>${names[op]}</span><div class="bar"><i style="width:${n ? Math.round(ok / n * 100) : 0}%"></i></div><span>${ok} de ${n}</span>`
+    $('res-ops').innerHTML = Object.keys(byOp).map(kind => {
+        const { ok, n } = byOp[kind]
+        return `<span><span class="icon-slot">${icon(KIND_INFO[kind].icon)}</span>${KIND_INFO[kind].name}</span><div class="bar"><i style="width:${n ? Math.round(ok / n * 100) : 0}%"></i></div><span>${ok} de ${n}</span>`
     }).join('')
     const hasNext = level.id < levels
     $('res-next').hidden = !hasNext

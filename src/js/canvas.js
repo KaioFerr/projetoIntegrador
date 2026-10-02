@@ -90,6 +90,7 @@ const game = {
     falls: 0,
     byOp: {},
     platforms: [],
+    lasers: [],
     flags: [],
     banners: [],
     near: null,
@@ -136,7 +137,13 @@ function loadLevel(index) {
     level.minis.forEach(([x, y, n]) => {
         game.platforms.push({ kind: 'mini', x, y, w: MINI_W + (n - 1) * MINI_STEP, n })
     })
+    // plataformas móveis: vão e voltam entre a posição inicial e (x + dx, y + dy)
+    level.movers.forEach(m => {
+        game.platforms.push({ kind: 'mini', x: m.x, y: m.y, w: MINI_W + (m.n - 1) * MINI_STEP, n: m.n, mover: { ...m, dx: m.dx || 0, dy: m.dy || 0 }, mdx: 0, mdy: 0 })
+    })
     game.banners = level.banners.map(([x, y]) => ({ x, y, solved: false, unlockT: -1 }))
+    game.lasers = level.lasers.map(l => ({ x: l.x, panel: l.panel, open: false, off: 0 }))
+    game.laserToast = 0
 }
 
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v))
@@ -209,6 +216,7 @@ function step() {
         b.unlockT++
         // momento em que o cadeado abre
         if (b.unlockT === LOCK_OPEN_AT) {
+            openLasers(b)
             sfx.unlock()
             burst(b.x + BANNER_W / 2, b.y + 26, 28, ['255,255,138', '56,214,196', '120,255,170'], { spread: 6, up: 8, life: 60, size: 6 })
             game.shake = 6
@@ -219,10 +227,16 @@ function step() {
 
     if (alive) {
         if (game.state === 'playing') game.time += 1 / 60
+        moveMovers()
+        // em cima de uma plataforma móvel, o jogador vai junto
+        if (p.grounded && p.on && p.on.mover) {
+            p.x = blockLasers(p.x, p.x + p.on.mdx)
+            p.y += p.on.mdy
+        }
         const dir = game.state === 'playing' ? (keys.right ? 1 : 0) - (keys.left ? 1 : 0) : 0
         p.vx = dir * 8
         if (dir) p.facing = dir > 0 ? 'right' : 'left'
-        p.x = clamp(p.x + p.vx, 0, game.level.end - p.w)
+        p.x = blockLasers(p.x, clamp(p.x + p.vx, 0, game.level.end - p.w))
 
         if (jumpBuffer > 0) {
             jumpBuffer--
@@ -245,15 +259,18 @@ function step() {
         p.y += p.vy
         p.vy += gravity
         p.grounded = false
+        p.on = null
 
         //colisão: só pelo topo das plataformas, e só se os pés estiverem sobre a parte visível
         for (const pl of game.platforms) {
             const edge = pl.kind === 'mini' ? MINI_EDGE : 0
             const onTop = p.x + FEET_R > pl.x + edge && p.x + FEET_L < pl.x + pl.w - edge
-            if (prevBottom <= pl.y && p.y + p.h >= pl.y && onTop) {
+            // plataforma que sobe: compara com a altura dela no quadro anterior
+            if (prevBottom <= pl.y - Math.min(0, pl.mdy || 0) + 0.01 && p.y + p.h >= pl.y && onTop) {
                 p.y = pl.y - p.h
                 p.vy = 0
                 p.grounded = true
+                p.on = pl
             }
         }
         if (p.grounded && !wasGrounded && impact > 8) {
@@ -269,6 +286,8 @@ function step() {
         findNear()
     }
 
+    game.lasers.forEach(l => { if (l.open && l.off < 1) l.off = Math.min(1, l.off + 0.05) })
+    if (game.laserToast > 0) game.laserToast--
     if (game.state === 'celebrate' && --game.celebrateTimer <= 0) complete()
     if (game.shake > 0) game.shake--
 
@@ -279,6 +298,51 @@ function step() {
         q.life--
     })
     game.particles = game.particles.filter(q => q.life > 0)
+}
+
+// plataformas móveis: posição suave de ida e volta; guarda o deslocamento do quadro
+function moveMovers() {
+    const t = game.tick
+    game.platforms.forEach(pl => {
+        const m = pl.mover
+        if (!m) return
+        const f = 0.5 - 0.5 * Math.cos((t / m.period) * Math.PI * 2)
+        const nx = m.x + m.dx * f
+        const ny = m.y + m.dy * f
+        pl.mdx = nx - pl.x
+        pl.mdy = ny - pl.y
+        pl.x = nx
+        pl.y = ny
+    })
+}
+
+// laser ligado funciona como parede: o jogador não passa (nem pulando)
+function blockLasers(oldX, newX) {
+    for (const l of game.lasers) {
+        if (l.open) continue
+        const c0 = oldX + 40
+        let hit = false
+        if (c0 < l.x && newX + FEET_R > l.x - 2) { newX = l.x - 2 - FEET_R; hit = true }
+        if (c0 > l.x && newX + FEET_L < l.x + 2) { newX = l.x + 2 - FEET_L; hit = true }
+        if (hit && game.laserToast === 0 && game.state === 'playing') {
+            game.laserToast = 150
+            ui.toast('Laser ligado! Hackeie o painel antes dele.', 2200, 'lock')
+            sfx.denied()
+        }
+    }
+    return newX
+}
+
+// painel hackeado desliga o(s) laser(s) ligado(s) a ele
+function openLasers(banner) {
+    const bi = game.banners.indexOf(banner)
+    game.lasers.forEach(l => {
+        if (l.open || l.panel !== bi) return
+        l.open = true
+        sfx.laserOff()
+        burst(l.x, GROUND_Y - 120, 24, ['255,93,115', '255,255,138', '56,214,196'], { spread: 4, up: 6, life: 50, size: 5 })
+        ui.toast('Laser desligado! Caminho livre.', 1800, 'check')
+    })
 }
 
 // contas da bandeira para trás que ainda faltam resolver
@@ -328,6 +392,7 @@ function fall() {
     p.y = GROUND_Y - p.h
     p.vx = p.vy = 0
     p.grounded = true
+    p.on = null
     p.invuln = 90
     updateCamera(true)
     ui.toast('Ops! -1 vida. Voltou ao checkpoint.', 2200, 'fall')
@@ -361,13 +426,14 @@ function tryInteract() {
     }
     const banner = game.near
     const level = game.level
-    const question = createQuestion(level.math)
-    const stats = game.byOp[question.op] || (game.byOp[question.op] = { ok: 0, n: 0 })
+    // a conta fica mais difícil ao longo da fase
+    const question = createQuestion(level.math, game.contas / Math.max(1, game.banners.length - 1))
+    const stats = game.byOp[question.kind] || (game.byOp[question.kind] = { ok: 0, n: 0 })
     resetInput()
     game.state = 'math'
     sfx.hackStart()
     ui.openMath({
-        title: `Hackeando painel ${game.contas + 1} de ${game.banners.length}`,
+        title: `Hackeando painel ${game.contas + 1}/${game.banners.length}`,
         question,
         onSubmit: value => {
             stats.n++
@@ -603,6 +669,62 @@ function drawFlag(f) {
     }
 }
 
+// trilho pontilhado mostrando por onde a plataforma móvel anda
+function drawTrack(pl) {
+    const m = pl.mover
+    const cx = m.x + pl.w / 2 - game.camera
+    const y0 = m.y + 8
+    c.save()
+    c.strokeStyle = 'rgba(56,214,196,0.45)'
+    c.lineWidth = 3
+    c.setLineDash([6, 8])
+    c.beginPath()
+    c.moveTo(cx, y0)
+    c.lineTo(cx + m.dx, y0 + m.dy)
+    c.stroke()
+    c.setLineDash([])
+    c.fillStyle = 'rgba(56,214,196,0.7)'
+    ;[[cx, y0], [cx + m.dx, y0 + m.dy]].forEach(([x, y]) => {
+        c.beginPath()
+        c.arc(x, y, 5, 0, Math.PI * 2)
+        c.fill()
+    })
+    c.restore()
+}
+
+// barreira de laser: emissores no chão e lá em cima, feixe piscando enquanto ligado
+function drawLaser(l) {
+    const x = l.x - game.camera
+    if (x < -40 || x > W + 40) return
+    const top = MIN_CAM_Y - 20
+    c.save()
+    const a = 1 - l.off
+    if (a > 0) {
+        const flick = 0.75 + Math.sin(game.tick * 0.9) * 0.15 + Math.random() * 0.1
+        c.globalAlpha = a * flick
+        c.shadowColor = '#ff2e63'
+        c.shadowBlur = 18
+        c.fillStyle = 'rgba(255,46,99,0.35)'
+        c.fillRect(x - 7, top, 14, GROUND_Y - 14 - top)
+        c.fillStyle = '#ff5d73'
+        c.fillRect(x - 3, top, 6, GROUND_Y - 14 - top)
+        c.fillStyle = '#fff0f3'
+        c.fillRect(x - 1, top, 2, GROUND_Y - 14 - top)
+        c.shadowBlur = 0
+        c.globalAlpha = 1
+    }
+    // emissor do chão
+    c.fillStyle = '#1a0521'
+    c.strokeStyle = '#000'
+    c.lineWidth = 2
+    roundRect(x - 14, GROUND_Y - 18, 28, 18, 4)
+    c.fill()
+    c.stroke()
+    c.fillStyle = l.open ? '#38d6c4' : '#ff2e63'
+    c.fillRect(x - 6, GROUND_Y - 14, 12, 5)
+    c.restore()
+}
+
 function drawBanner(b) {
     const x = b.x - game.camera
     if (x < -BANNER_W || x > W) return
@@ -766,6 +888,7 @@ function render() {
     drawGlow(gaps)
     drawNeon(gaps, 1, GROUND_Y)
 
+    game.platforms.forEach(pl => { if (pl.mover) drawTrack(pl) })
     game.platforms.forEach(pl => {
         const x0 = pl.x - game.camera
         if (x0 > W || x0 + pl.w < 0) return
@@ -778,6 +901,7 @@ function render() {
     game.flags.forEach(drawFlag)
     game.banners.forEach(drawBanner)
     drawPlayer()
+    game.lasers.forEach(drawLaser)
     //efeitos de desbloqueio ficam na frente do jogador
     game.banners.forEach(b => {
         const x = b.x - game.camera

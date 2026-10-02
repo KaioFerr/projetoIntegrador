@@ -10,7 +10,11 @@ O jogo foi desenvolvido utilizando as tecnologias web JavaScript, HTML e CSS. At
 
 - Controles: setas ou "A, D" para andar, seta para cima, "W" ou espaço para pular, "E" para hackear o painel ou salvar o checkpoint "P" para pausar, "N" para ligar/desligar a música e "M" para ligar/desligar todos os sons.
 - Para avançar é preciso hackear os painéis com cadeado (aperte "E" perto deles): cada painel tem uma conta como senha e, ao acertar, o cadeado abre. As contas são de adição e subtração, geradas de forma aleatória e com dificuldade crescente.
-- 4 fases (Soma, Subtração, Mistas e Desafio), cada uma com 8 contas. A fase seguinte é liberada ao concluir a anterior.
+- 8 fases, cada uma com mapa próprio, liberadas em sequência:
+  1. Soma até 10 · 2. Subtração até 10 · 3. Soma até 20 · 4. Subtração até 20 · 5. Mistas · 6. Número que falta (7 + ? = 12) · 7. Dezenas e trios (30 + 40, 3 + 4 + 2) · 8. Desafio final.
+- As contas ficam um pouco mais difíceis ao longo de cada fase.
+- Obstáculos: **barreiras de laser** que só desligam ao hackear o painel antes delas, **plataformas móveis** para atravessar vãos largos e **elevadores** para subir nas torres (o trilho pontilhado mostra o caminho).
+- Os mapas ficam em `src/js/levels.js`. Depois de mudar um mapa, rode `npm run verificar-fases`: ele simula a física do jogo e avisa se algum painel ficou impossível de alcançar.
 - Painel compacto com fase, tempo, contas resolvidas e vidas. A câmera também sobe quando você chega nas plataformas altas.
 - Funciona no celular na horizontal, com botões de toque (andar, pular e E) e entra em tela cheia sozinho ao virar o celular (alguns navegadores pedem um toque na tela antes).
 - Checkpoints (bandeiras): aperte "E" perto da bandeira para salvar. Só dá para salvar depois de hackear todos os painéis que ficam antes dela.
